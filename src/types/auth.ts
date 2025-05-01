@@ -13,6 +13,6 @@ export interface AuthContextType {
   session: Session | null;
   isLoading: boolean;
   error: string | null;
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, password: string) => Promise<any>; // Changed from Promise<void> to Promise<any>
   logout: () => Promise<void>;
 }
