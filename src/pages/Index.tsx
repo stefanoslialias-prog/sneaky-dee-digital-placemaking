@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import WifiDetector from '@/components/WifiDetector';
@@ -39,7 +38,7 @@ const Index = () => {
           <img 
             src="/lovable-uploads/digital-placemaking-logo.png" 
             alt="Digital Placemaking" 
-            className="h-8" 
+            className="h-8 ml-auto" 
             onError={(e) => {
               // Fallback if logo doesn't exist
               e.currentTarget.style.display = 'none';
@@ -47,7 +46,7 @@ const Index = () => {
           />
         </div>
         <Link to="/admin">
-          <Button variant="ghost" size="sm" className="text-xs flex items-center gap-1">
+          <Button variant="outline" size="sm" className="text-xs flex items-center gap-1">
             Admin
             <ArrowUpRightFromCircle size={12} />
           </Button>

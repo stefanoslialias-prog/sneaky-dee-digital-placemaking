@@ -84,55 +84,66 @@ const SentimentSurvey: React.FC<SentimentSurveyProps> = ({ onComplete }) => {
   };
 
   return (
-    <Card className="w-full max-w-md mx-auto">
-      <CardHeader className="text-center">
-        <CardTitle className="text-2xl font-playfair">Tell us how you feel today!</CardTitle>
-        <CardDescription>
-          Help us improve your Toronto experience
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        {step === 1 ? (
-          <div className="grid grid-cols-3 gap-4">
-            {sentimentOptions.map((option) => (
-              <Button
-                key={option.value}
-                variant="outline"
-                onClick={() => handleSentimentSelect(option.value)}
+    <div className="w-full max-w-md mx-auto">
+      {/* Shop Local Win Local image - centered above the card */}
+      <div className="flex justify-center mb-6">
+        <img 
+          src="/shop-local-win-local.png" 
+          alt="Shop Local Win Local" 
+          className="h-24 object-contain" 
+        />
+      </div>
+
+      <Card>
+        <CardHeader className="text-center">
+          <CardTitle className="text-2xl font-playfair">Tell us how you feel today!</CardTitle>
+          <CardDescription>
+            Help us improve your Toronto experience
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {step === 1 ? (
+            <div className="grid grid-cols-3 gap-4">
+              {sentimentOptions.map((option) => (
+                <Button
+                  key={option.value}
+                  variant="outline"
+                  onClick={() => handleSentimentSelect(option.value)}
+                  disabled={isSubmitting}
+                  className={`h-24 flex flex-col items-center justify-center gap-2 border-2 hover:bg-toronto-gray ${
+                    selectedSentiment === option.value ? 'border-toronto-blue' : ''
+                  }`}
+                >
+                  <span className="text-3xl">{option.emoji}</span>
+                  <span>{option.label}</span>
+                </Button>
+              ))}
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <p className="text-center">Would you like to tell us more?</p>
+              <textarea
+                className="w-full h-24 p-2 border rounded-md"
+                placeholder="Optional: Share your thoughts..."
+                value={comment}
+                onChange={(e) => setComment(e.target.value)}
                 disabled={isSubmitting}
-                className={`h-24 flex flex-col items-center justify-center gap-2 border-2 hover:bg-toronto-gray ${
-                  selectedSentiment === option.value ? 'border-toronto-blue' : ''
-                }`}
-              >
-                <span className="text-3xl">{option.emoji}</span>
-                <span>{option.label}</span>
-              </Button>
-            ))}
-          </div>
-        ) : (
-          <div className="space-y-4">
-            <p className="text-center">Would you like to tell us more?</p>
-            <textarea
-              className="w-full h-24 p-2 border rounded-md"
-              placeholder="Optional: Share your thoughts..."
-              value={comment}
-              onChange={(e) => setComment(e.target.value)}
-              disabled={isSubmitting}
-            ></textarea>
-          </div>
+              ></textarea>
+            </div>
+          )}
+        </CardContent>
+        {step === 2 && (
+          <CardFooter className="flex justify-between">
+            <Button variant="outline" onClick={() => setStep(1)} disabled={isSubmitting}>
+              Back
+            </Button>
+            <Button onClick={() => handleSubmit()} disabled={isSubmitting}>
+              {isSubmitting ? 'Submitting...' : 'Submit'}
+            </Button>
+          </CardFooter>
         )}
-      </CardContent>
-      {step === 2 && (
-        <CardFooter className="flex justify-between">
-          <Button variant="outline" onClick={() => setStep(1)} disabled={isSubmitting}>
-            Back
-          </Button>
-          <Button onClick={() => handleSubmit()} disabled={isSubmitting}>
-            {isSubmitting ? 'Submitting...' : 'Submit'}
-          </Button>
-        </CardFooter>
-      )}
-    </Card>
+      </Card>
+    </div>
   );
 };
 

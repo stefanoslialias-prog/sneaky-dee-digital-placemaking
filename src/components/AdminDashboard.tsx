@@ -2,9 +2,9 @@
 import React, { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/hooks/useAuth';
 import Logo from '@/components/Logo';
-import { DatabaseBackup, Users, FileText, LayoutGrid, Settings, Wifi } from 'lucide-react';
+import { DatabaseBackup, Users, FileText, LayoutGrid, Settings, Wifi, ArrowUpRightFromCircle } from 'lucide-react';
 import SentimentOverview from '@/components/dashboard/SentimentOverview';
 import LocationMap from '@/components/dashboard/LocationMap';
 import ResponseTable from '@/components/dashboard/ResponseTable';
@@ -12,6 +12,7 @@ import QuestionDesigner from '@/components/dashboard/QuestionDesigner';
 import LiveTraffic from '@/components/dashboard/LiveTraffic';
 import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
+import { Link } from 'react-router-dom';
 
 const AdminDashboard: React.FC = () => {
   const { user, logout } = useAuth();
@@ -82,6 +83,12 @@ const AdminDashboard: React.FC = () => {
           />
         </div>
         <div className="flex items-center gap-4">
+          <Link to="/">
+            <Button variant="outline" size="sm" className="flex items-center gap-1 mr-2">
+              Survey
+              <ArrowUpRightFromCircle size={12} />
+            </Button>
+          </Link>
           <span className="text-sm text-gray-600">
             Welcome, {user?.name}
           </span>
