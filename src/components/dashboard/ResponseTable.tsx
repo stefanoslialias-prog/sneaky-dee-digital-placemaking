@@ -5,6 +5,15 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import {
+  Table,
+  TableBody,
+  TableCaption,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 interface SurveyResponse {
   id: string;
@@ -40,19 +49,37 @@ const ResponseTable: React.FC = () => {
           created_at, 
           answer, 
           comment, 
-          location_id,
-          wifi_locations(name)
+          location_id
         `)
         .order('created_at', { ascending: false })
         .range(startIndex, startIndex + pageSize - 1);
         
       if (error) throw error;
       
+      // Now fetch the location names separately if needed
+      const locationIds = data?.map(item => item.location_id).filter(id => id) || [];
+      const uniqueLocationIds = [...new Set(locationIds)];
+      
+      // Get location names if we have any location IDs
+      const locationMap: Record<string, string> = {};
+      if (uniqueLocationIds.length > 0) {
+        const { data: locations, error: locError } = await supabase
+          .from('wifi_locations')
+          .select('id, name')
+          .in('id', uniqueLocationIds);
+          
+        if (!locError && locations) {
+          locations.forEach(location => {
+            locationMap[location.id] = location.name;
+          });
+        }
+      }
+      
       // Transform to the expected format
       const formattedResponses = data?.map(item => ({
         id: item.id,
         timestamp: item.created_at,
-        location: item.wifi_locations?.name || item.location_id || 'Unknown',
+        location: item.location_id ? locationMap[item.location_id] || item.location_id : 'Unknown',
         sentiment: item.answer,
         comment: item.comment
       })) || [];
@@ -121,8 +148,7 @@ const ResponseTable: React.FC = () => {
           created_at, 
           answer, 
           comment, 
-          location_id,
-          wifi_locations(name)
+          location_id
         `)
         .order('created_at', { ascending: false });
         
@@ -133,10 +159,28 @@ const ResponseTable: React.FC = () => {
         return;
       }
       
+      // Get location names if needed
+      const locationIds = data.map(item => item.location_id).filter(id => id);
+      const uniqueLocationIds = [...new Set(locationIds)];
+      
+      const locationMap: Record<string, string> = {};
+      if (uniqueLocationIds.length > 0) {
+        const { data: locations, error: locError } = await supabase
+          .from('wifi_locations')
+          .select('id, name')
+          .in('id', uniqueLocationIds);
+          
+        if (!locError && locations) {
+          locations.forEach(location => {
+            locationMap[location.id] = location.name;
+          });
+        }
+      }
+      
       // Transform to the expected format
       const exportData = data.map(item => ({
         timestamp: new Date(item.created_at).toLocaleString(),
-        location: item.wifi_locations?.name || item.location_id || 'Unknown',
+        location: item.location_id ? locationMap[item.location_id] || item.location_id : 'Unknown',
         sentiment: item.answer,
         comment: item.comment || ''
       }));
@@ -202,60 +246,58 @@ const ResponseTable: React.FC = () => {
       </CardHeader>
       <CardContent>
         <div className="rounded-md border">
-          <div className="relative w-full overflow-auto">
-            <table className="w-full caption-bottom text-sm">
-              <thead>
-                <tr className="border-b bg-gray-50">
-                  <th className="h-12 px-4 text-left font-medium">Time</th>
-                  <th className="h-12 px-4 text-left font-medium">Location</th>
-                  <th className="h-12 px-4 text-left font-medium">Sentiment</th>
-                  <th className="h-12 px-4 text-left font-medium">Comment</th>
-                </tr>
-              </thead>
-              <tbody>
-                {loading ? (
-                  Array(5).fill(null).map((_, index) => (
-                    <tr key={`loading-${index}`} className="border-b">
-                      {[1, 2, 3, 4].map((cellIndex) => (
-                        <td key={`loading-cell-${index}-${cellIndex}`} className="p-4">
-                          <div className="h-5 bg-gray-200 rounded animate-pulse w-3/4"></div>
-                        </td>
-                      ))}
-                    </tr>
-                  ))
-                ) : (
-                  responses.map((response) => (
-                    <tr key={response.id} className="border-b hover:bg-gray-50">
-                      <td className="p-4">
-                        {new Date(response.timestamp).toLocaleString()}
-                      </td>
-                      <td className="p-4">{response.location}</td>
-                      <td className="p-4">
-                        <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${
-                          response.sentiment === 'happy' ? 'bg-green-100 text-green-800' : 
-                          response.sentiment === 'neutral' ? 'bg-blue-100 text-blue-800' : 
-                          'bg-red-100 text-red-800'
-                        }`}>
-                          {response.sentiment}
-                        </span>
-                      </td>
-                      <td className="p-4">
-                        {response.comment || <span className="text-gray-400 italic">No comment</span>}
-                      </td>
-                    </tr>
-                  ))
-                )}
-                
-                {!loading && responses.length === 0 && (
-                  <tr>
-                    <td colSpan={4} className="p-4 text-center text-gray-500">
-                      No responses found
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Time</TableHead>
+                <TableHead>Location</TableHead>
+                <TableHead>Sentiment</TableHead>
+                <TableHead>Comment</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {loading ? (
+                Array(5).fill(null).map((_, index) => (
+                  <TableRow key={`loading-${index}`}>
+                    {[1, 2, 3, 4].map((cellIndex) => (
+                      <TableCell key={`loading-cell-${index}-${cellIndex}`}>
+                        <div className="h-5 bg-gray-200 rounded animate-pulse w-3/4"></div>
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                ))
+              ) : (
+                responses.map((response) => (
+                  <TableRow key={response.id}>
+                    <TableCell>
+                      {new Date(response.timestamp).toLocaleString()}
+                    </TableCell>
+                    <TableCell>{response.location}</TableCell>
+                    <TableCell>
+                      <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${
+                        response.sentiment === 'happy' ? 'bg-green-100 text-green-800' : 
+                        response.sentiment === 'neutral' ? 'bg-blue-100 text-blue-800' : 
+                        'bg-red-100 text-red-800'
+                      }`}>
+                        {response.sentiment}
+                      </span>
+                    </TableCell>
+                    <TableCell>
+                      {response.comment || <span className="text-gray-400 italic">No comment</span>}
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+              
+              {!loading && responses.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={4} className="text-center text-gray-500">
+                    No responses found
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
         </div>
       </CardContent>
       <CardFooter className="flex items-center justify-between">
