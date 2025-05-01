@@ -63,11 +63,22 @@ const Index = () => {
               </div>
               <h1 className="text-4xl font-bold mb-4 font-playfair">Toronto Public WiFi</h1>
               <p className="text-gray-600 mb-6">
-                Welcome! Connect to free WiFi and help us improve your community experience.
+                Click on the button below to get connected with free Wi-Fi and see promotions nearby.
               </p>
               <Button onClick={handleStartSurvey} size="lg" className="bg-toronto-blue hover:bg-toronto-lightblue">
                 Start Quick Survey
               </Button>
+              
+              <div className="mt-10">
+                <img 
+                  src="/lovable-uploads/shop-local-win-local.png" 
+                  alt="Shop Local Win Local" 
+                  className="mx-auto h-36"
+                  onError={(e) => {
+                    e.currentTarget.style.display = 'none';
+                  }}
+                />
+              </div>
             </div>
             
             <div className="text-sm text-gray-500 mt-8">
