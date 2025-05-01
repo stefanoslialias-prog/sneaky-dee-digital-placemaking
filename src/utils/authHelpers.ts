@@ -100,28 +100,28 @@ export const handleUserSession = async (session: Session): Promise<AuthUserType 
 export const loginUser = async (email: string, password: string) => {
   console.log('Attempting login for:', email);
   
-  const { data, error } = await supabase.auth.signInWithPassword({
+  const response = await supabase.auth.signInWithPassword({
     email,
     password
   });
   
-  if (error) {
-    console.error('Login error details:', error);
+  if (response.error) {
+    console.error('Login error details:', response.error);
     
     // Check for specific errors to provide better guidance
-    if (error.message.includes('Email not confirmed')) {
+    if (response.error.message.includes('Email not confirmed')) {
       throw new Error('Please verify your email before logging in');
-    } else if (error.message.includes('Invalid login')) {
+    } else if (response.error.message.includes('Invalid login')) {
       throw new Error('Invalid email or password. Please try again');
     } else {
-      throw error;
+      throw response.error;
     }
   }
   
-  console.log('Login successful, user:', data?.user?.id);
+  console.log('Login successful, user:', response.data?.user?.id);
   toast.success('Login successful');
   
-  return data;
+  return response.data;
 };
 
 export const logoutUser = async () => {

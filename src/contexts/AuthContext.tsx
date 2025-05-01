@@ -92,10 +92,10 @@ export const AuthProvider: React.FC<{children: React.ReactNode}> = ({ children }
     setError(null);
     
     try {
-      const { data } = await loginUser(email, password);
+      const result = await loginUser(email, password);
       // Authentication state will be updated through the auth state listener
       console.log('Login successful, waiting for auth state change');
-      return data;
+      return result;
     } catch (err: any) {
       console.error('Login error:', err);
       setError(err.message || 'Login failed. Please check your credentials.');
