@@ -4,7 +4,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
 import Logo from '@/components/Logo';
-import { DatabaseBackup, Users, FileText, LayoutGrid, Settings, Wifi, ArrowUpRightFromCircle } from 'lucide-react';
+import { DatabaseBackup, Users, FileText, LayoutGrid, Settings, Wifi, ArrowUpRightFromCircle, ArrowLeft } from 'lucide-react';
 import SentimentOverview from '@/components/dashboard/SentimentOverview';
 import LocationMap from '@/components/dashboard/LocationMap';
 import ResponseTable from '@/components/dashboard/ResponseTable';
@@ -73,7 +73,7 @@ const AdminDashboard: React.FC = () => {
             </Badge>
           </div>
           <img 
-            src="/digital-placemaking-logo.png" 
+            src="/lovable-uploads/68284ad5-d0ad-4d79-9dcb-65d03682dbcd.png" 
             alt="Digital Placemaking" 
             className="h-7" 
             onError={(e) => {
@@ -85,8 +85,8 @@ const AdminDashboard: React.FC = () => {
         <div className="flex items-center gap-4">
           <Link to="/">
             <Button variant="outline" size="sm" className="flex items-center gap-1 mr-2">
-              Survey
-              <ArrowUpRightFromCircle size={12} />
+              <ArrowLeft size={12} className="mr-1" />
+              Back to Survey
             </Button>
           </Link>
           <span className="text-sm text-gray-600">
