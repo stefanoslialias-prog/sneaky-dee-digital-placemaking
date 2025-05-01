@@ -1,12 +1,22 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import AdminLogin from '@/components/AdminLogin';
 import AdminDashboard from '@/components/AdminDashboard';
+import { toast } from 'sonner';
 
 const Admin = () => {
   const { user, isLoading } = useAuth();
+
+  // Notify about real-time capability
+  useEffect(() => {
+    if (user) {
+      toast.success("Real-time updates enabled!", {
+        description: "You'll now see survey responses and traffic data as they happen."
+      });
+    }
+  }, [user]);
 
   // Show loading state while checking authentication
   if (isLoading) {

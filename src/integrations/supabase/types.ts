@@ -27,6 +27,35 @@ export type Database = {
         }
         Relationships: []
       }
+      location_traffic: {
+        Row: {
+          device_count: number
+          id: string
+          location_id: string
+          timestamp: string
+        }
+        Insert: {
+          device_count: number
+          id?: string
+          location_id: string
+          timestamp?: string
+        }
+        Update: {
+          device_count?: number
+          id?: string
+          location_id?: string
+          timestamp?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "location_traffic_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "wifi_locations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       survey_questions: {
         Row: {
           active: boolean
@@ -57,22 +86,28 @@ export type Database = {
       survey_responses: {
         Row: {
           answer: string
+          comment: string | null
           created_at: string
           id: string
+          location_id: string | null
           question_id: string
           session_id: string
         }
         Insert: {
           answer: string
+          comment?: string | null
           created_at?: string
           id?: string
+          location_id?: string | null
           question_id: string
           session_id: string
         }
         Update: {
           answer?: string
+          comment?: string | null
           created_at?: string
           id?: string
+          location_id?: string | null
           question_id?: string
           session_id?: string
         }
@@ -101,6 +136,36 @@ export type Database = {
           id?: string
           role?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      wifi_locations: {
+        Row: {
+          active: boolean | null
+          created_at: string
+          description: string | null
+          id: string
+          latitude: number | null
+          longitude: number | null
+          name: string
+        }
+        Insert: {
+          active?: boolean | null
+          created_at?: string
+          description?: string | null
+          id: string
+          latitude?: number | null
+          longitude?: number | null
+          name: string
+        }
+        Update: {
+          active?: boolean | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          latitude?: number | null
+          longitude?: number | null
+          name?: string
         }
         Relationships: []
       }
