@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import WifiDetector from '@/components/WifiDetector';
@@ -33,7 +34,18 @@ const Index = () => {
   return (
     <div className="min-h-screen flex flex-col">
       <header className="py-4 px-6 flex justify-between items-center border-b">
-        <Logo />
+        <div className="flex items-center gap-4">
+          <Logo />
+          <img 
+            src="/digital-placemaking-logo.png" 
+            alt="Digital Placemaking" 
+            className="h-8" 
+            onError={(e) => {
+              // Fallback if logo doesn't exist
+              e.currentTarget.style.display = 'none';
+            }}
+          />
+        </div>
         <Link to="/admin">
           <Button variant="ghost" size="sm" className="text-xs flex items-center gap-1">
             Admin

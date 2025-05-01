@@ -63,12 +63,23 @@ const AdminDashboard: React.FC = () => {
   return (
     <div className="min-h-screen flex flex-col">
       <header className="py-2 px-6 flex justify-between items-center border-b bg-white">
-        <div className="flex items-center gap-2">
-          <Logo />
-          <Badge variant="outline" className="bg-green-50 text-green-700 animate-pulse">
-            <Wifi className="h-3 w-3 mr-1" />
-            Live
-          </Badge>
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
+            <Logo />
+            <Badge variant="outline" className="bg-green-50 text-green-700 animate-pulse">
+              <Wifi className="h-3 w-3 mr-1" />
+              Live
+            </Badge>
+          </div>
+          <img 
+            src="/digital-placemaking-logo.png" 
+            alt="Digital Placemaking" 
+            className="h-7" 
+            onError={(e) => {
+              // Fallback if logo doesn't exist
+              e.currentTarget.style.display = 'none';
+            }}
+          />
         </div>
         <div className="flex items-center gap-4">
           <span className="text-sm text-gray-600">
