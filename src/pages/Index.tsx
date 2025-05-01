@@ -37,7 +37,7 @@ const Index = () => {
         <div className="flex items-center gap-4">
           <Logo />
           <img 
-            src="/digital-placemaking-logo.png" 
+            src="/lovable-uploads/digital-placemaking-logo.png" 
             alt="Digital Placemaking" 
             className="h-8" 
             onError={(e) => {

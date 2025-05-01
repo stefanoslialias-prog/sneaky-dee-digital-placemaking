@@ -39,13 +39,22 @@ const DealDisplay: React.FC = () => {
     toast.success('Deal claimed! Check your screen for the code.');
   };
 
+  // Extract percentage from the title if it exists
+  const getDiscountPercentage = () => {
+    if (deal.title.includes('%')) {
+      const match = deal.title.match(/(\d+)%/);
+      return match ? match[0] : '';
+    }
+    return '';
+  };
+
   return (
     <Card className="w-full max-w-md mx-auto">
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle className="font-playfair text-2xl">Thanks for your feedback!</CardTitle>
           <img 
-            src="/digital-placemaking-logo.png" 
+            src="/lovable-uploads/digital-placemaking-logo.png" 
             alt="Digital Placemaking" 
             className="h-8" 
             onError={(e) => {
@@ -61,9 +70,9 @@ const DealDisplay: React.FC = () => {
         <div className="p-4 rounded-lg bg-white shadow-md border border-toronto-blue/20">
           <div className="flex flex-col items-center mb-3">
             <img 
-              src="/shop-local-win-local.png" 
+              src="/lovable-uploads/shop-local-win-local.png" 
               alt="Shop Local Win Local" 
-              className="max-h-32 object-contain mb-2"
+              className="max-h-32 object-contain mb-2 rounded shadow-sm"
               onError={(e) => {
                 // Fallback to text if image doesn't exist
                 e.currentTarget.style.display = 'none';
@@ -83,7 +92,7 @@ const DealDisplay: React.FC = () => {
               
               <div className="mt-4 p-3 bg-green-50 text-green-700 rounded-md text-center">
                 <p className="font-medium">
-                  🎉 Your {deal.title.includes('%') ? deal.title.match(/\d+%/)[0] : ''} coupon has been sent to your e-wallet!
+                  🎉 Your {getDiscountPercentage()} coupon has been sent to your e-wallet!
                 </p>
               </div>
             </div>
