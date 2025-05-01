@@ -8,10 +8,11 @@ import Logo from '@/components/Logo';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import { Loader } from 'lucide-react';
 
 const AdminLogin: React.FC = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState('admin@toronto.ca');
+  const [password, setPassword] = useState('toronto2025');
   const { login, isLoading, error } = useAuth();
 
   // Check if we have a Supabase instance
@@ -40,9 +41,9 @@ const AdminLogin: React.FC = () => {
       
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl font-playfair">Admin Login</CardTitle>
+          <CardTitle className="text-2xl font-playfair">Community Pulse Dashboard</CardTitle>
           <CardDescription>
-            Enter your credentials to access the Community Pulse dashboard
+            Sign in to access the real-time admin dashboard
           </CardDescription>
         </CardHeader>
         <form onSubmit={handleSubmit}>
@@ -78,14 +79,19 @@ const AdminLogin: React.FC = () => {
           </CardContent>
           <CardFooter>
             <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? 'Logging in...' : 'Log in'}
+              {isLoading ? (
+                <>
+                  <Loader className="mr-2 h-4 w-4 animate-spin" />
+                  Signing in...
+                </>
+              ) : 'Sign in'}
             </Button>
           </CardFooter>
         </form>
       </Card>
       
       <div className="mt-8 text-center text-sm text-gray-500">
-        <p>For demo purposes:</p>
+        <p>Demo credentials pre-filled above:</p>
         <p className="font-mono">Email: admin@toronto.ca</p>
         <p className="font-mono">Password: toronto2025</p>
       </div>

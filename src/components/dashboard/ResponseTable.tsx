@@ -28,12 +28,39 @@ const ResponseTable: React.FC = () => {
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [newResponses, setNewResponses] = useState(0);
+  const [locationMap, setLocationMap] = useState<Record<string, string>>({});
   const pageSize = 10;
+  
+  // Fetch location data to map IDs to names
+  useEffect(() => {
+    const fetchLocations = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('wifi_locations')
+          .select('id, name');
+          
+        if (error) throw error;
+        
+        const map: Record<string, string> = {};
+        if (data) {
+          data.forEach(loc => {
+            map[loc.id] = loc.name;
+          });
+        }
+        
+        setLocationMap(map);
+      } catch (error) {
+        console.error('Error fetching locations:', error);
+      }
+    };
+    
+    fetchLocations();
+  }, []);
   
   // Fetch initial data
   useEffect(() => {
     fetchResponses();
-  }, [page]);
+  }, [page, locationMap]);
   
   const fetchResponses = async () => {
     try {
@@ -55,25 +82,6 @@ const ResponseTable: React.FC = () => {
         .range(startIndex, startIndex + pageSize - 1);
         
       if (error) throw error;
-      
-      // Now fetch the location names separately if needed
-      const locationIds = data?.map(item => item.location_id).filter(id => id) || [];
-      const uniqueLocationIds = [...new Set(locationIds)];
-      
-      // Get location names if we have any location IDs
-      const locationMap: Record<string, string> = {};
-      if (uniqueLocationIds.length > 0) {
-        const { data: locations, error: locError } = await supabase
-          .from('wifi_locations')
-          .select('id, name')
-          .in('id', uniqueLocationIds);
-          
-        if (!locError && locations) {
-          locations.forEach(location => {
-            locationMap[location.id] = location.name;
-          });
-        }
-      }
       
       // Transform to the expected format
       const formattedResponses = data?.map(item => ({
@@ -104,6 +112,10 @@ const ResponseTable: React.FC = () => {
         { event: 'INSERT', schema: 'public', table: 'survey_responses' }, 
         (payload) => {
           setNewResponses(count => count + 1);
+          // Show a toast notification
+          toast('New response received', {
+            description: 'Someone submitted a new survey response'
+          });
         }
       )
       .subscribe();
@@ -157,24 +169,6 @@ const ResponseTable: React.FC = () => {
       if (!data || data.length === 0) {
         toast.error('No data to export');
         return;
-      }
-      
-      // Get location names if needed
-      const locationIds = data.map(item => item.location_id).filter(id => id);
-      const uniqueLocationIds = [...new Set(locationIds)];
-      
-      const locationMap: Record<string, string> = {};
-      if (uniqueLocationIds.length > 0) {
-        const { data: locations, error: locError } = await supabase
-          .from('wifi_locations')
-          .select('id, name')
-          .in('id', uniqueLocationIds);
-          
-        if (!locError && locations) {
-          locations.forEach(location => {
-            locationMap[location.id] = location.name;
-          });
-        }
       }
       
       // Transform to the expected format
@@ -268,7 +262,7 @@ const ResponseTable: React.FC = () => {
                 ))
               ) : (
                 responses.map((response) => (
-                  <TableRow key={response.id}>
+                  <TableRow key={response.id} className="animate-fade-in">
                     <TableCell>
                       {new Date(response.timestamp).toLocaleString()}
                     </TableCell>

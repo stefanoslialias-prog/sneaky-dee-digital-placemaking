@@ -1,24 +1,75 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import Logo from '@/components/Logo';
-import { DatabaseBackup, Users, FileText, LayoutGrid, Settings } from 'lucide-react';
+import { DatabaseBackup, Users, FileText, LayoutGrid, Settings, Wifi } from 'lucide-react';
 import SentimentOverview from '@/components/dashboard/SentimentOverview';
 import LocationMap from '@/components/dashboard/LocationMap';
 import ResponseTable from '@/components/dashboard/ResponseTable';
 import QuestionDesigner from '@/components/dashboard/QuestionDesigner';
 import LiveTraffic from '@/components/dashboard/LiveTraffic';
+import { Badge } from '@/components/ui/badge';
+import { supabase } from '@/integrations/supabase/client';
 
 const AdminDashboard: React.FC = () => {
   const { user, logout } = useAuth();
   const [activeTab, setActiveTab] = useState('overview');
+  const [liveStatus, setLiveStatus] = useState({
+    newResponses: 0,
+    newTraffic: 0
+  });
+  
+  // Subscribe to real-time events
+  useEffect(() => {
+    // Subscribe to new responses
+    const responseChannel = supabase
+      .channel('responses-channel')
+      .on('postgres_changes', 
+        { event: 'INSERT', schema: 'public', table: 'survey_responses' }, 
+        () => {
+          setLiveStatus(prev => ({...prev, newResponses: prev.newResponses + 1}));
+        }
+      )
+      .subscribe();
+      
+    // Subscribe to traffic updates
+    const trafficChannel = supabase
+      .channel('traffic-channel')
+      .on('postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'location_traffic' },
+        () => {
+          setLiveStatus(prev => ({...prev, newTraffic: prev.newTraffic + 1}));
+        }
+      )
+      .subscribe();
+      
+    return () => {
+      supabase.removeChannel(responseChannel);
+      supabase.removeChannel(trafficChannel);
+    };
+  }, []);
+  
+  // Reset counters when switching tabs
+  useEffect(() => {
+    if (activeTab === 'responses') {
+      setLiveStatus(prev => ({...prev, newResponses: 0}));
+    } else if (activeTab === 'traffic') {
+      setLiveStatus(prev => ({...prev, newTraffic: 0}));
+    }
+  }, [activeTab]);
   
   return (
     <div className="min-h-screen flex flex-col">
       <header className="py-2 px-6 flex justify-between items-center border-b bg-white">
-        <Logo />
+        <div className="flex items-center gap-2">
+          <Logo />
+          <Badge variant="outline" className="bg-green-50 text-green-700 animate-pulse">
+            <Wifi className="h-3 w-3 mr-1" />
+            Live
+          </Badge>
+        </div>
         <div className="flex items-center gap-4">
           <span className="text-sm text-gray-600">
             Welcome, {user?.name}
@@ -32,7 +83,7 @@ const AdminDashboard: React.FC = () => {
       <main className="flex-1 flex flex-col p-4 md:p-8 bg-toronto-gray">
         <div className="mb-6">
           <h1 className="text-3xl font-bold font-playfair">Community Pulse Dashboard</h1>
-          <p className="text-gray-600">Monitor community sentiment and WiFi hotspot activity</p>
+          <p className="text-gray-600">Real-time control center for community sentiment and WiFi hotspots</p>
         </div>
         
         <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col">
@@ -42,7 +93,13 @@ const AdminDashboard: React.FC = () => {
                 <DatabaseBackup size={16} /> Overview
               </TabsTrigger>
               <TabsTrigger value="traffic" className="flex items-center gap-2">
-                <LayoutGrid size={16} /> Live Traffic
+                <LayoutGrid size={16} /> 
+                Live Traffic
+                {liveStatus.newTraffic > 0 && (
+                  <Badge variant="outline" className="h-5 w-5 p-0 flex items-center justify-center bg-blue-500 text-white">
+                    {liveStatus.newTraffic}
+                  </Badge>
+                )}
               </TabsTrigger>
               <TabsTrigger value="locations" className="flex items-center gap-2">
                 <Users size={16} /> Locations
@@ -51,7 +108,13 @@ const AdminDashboard: React.FC = () => {
                 <Settings size={16} /> Questions
               </TabsTrigger>
               <TabsTrigger value="responses" className="flex items-center gap-2">
-                <FileText size={16} /> Raw Data
+                <FileText size={16} /> 
+                Raw Data
+                {liveStatus.newResponses > 0 && (
+                  <Badge variant="outline" className="h-5 w-5 p-0 flex items-center justify-center bg-blue-500 text-white">
+                    {liveStatus.newResponses}
+                  </Badge>
+                )}
               </TabsTrigger>
             </TabsList>
           </div>
@@ -81,7 +144,7 @@ const AdminDashboard: React.FC = () => {
       </main>
       
       <footer className="py-3 px-6 text-center text-sm text-gray-500 border-t">
-        <p>&copy; {new Date().getFullYear()} City of Toronto Community Pulse Dashboard</p>
+        <p>&copy; {new Date().getFullYear()} City of Toronto Community Pulse Dashboard | Real-time control center</p>
       </footer>
     </div>
   );

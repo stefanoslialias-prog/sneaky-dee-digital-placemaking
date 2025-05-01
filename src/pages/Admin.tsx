@@ -11,8 +11,8 @@ const Admin = () => {
   // Notify about real-time capability
   useEffect(() => {
     if (user) {
-      toast.success("Real-time updates enabled!", {
-        description: "You'll now see survey responses and traffic data as they happen."
+      toast.success("Real-time dashboard active!", {
+        description: "You're now seeing live updates for survey responses and traffic data."
       });
     }
   }, [user]);
@@ -23,7 +23,7 @@ const Admin = () => {
       <div className="min-h-screen flex flex-col items-center justify-center bg-toronto-gray p-4">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-toronto-blue mx-auto mb-4"></div>
-          <p>Loading authentication...</p>
+          <p>Authenticating, please wait...</p>
         </div>
       </div>
     );

@@ -32,7 +32,18 @@ export const AuthProvider: React.FC<{children: React.ReactNode}> = ({ children }
       setIsLoading(true);
       
       try {
-        // Get current session
+        // First set up auth state change listener
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(
+          async (event, session) => {
+            if (event === 'SIGNED_IN' && session) {
+              await handleUserSession(session);
+            } else if (event === 'SIGNED_OUT') {
+              setUser(null);
+            }
+          }
+        );
+        
+        // Then check for existing session
         const { data: { session }, error: sessionError } = await supabase.auth.getSession();
         
         if (sessionError) {
@@ -42,30 +53,24 @@ export const AuthProvider: React.FC<{children: React.ReactNode}> = ({ children }
         if (session) {
           await handleUserSession(session);
         }
+        
+        setIsLoading(false);
+        
+        // Return cleanup function
+        return () => {
+          subscription.unsubscribe();
+        };
       } catch (err: any) {
         console.error('Session check error:', err);
-        // Don't show error toast on initial load if no session
-      } finally {
         setIsLoading(false);
       }
     };
     
-    checkSession();
-    
-    // Set up auth state change listener
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        if (event === 'SIGNED_IN' && session) {
-          await handleUserSession(session);
-        } else if (event === 'SIGNED_OUT') {
-          setUser(null);
-        }
-      }
-    );
-    
-    // Clean up subscription
+    const cleanup = checkSession();
     return () => {
-      subscription.unsubscribe();
+      cleanup.then(unsubscribe => {
+        if (unsubscribe) unsubscribe();
+      });
     };
   }, []);
   
@@ -79,7 +84,7 @@ export const AuthProvider: React.FC<{children: React.ReactNode}> = ({ children }
         .from('user_roles')
         .select('role')
         .eq('user_id', session.user.id)
-        .single();
+        .maybeSingle();
         
       if (roleError) {
         console.error('Role check error:', roleError);
