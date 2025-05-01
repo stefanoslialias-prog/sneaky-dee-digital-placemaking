@@ -8,9 +8,8 @@ import Logo from '@/components/Logo';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
-import { Loader } from 'lucide-react';
+import { Loader, Info } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { InfoCircledIcon } from '@radix-ui/react-icons';
 
 const AdminLogin: React.FC = () => {
   const [email, setEmail] = useState('admin@toronto.ca');
@@ -107,7 +106,7 @@ const AdminLogin: React.FC = () => {
             
             {supabaseStatus === 'error' && (
               <Alert variant="destructive">
-                <InfoCircledIcon className="h-4 w-4" />
+                <Info className="h-4 w-4" />
                 <AlertTitle>Connection Error</AlertTitle>
                 <AlertDescription>
                   {statusMessage || 'Unable to connect to the database. Please try again later.'}
@@ -117,7 +116,7 @@ const AdminLogin: React.FC = () => {
             
             {supabaseStatus === 'connected' && (
               <Alert className="bg-green-50 text-green-800 border-green-200">
-                <InfoCircledIcon className="h-4 w-4" />
+                <Info className="h-4 w-4" />
                 <AlertTitle>Ready</AlertTitle>
                 <AlertDescription>
                   Connected to database successfully. You can sign in now.
