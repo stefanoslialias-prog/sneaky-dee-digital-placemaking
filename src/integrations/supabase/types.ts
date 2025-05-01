@@ -9,6 +9,24 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      admin_users: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+        }
+        Relationships: []
+      }
       survey_questions: {
         Row: {
           active: boolean
@@ -88,11 +106,36 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      location_analytics: {
+        Row: {
+          concerned_count: number | null
+          first_response: string | null
+          happy_count: number | null
+          last_response: string | null
+          location_code: string | null
+          neutral_count: number | null
+          total_responses: number | null
+        }
+        Relationships: []
+      }
+      sentiment_summary: {
+        Row: {
+          concerned_count: number | null
+          happy_count: number | null
+          neutral_count: number | null
+          survey_date: number | null
+          total_count: number | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       has_role: {
         Args: { user_id: string; required_role: string }
+        Returns: boolean
+      }
+      is_admin: {
+        Args: Record<PropertyKey, never>
         Returns: boolean
       }
     }

@@ -3,8 +3,9 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 
-type Sentiment = 'happy' | 'neutral' | 'concerned';
+export type Sentiment = 'happy' | 'neutral' | 'concerned';
 
 const sentimentOptions: { value: Sentiment; emoji: string; label: string }[] = [
   { value: 'happy', emoji: '😊', label: 'Happy' },
@@ -20,20 +21,66 @@ const SentimentSurvey: React.FC<SentimentSurveyProps> = ({ onComplete }) => {
   const [selectedSentiment, setSelectedSentiment] = useState<Sentiment | null>(null);
   const [comment, setComment] = useState('');
   const [step, setStep] = useState(1);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSentimentSelect = (sentiment: Sentiment) => {
+  const handleSentimentSelect = async (sentiment: Sentiment) => {
     setSelectedSentiment(sentiment);
     if (sentiment === 'happy') {
       // Skip the comment step for happy users
-      handleSubmit(sentiment);
+      await handleSubmit(sentiment);
     } else {
       setStep(2);
     }
   };
 
-  const handleSubmit = (sentiment: Sentiment = selectedSentiment as Sentiment) => {
-    onComplete(sentiment, comment);
-    toast.success('Thanks for sharing how you feel!');
+  const handleSubmit = async (sentiment: Sentiment = selectedSentiment as Sentiment) => {
+    setIsSubmitting(true);
+    try {
+      // Get the first active question from the database
+      const { data: question, error: questionError } = await supabase
+        .from('survey_questions')
+        .select('id')
+        .eq('active', true)
+        .order('order')
+        .limit(1)
+        .single();
+        
+      if (questionError) {
+        // Fallback to mock data behavior if there's an error
+        console.error('Error fetching question:', questionError);
+        onComplete(sentiment, comment);
+        toast.success('Thanks for sharing how you feel!');
+        return;
+      }
+      
+      // Generate a simple session ID (in a real app, this would be more sophisticated)
+      const sessionId = `${Math.floor(Math.random() * 6) + 1}-${Date.now()}`;
+      
+      // Insert response into Supabase
+      const { error: insertError } = await supabase
+        .from('survey_responses')
+        .insert({
+          question_id: question.id,
+          answer: sentiment,
+          comment: comment || null,
+          session_id: sessionId
+        });
+        
+      if (insertError) {
+        console.error('Error saving response:', insertError);
+        // Still complete the flow even if DB insert fails
+      }
+      
+      // Call the onComplete callback to move to the next step
+      onComplete(sentiment, comment);
+      toast.success('Thanks for sharing how you feel!');
+      
+    } catch (error) {
+      console.error('Survey submission error:', error);
+      toast.error('Something went wrong. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -52,6 +99,7 @@ const SentimentSurvey: React.FC<SentimentSurveyProps> = ({ onComplete }) => {
                 key={option.value}
                 variant="outline"
                 onClick={() => handleSentimentSelect(option.value)}
+                disabled={isSubmitting}
                 className={`h-24 flex flex-col items-center justify-center gap-2 border-2 hover:bg-toronto-gray ${
                   selectedSentiment === option.value ? 'border-toronto-blue' : ''
                 }`}
@@ -69,17 +117,18 @@ const SentimentSurvey: React.FC<SentimentSurveyProps> = ({ onComplete }) => {
               placeholder="Optional: Share your thoughts..."
               value={comment}
               onChange={(e) => setComment(e.target.value)}
+              disabled={isSubmitting}
             ></textarea>
           </div>
         )}
       </CardContent>
       {step === 2 && (
         <CardFooter className="flex justify-between">
-          <Button variant="outline" onClick={() => setStep(1)}>
+          <Button variant="outline" onClick={() => setStep(1)} disabled={isSubmitting}>
             Back
           </Button>
-          <Button onClick={() => handleSubmit()}>
-            Submit
+          <Button onClick={() => handleSubmit()} disabled={isSubmitting}>
+            {isSubmitting ? 'Submitting...' : 'Submit'}
           </Button>
         </CardFooter>
       )}
