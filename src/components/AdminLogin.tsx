@@ -4,7 +4,6 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import Logo from '@/components/Logo';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
@@ -81,8 +80,6 @@ const AdminLogin: React.FC = () => {
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-toronto-gray p-4">
-      <Logo className="mb-8" />
-      
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
           <CardTitle className="text-2xl font-playfair">Community Pulse Dashboard</CardTitle>
