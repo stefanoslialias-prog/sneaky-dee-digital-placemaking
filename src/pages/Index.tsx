@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import WifiDetector from '@/components/WifiDetector';
@@ -7,7 +6,7 @@ import DealDisplay from '@/components/DealDisplay';
 import Logo from '@/components/Logo';
 import { Link } from 'react-router-dom';
 import mockDatabase, { Sentiment } from '@/services/mockData';
-import { ArrowUpRightFromCircle } from 'lucide-react';
+import { ArrowUpRightFromCircle, Wifi } from 'lucide-react';
 
 const Index = () => {
   const [step, setStep] = useState<'welcome' | 'connecting' | 'survey' | 'deal'>('welcome');
