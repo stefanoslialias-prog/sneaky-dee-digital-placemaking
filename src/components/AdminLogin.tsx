@@ -9,21 +9,49 @@ import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { Loader } from 'lucide-react';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { InfoCircledIcon } from '@radix-ui/react-icons';
 
 const AdminLogin: React.FC = () => {
   const [email, setEmail] = useState('admin@toronto.ca');
   const [password, setPassword] = useState('toronto2025');
   const { login, isLoading, error } = useAuth();
+  const [supabaseStatus, setSupabaseStatus] = useState<'checking' | 'connected' | 'error'>('checking');
+  const [statusMessage, setStatusMessage] = useState('');
 
-  // Check if we have a Supabase instance
+  // Check if we have a Supabase instance and display diagnostic info
   useEffect(() => {
     const checkSupabase = async () => {
       try {
+        console.log('Checking Supabase connection...');
+        setSupabaseStatus('checking');
+        
+        // First check if we're already authenticated
+        const { data: sessionData } = await supabase.auth.getSession();
+        if (sessionData.session) {
+          console.log('User already has an active session');
+          setStatusMessage('You have an active session');
+        }
+        
         // Simple check to see if Supabase is accessible
-        await supabase.from('user_roles').select('count').limit(1);
-      } catch (err) {
-        console.error('Supabase connection error:', err);
-        toast.error('Error connecting to database. Please try again later.');
+        const { data, error } = await supabase.from('user_roles').select('count').limit(1);
+        
+        if (error) {
+          console.error('Supabase connection error:', error);
+          setSupabaseStatus('error');
+          setStatusMessage(`Database error: ${error.message}`);
+          toast.error(`Database connection error: ${error.message}`);
+          return;
+        }
+        
+        console.log('Supabase connection successful');
+        setSupabaseStatus('connected');
+        setStatusMessage('Connected to database');
+      } catch (err: any) {
+        console.error('Supabase connection exception:', err);
+        setSupabaseStatus('error');
+        setStatusMessage(`Connection error: ${err.message}`);
+        toast.error(`Database connection error: ${err.message}`);
       }
     };
     
@@ -32,6 +60,7 @@ const AdminLogin: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log(`Submitting login form for: ${email}`);
     await login(email, password);
   };
 
@@ -76,13 +105,41 @@ const AdminLogin: React.FC = () => {
               </div>
             )}
             
+            {supabaseStatus === 'error' && (
+              <Alert variant="destructive">
+                <InfoCircledIcon className="h-4 w-4" />
+                <AlertTitle>Connection Error</AlertTitle>
+                <AlertDescription>
+                  {statusMessage || 'Unable to connect to the database. Please try again later.'}
+                </AlertDescription>
+              </Alert>
+            )}
+            
+            {supabaseStatus === 'connected' && (
+              <Alert className="bg-green-50 text-green-800 border-green-200">
+                <InfoCircledIcon className="h-4 w-4" />
+                <AlertTitle>Ready</AlertTitle>
+                <AlertDescription>
+                  Connected to database successfully. You can sign in now.
+                </AlertDescription>
+              </Alert>
+            )}
           </CardContent>
           <CardFooter>
-            <Button type="submit" className="w-full" disabled={isLoading}>
+            <Button 
+              type="submit" 
+              className="w-full" 
+              disabled={isLoading || supabaseStatus === 'error' || supabaseStatus === 'checking'}
+            >
               {isLoading ? (
                 <>
                   <Loader className="mr-2 h-4 w-4 animate-spin" />
                   Signing in...
+                </>
+              ) : supabaseStatus === 'checking' ? (
+                <>
+                  <Loader className="mr-2 h-4 w-4 animate-spin" />
+                  Checking connection...
                 </>
               ) : 'Sign in'}
             </Button>

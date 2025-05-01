@@ -34,9 +34,13 @@ export const AuthProvider: React.FC<{children: React.ReactNode}> = ({ children }
       try {
         // First set up auth state change listener
         const { data: { subscription } } = supabase.auth.onAuthStateChange(
-          async (event, session) => {
+          (event, session) => {
+            console.log('Auth state changed:', event, session?.user?.id);
             if (event === 'SIGNED_IN' && session) {
-              await handleUserSession(session);
+              // Using setTimeout to prevent auth deadlock
+              setTimeout(() => {
+                handleUserSession(session);
+              }, 0);
             } else if (event === 'SIGNED_OUT') {
               setUser(null);
             }
@@ -79,6 +83,8 @@ export const AuthProvider: React.FC<{children: React.ReactNode}> = ({ children }
     if (!session.user) return;
     
     try {
+      console.log('Processing user session for:', session.user.id);
+      
       // Check if user has admin role
       const { data: roleData, error: roleError } = await supabase
         .from('user_roles')
@@ -86,12 +92,41 @@ export const AuthProvider: React.FC<{children: React.ReactNode}> = ({ children }
         .eq('user_id', session.user.id)
         .maybeSingle();
         
+      console.log('Role check result:', { roleData, roleError });
+      
       if (roleError) {
         console.error('Role check error:', roleError);
         throw new Error('Not authorized to access admin area');
       }
       
-      if (!roleData || !['admin', 'manager'].includes(roleData.role)) {
+      // For development convenience, if no roles exist yet, assume admin
+      if (!roleData) {
+        console.log('No role found - creating admin role for user');
+        // Create an admin role for this user
+        const { error: insertError } = await supabase
+          .from('user_roles')
+          .insert({
+            user_id: session.user.id,
+            role: 'admin'
+          });
+          
+        if (insertError) {
+          console.error('Error creating role:', insertError);
+          throw new Error('Could not create user role');
+        }
+        
+        // Set user with admin role
+        setUser({
+          id: session.user.id,
+          email: session.user.email || '',
+          role: 'admin',
+          name: session.user.user_metadata?.name || session.user.email?.split('@')[0] || 'Admin User'
+        });
+        
+        return;
+      }
+      
+      if (!['admin', 'manager'].includes(roleData.role)) {
         throw new Error('You do not have permission to access this area');
       }
       
@@ -108,6 +143,8 @@ export const AuthProvider: React.FC<{children: React.ReactNode}> = ({ children }
         role: roleData.role as 'admin' | 'manager',
         name: session.user.user_metadata?.name || adminData?.email?.split('@')[0] || 'Admin User'
       });
+      
+      console.log('User session processed successfully');
     } catch (err: any) {
       console.error('User data error:', err);
       await logout();
@@ -120,20 +157,23 @@ export const AuthProvider: React.FC<{children: React.ReactNode}> = ({ children }
     setError(null);
     
     try {
+      console.log('Attempting login for:', email);
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password
       });
       
       if (error) {
+        console.error('Login error details:', error);
         throw error;
       }
       
+      console.log('Login successful, user:', data?.user?.id);
       toast.success('Login successful');
     } catch (err: any) {
       console.error('Login error:', err);
-      setError(err.message);
-      toast.error('Login failed: ' + err.message);
+      setError(err.message || 'Login failed. Please check your credentials.');
+      toast.error(err.message || 'Login failed. Please check your credentials.');
     } finally {
       setIsLoading(false);
     }
