@@ -71,9 +71,9 @@ const Index = () => {
               
               <div className="mt-10">
                 <img 
-                  src="/lovable-uploads/shop-local-win-local.png" 
+                  src="/lovable-uploads/85ab9848-7cfd-4345-94a6-8bd9914ee24a.png" 
                   alt="Shop Local Win Local" 
-                  className="mx-auto h-36"
+                  className="mx-auto h-48 w-auto"
                   onError={(e) => {
                     e.currentTarget.style.display = 'none';
                   }}
