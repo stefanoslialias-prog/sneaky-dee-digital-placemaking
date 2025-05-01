@@ -1,25 +1,12 @@
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { Session, User } from '@supabase/supabase-js';
+import { Session } from '@supabase/supabase-js';
 import { toast } from 'sonner';
+import { AuthContextType, AuthUserType } from '@/types/auth';
+import { handleUserSession, loginUser, logoutUser } from '@/utils/authHelpers';
 
-interface AuthUserType {
-  id: string;
-  email: string;
-  role: 'admin' | 'manager';
-  name: string;
-}
-
-interface AuthContextType {
-  user: AuthUserType | null;
-  isLoading: boolean;
-  error: string | null;
-  login: (email: string, password: string) => Promise<void>;
-  logout: () => Promise<void>;
-}
-
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+export const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{children: React.ReactNode}> = ({ children }) => {
   const [user, setUser] = useState<AuthUserType | null>(null);
@@ -39,7 +26,7 @@ export const AuthProvider: React.FC<{children: React.ReactNode}> = ({ children }
             if (event === 'SIGNED_IN' && session) {
               // Using setTimeout to prevent auth deadlock
               setTimeout(() => {
-                handleUserSession(session);
+                handleSessionChange(session);
               }, 0);
             } else if (event === 'SIGNED_OUT') {
               setUser(null);
@@ -55,7 +42,7 @@ export const AuthProvider: React.FC<{children: React.ReactNode}> = ({ children }
         }
         
         if (session) {
-          await handleUserSession(session);
+          await handleSessionChange(session);
         }
         
         setIsLoading(false);
@@ -78,76 +65,15 @@ export const AuthProvider: React.FC<{children: React.ReactNode}> = ({ children }
     };
   }, []);
   
-  // Helper function to handle user session
-  const handleUserSession = async (session: Session) => {
-    if (!session.user) return;
-    
+  // Helper function to handle session change
+  const handleSessionChange = async (session: Session) => {
     try {
-      console.log('Processing user session for:', session.user.id);
-      
-      // Use the has_role function to check for admin role
-      // This avoids the RLS recursion issue
-      const { data: roleData, error: roleError } = await supabase.rpc('has_role', { 
-        user_id: session.user.id, 
-        required_role: 'admin' 
-      });
-        
-      console.log('Role check result:', { roleData, roleError });
-      
-      if (roleError) {
-        console.error('Role check error:', roleError);
-        
-        // If this is development, try to create an admin role
-        // This is useful for initial setup and testing
-        if (process.env.NODE_ENV === 'development' || window.location.hostname === 'localhost') {
-          console.log('Development environment detected - attempting to create admin role');
-          
-          const { error: insertError } = await supabase
-            .from('user_roles')
-            .insert({
-              user_id: session.user.id,
-              role: 'admin'
-            });
-            
-          if (insertError) {
-            console.error('Error creating role:', insertError);
-            throw new Error('Could not create user role');
-          } else {
-            console.log('Created admin role for user in development mode');
-            
-            // Set user with admin role after creating it
-            setUser({
-              id: session.user.id,
-              email: session.user.email || '',
-              role: 'admin',
-              name: session.user.user_metadata?.name || session.user.email?.split('@')[0] || 'Admin User'
-            });
-            
-            return;
-          }
-        } else {
-          throw new Error('Not authorized to access admin area');
-        }
-      }
-      
-      // If the role check returned false (not admin)
-      if (roleData === false) {
-        throw new Error('You do not have permission to access this area');
-      }
-      
-      // Get user details
-      setUser({
-        id: session.user.id,
-        email: session.user.email || '',
-        role: 'admin',
-        name: session.user.user_metadata?.name || session.user.email?.split('@')[0] || 'Admin User'
-      });
-      
-      console.log('User session processed successfully');
+      const userData = await handleUserSession(session);
+      setUser(userData);
     } catch (err: any) {
-      console.error('User data error:', err);
-      await logout();
+      console.error('Session change error:', err);
       setError(err.message);
+      await logout();
     }
   };
 
@@ -156,19 +82,8 @@ export const AuthProvider: React.FC<{children: React.ReactNode}> = ({ children }
     setError(null);
     
     try {
-      console.log('Attempting login for:', email);
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password
-      });
-      
-      if (error) {
-        console.error('Login error details:', error);
-        throw error;
-      }
-      
-      console.log('Login successful, user:', data?.user?.id);
-      toast.success('Login successful');
+      await loginUser(email, password);
+      // Authentication state will be updated through the auth state listener
     } catch (err: any) {
       console.error('Login error:', err);
       setError(err.message || 'Login failed. Please check your credentials.');
@@ -181,12 +96,8 @@ export const AuthProvider: React.FC<{children: React.ReactNode}> = ({ children }
   const logout = async () => {
     setIsLoading(true);
     try {
-      const { error } = await supabase.auth.signOut();
-      if (error) {
-        throw error;
-      }
+      await logoutUser();
       setUser(null);
-      toast.success('Logged out successfully');
     } catch (err: any) {
       console.error('Logout error:', err);
       toast.error('Logout failed: ' + err.message);
@@ -210,10 +121,5 @@ export const AuthProvider: React.FC<{children: React.ReactNode}> = ({ children }
   );
 };
 
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
-};
+// Export the hook from this file for backward compatibility
+export { useAuth } from '@/hooks/useAuth';
