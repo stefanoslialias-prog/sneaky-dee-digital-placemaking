@@ -83,14 +83,14 @@ const AdminDashboard: React.FC = () => {
           />
         </div>
         <div className="flex items-center gap-4">
-          <Link to="/">
+          <Link to="/survey">
             <Button variant="outline" size="sm" className="flex items-center gap-1 mr-2">
               <ArrowLeft size={12} className="mr-1" />
               Back to Survey
             </Button>
           </Link>
           <span className="text-sm text-gray-600">
-            Welcome, {user?.name}
+            Welcome, {user?.name || 'Admin'}
           </span>
           <Button variant="outline" size="sm" onClick={logout}>
             Log out
