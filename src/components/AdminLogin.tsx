@@ -8,7 +8,7 @@ import Logo from '@/components/Logo';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
-import { Loader, Info } from 'lucide-react';
+import { Loader, Info, AlertCircle, CheckCircle } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 const AdminLogin: React.FC = () => {
@@ -17,6 +17,7 @@ const AdminLogin: React.FC = () => {
   const { login, isLoading, error } = useAuth();
   const [supabaseStatus, setSupabaseStatus] = useState<'checking' | 'connected' | 'error'>('checking');
   const [statusMessage, setStatusMessage] = useState('');
+  const [retryCount, setRetryCount] = useState(0);
 
   // Check if we have a Supabase instance and display diagnostic info
   useEffect(() => {
@@ -32,8 +33,12 @@ const AdminLogin: React.FC = () => {
           setStatusMessage('You have an active session');
         }
         
-        // Simple check to see if Supabase is accessible
-        const { data, error } = await supabase.from('user_roles').select('count').limit(1);
+        // Check if we can access the database without querying user_roles directly
+        // This avoids the potential RLS recursion issue
+        const { data, error } = await supabase
+          .from('wifi_locations')
+          .select('count')
+          .limit(1);
         
         if (error) {
           console.error('Supabase connection error:', error);
@@ -51,16 +56,27 @@ const AdminLogin: React.FC = () => {
         setSupabaseStatus('error');
         setStatusMessage(`Connection error: ${err.message}`);
         toast.error(`Database connection error: ${err.message}`);
+        
+        // If we've tried less than 3 times, retry after 2 seconds
+        if (retryCount < 3) {
+          setTimeout(() => {
+            setRetryCount(prev => prev + 1);
+          }, 2000);
+        }
       }
     };
     
     checkSupabase();
-  }, []);
+  }, [retryCount]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     console.log(`Submitting login form for: ${email}`);
     await login(email, password);
+  };
+
+  const handleRetryConnection = () => {
+    setRetryCount(prev => prev + 1);
   };
 
   return (
@@ -99,9 +115,13 @@ const AdminLogin: React.FC = () => {
             </div>
             
             {error && (
-              <div className="p-3 rounded bg-red-50 text-red-500 text-sm">
-                {error}
-              </div>
+              <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertTitle>Authentication Error</AlertTitle>
+                <AlertDescription>
+                  {error}
+                </AlertDescription>
+              </Alert>
             )}
             
             {supabaseStatus === 'error' && (
@@ -109,14 +129,24 @@ const AdminLogin: React.FC = () => {
                 <Info className="h-4 w-4" />
                 <AlertTitle>Connection Error</AlertTitle>
                 <AlertDescription>
-                  {statusMessage || 'Unable to connect to the database. Please try again later.'}
+                  <div className="space-y-2">
+                    <p>{statusMessage || 'Unable to connect to the database. Please try again later.'}</p>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={handleRetryConnection}
+                      className="mt-2"
+                    >
+                      Retry Connection
+                    </Button>
+                  </div>
                 </AlertDescription>
               </Alert>
             )}
             
             {supabaseStatus === 'connected' && (
               <Alert className="bg-green-50 text-green-800 border-green-200">
-                <Info className="h-4 w-4" />
+                <CheckCircle className="h-4 w-4" />
                 <AlertTitle>Ready</AlertTitle>
                 <AlertDescription>
                   Connected to database successfully. You can sign in now.

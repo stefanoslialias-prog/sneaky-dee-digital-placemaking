@@ -85,63 +85,62 @@ export const AuthProvider: React.FC<{children: React.ReactNode}> = ({ children }
     try {
       console.log('Processing user session for:', session.user.id);
       
-      // Check if user has admin role
-      const { data: roleData, error: roleError } = await supabase
-        .from('user_roles')
-        .select('role')
-        .eq('user_id', session.user.id)
-        .maybeSingle();
+      // Use the has_role function to check for admin role
+      // This avoids the RLS recursion issue
+      const { data: roleData, error: roleError } = await supabase.rpc('has_role', { 
+        user_id: session.user.id, 
+        required_role: 'admin' 
+      });
         
       console.log('Role check result:', { roleData, roleError });
       
       if (roleError) {
         console.error('Role check error:', roleError);
-        throw new Error('Not authorized to access admin area');
-      }
-      
-      // For development convenience, if no roles exist yet, assume admin
-      if (!roleData) {
-        console.log('No role found - creating admin role for user');
-        // Create an admin role for this user
-        const { error: insertError } = await supabase
-          .from('user_roles')
-          .insert({
-            user_id: session.user.id,
-            role: 'admin'
-          });
+        
+        // If this is development, try to create an admin role
+        // This is useful for initial setup and testing
+        if (process.env.NODE_ENV === 'development' || window.location.hostname === 'localhost') {
+          console.log('Development environment detected - attempting to create admin role');
           
-        if (insertError) {
-          console.error('Error creating role:', insertError);
-          throw new Error('Could not create user role');
+          const { error: insertError } = await supabase
+            .from('user_roles')
+            .insert({
+              user_id: session.user.id,
+              role: 'admin'
+            });
+            
+          if (insertError) {
+            console.error('Error creating role:', insertError);
+            throw new Error('Could not create user role');
+          } else {
+            console.log('Created admin role for user in development mode');
+            
+            // Set user with admin role after creating it
+            setUser({
+              id: session.user.id,
+              email: session.user.email || '',
+              role: 'admin',
+              name: session.user.user_metadata?.name || session.user.email?.split('@')[0] || 'Admin User'
+            });
+            
+            return;
+          }
+        } else {
+          throw new Error('Not authorized to access admin area');
         }
-        
-        // Set user with admin role
-        setUser({
-          id: session.user.id,
-          email: session.user.email || '',
-          role: 'admin',
-          name: session.user.user_metadata?.name || session.user.email?.split('@')[0] || 'Admin User'
-        });
-        
-        return;
       }
       
-      if (!['admin', 'manager'].includes(roleData.role)) {
+      // If the role check returned false (not admin)
+      if (roleData === false) {
         throw new Error('You do not have permission to access this area');
       }
       
-      // Get user details from admin_users or fallback to auth user
-      const { data: adminData } = await supabase
-        .from('admin_users')
-        .select('email')
-        .eq('id', session.user.id)
-        .maybeSingle();
-      
+      // Get user details
       setUser({
         id: session.user.id,
-        email: adminData?.email || session.user.email || '',
-        role: roleData.role as 'admin' | 'manager',
-        name: session.user.user_metadata?.name || adminData?.email?.split('@')[0] || 'Admin User'
+        email: session.user.email || '',
+        role: 'admin',
+        name: session.user.user_metadata?.name || session.user.email?.split('@')[0] || 'Admin User'
       });
       
       console.log('User session processed successfully');
