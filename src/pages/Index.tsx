@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import WifiDetector from '@/components/WifiDetector';
@@ -36,7 +37,7 @@ const Index = () => {
         <div className="flex items-center gap-4">
           <Logo />
           <img 
-            src="/lovable-uploads/digital-placemaking-logo.png" 
+            src="/lovable-uploads/68284ad5-d0ad-4d79-9dcb-65d03682dbcd.png" 
             alt="Digital Placemaking" 
             className="h-8 ml-auto" 
             onError={(e) => {

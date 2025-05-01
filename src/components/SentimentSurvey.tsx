@@ -88,7 +88,7 @@ const SentimentSurvey: React.FC<SentimentSurveyProps> = ({ onComplete }) => {
       {/* Shop Local Win Local image - centered above the card */}
       <div className="flex justify-center mb-6">
         <img 
-          src="/shop-local-win-local.png" 
+          src="/lovable-uploads/bd068280-e55a-4131-8a50-96bb2b06a92a.png" 
           alt="Shop Local Win Local" 
           className="h-24 object-contain" 
         />

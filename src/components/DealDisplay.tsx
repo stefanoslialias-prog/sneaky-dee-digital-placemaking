@@ -54,7 +54,7 @@ const DealDisplay: React.FC = () => {
         <div className="flex items-center justify-between">
           <CardTitle className="font-playfair text-2xl">Thanks for your feedback!</CardTitle>
           <img 
-            src="/lovable-uploads/digital-placemaking-logo.png" 
+            src="/lovable-uploads/68284ad5-d0ad-4d79-9dcb-65d03682dbcd.png" 
             alt="Digital Placemaking" 
             className="h-8" 
             onError={(e) => {
@@ -70,7 +70,7 @@ const DealDisplay: React.FC = () => {
         <div className="p-4 rounded-lg bg-white shadow-md border border-toronto-blue/20">
           <div className="flex flex-col items-center mb-3">
             <img 
-              src="/lovable-uploads/shop-local-win-local.png" 
+              src="/lovable-uploads/bd068280-e55a-4131-8a50-96bb2b06a92a.png" 
               alt="Shop Local Win Local" 
               className="max-h-32 object-contain mb-2 rounded shadow-sm"
               onError={(e) => {
