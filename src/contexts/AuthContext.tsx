@@ -12,6 +12,7 @@ export const AuthProvider: React.FC<{children: React.ReactNode}> = ({ children }
   const [user, setUser] = useState<AuthUserType | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
 
   // Check for session on initial load
   useEffect(() => {
@@ -21,28 +22,48 @@ export const AuthProvider: React.FC<{children: React.ReactNode}> = ({ children }
       try {
         // First set up auth state change listener
         const { data: { subscription } } = supabase.auth.onAuthStateChange(
-          (event, session) => {
-            console.log('Auth state changed:', event, session?.user?.id);
-            if (event === 'SIGNED_IN' && session) {
-              // Using setTimeout to prevent auth deadlock
-              setTimeout(() => {
-                handleSessionChange(session);
-              }, 0);
+          async (event, newSession) => {
+            console.log('Auth state changed:', event, newSession?.user?.id);
+            
+            if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+              if (newSession) {
+                setSession(newSession);
+                
+                // Use setTimeout to prevent auth deadlock
+                setTimeout(async () => {
+                  try {
+                    const userData = await handleUserSession(newSession);
+                    setUser(userData);
+                    setError(null);
+                  } catch (err: any) {
+                    console.error('Session handling error:', err.message);
+                    setError(err.message);
+                  }
+                }, 0);
+              }
             } else if (event === 'SIGNED_OUT') {
               setUser(null);
+              setSession(null);
             }
           }
         );
         
         // Then check for existing session
-        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        const { data: { session: existingSession }, error: sessionError } = await supabase.auth.getSession();
         
         if (sessionError) {
           throw sessionError;
         }
         
-        if (session) {
-          await handleSessionChange(session);
+        if (existingSession) {
+          setSession(existingSession);
+          try {
+            const userData = await handleUserSession(existingSession);
+            setUser(userData);
+          } catch (err: any) {
+            console.error('Error handling existing session:', err.message);
+            setError(err.message);
+          }
         }
         
         setIsLoading(false);
@@ -54,6 +75,7 @@ export const AuthProvider: React.FC<{children: React.ReactNode}> = ({ children }
       } catch (err: any) {
         console.error('Session check error:', err);
         setIsLoading(false);
+        setError(err.message);
       }
     };
     
@@ -65,29 +87,20 @@ export const AuthProvider: React.FC<{children: React.ReactNode}> = ({ children }
     };
   }, []);
   
-  // Helper function to handle session change
-  const handleSessionChange = async (session: Session) => {
-    try {
-      const userData = await handleUserSession(session);
-      setUser(userData);
-    } catch (err: any) {
-      console.error('Session change error:', err);
-      setError(err.message);
-      await logout();
-    }
-  };
-
   const login = async (email: string, password: string) => {
     setIsLoading(true);
     setError(null);
     
     try {
-      await loginUser(email, password);
+      const { data } = await loginUser(email, password);
       // Authentication state will be updated through the auth state listener
+      console.log('Login successful, waiting for auth state change');
+      return data;
     } catch (err: any) {
       console.error('Login error:', err);
       setError(err.message || 'Login failed. Please check your credentials.');
       toast.error(err.message || 'Login failed. Please check your credentials.');
+      throw err;
     } finally {
       setIsLoading(false);
     }
@@ -98,6 +111,7 @@ export const AuthProvider: React.FC<{children: React.ReactNode}> = ({ children }
     try {
       await logoutUser();
       setUser(null);
+      setSession(null);
     } catch (err: any) {
       console.error('Logout error:', err);
       toast.error('Logout failed: ' + err.message);
@@ -108,6 +122,7 @@ export const AuthProvider: React.FC<{children: React.ReactNode}> = ({ children }
 
   const value = {
     user,
+    session,
     isLoading,
     error,
     login,
@@ -121,5 +136,4 @@ export const AuthProvider: React.FC<{children: React.ReactNode}> = ({ children }
   );
 };
 
-// Export the hook from this file for backward compatibility
 export { useAuth } from '@/hooks/useAuth';

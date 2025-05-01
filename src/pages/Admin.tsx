@@ -4,24 +4,34 @@ import { useAuth } from '@/contexts/AuthContext';
 import AdminLogin from '@/components/AdminLogin';
 import AdminDashboard from '@/components/AdminDashboard';
 import { toast } from 'sonner';
+import { Navigate } from 'react-router-dom';
 
 const Admin = () => {
-  const { user, isLoading } = useAuth();
+  const { user, isLoading, error, session } = useAuth();
 
   // Notify about real-time capability
   useEffect(() => {
-    if (user) {
-      console.log('User authenticated:', user);
+    if (user && user.role === 'admin') {
+      console.log('User authenticated as admin:', user);
       toast.success("Real-time dashboard active!", {
         description: "You're now seeing live updates for survey responses and traffic data."
+      });
+    } else if (user && user.role !== 'admin') {
+      toast.error("Access denied", {
+        description: "Your account does not have admin privileges."
       });
     }
   }, [user]);
 
   // Debug auth status
   useEffect(() => {
-    console.log('Admin page - Auth status:', { isAuthenticated: !!user, isLoading });
-  }, [user, isLoading]);
+    console.log('Admin page - Auth status:', { 
+      isAuthenticated: !!user, 
+      isAdmin: user?.role === 'admin', 
+      isLoading, 
+      hasSession: !!session 
+    });
+  }, [user, isLoading, session]);
 
   // Show loading state while checking authentication
   if (isLoading) {
@@ -36,9 +46,14 @@ const Admin = () => {
     );
   }
 
+  // Redirect non-admin users with proper message
+  if (user && user.role !== 'admin') {
+    return <Navigate to="/" replace />;
+  }
+
   console.log('Admin page rendering decision:', user ? 'Showing dashboard' : 'Showing login');
 
-  // If logged in, show dashboard, otherwise show login page
+  // If logged in as admin, show dashboard, otherwise show login page
   return user ? <AdminDashboard /> : <AdminLogin />;
 };
 

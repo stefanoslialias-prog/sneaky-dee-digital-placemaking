@@ -9,14 +9,23 @@ import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { Loader, Info, AlertCircle, CheckCircle } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { useNavigate } from 'react-router-dom';
 
 const AdminLogin: React.FC = () => {
   const [email, setEmail] = useState('admin@toronto.ca');
   const [password, setPassword] = useState('toronto2025');
-  const { login, isLoading, error } = useAuth();
+  const { login, isLoading, error, user } = useAuth();
   const [supabaseStatus, setSupabaseStatus] = useState<'checking' | 'connected' | 'error'>('checking');
   const [statusMessage, setStatusMessage] = useState('');
   const [retryCount, setRetryCount] = useState(0);
+  const navigate = useNavigate();
+
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (user) {
+      navigate('/admin');
+    }
+  }, [user, navigate]);
 
   // Check if we have a Supabase instance and display diagnostic info
   useEffect(() => {
@@ -30,13 +39,24 @@ const AdminLogin: React.FC = () => {
         if (sessionData.session) {
           console.log('User already has an active session');
           setStatusMessage('You have an active session');
+          
+          // Try to verify if the session belongs to an admin
+          const { data: roleData } = await supabase.rpc('has_role', {
+            user_id: sessionData.session.user.id,
+            required_role: 'admin'
+          }).maybeSingle();
+          
+          if (roleData === true) {
+            toast.success('Welcome back! Redirecting to dashboard...');
+            // Let the useEffect above handle navigation
+          }
         }
         
         // Check if we can access the database without querying user_roles directly
         // This avoids the potential RLS recursion issue
         const { data, error } = await supabase
           .from('wifi_locations')
-          .select('count')
+          .select('id')
           .limit(1);
         
         if (error) {
@@ -71,7 +91,13 @@ const AdminLogin: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     console.log(`Submitting login form for: ${email}`);
-    await login(email, password);
+    
+    try {
+      await login(email, password);
+      // Let the auth state listener and user effect handle the redirect
+    } catch (err) {
+      // Error is already handled in the login function and the error state
+    }
   };
 
   const handleRetryConnection = () => {
@@ -151,7 +177,7 @@ const AdminLogin: React.FC = () => {
               </Alert>
             )}
           </CardContent>
-          <CardFooter>
+          <CardFooter className="flex flex-col space-y-4">
             <Button 
               type="submit" 
               className="w-full" 
@@ -169,15 +195,13 @@ const AdminLogin: React.FC = () => {
                 </>
               ) : 'Sign in'}
             </Button>
+            
+            <div className="text-center text-sm text-gray-500">
+              <p>Need access? Contact your administrator.</p>
+            </div>
           </CardFooter>
         </form>
       </Card>
-      
-      <div className="mt-8 text-center text-sm text-gray-500">
-        <p>Demo credentials pre-filled above:</p>
-        <p className="font-mono">Email: admin@toronto.ca</p>
-        <p className="font-mono">Password: toronto2025</p>
-      </div>
     </div>
   );
 };

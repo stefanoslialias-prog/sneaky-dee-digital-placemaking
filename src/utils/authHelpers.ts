@@ -10,8 +10,7 @@ export const handleUserSession = async (session: Session): Promise<AuthUserType 
   try {
     console.log('Processing user session for:', session.user.id);
     
-    // Use the has_role function to check for admin role
-    // This avoids the RLS recursion issue
+    // First try using the has_role function which avoids RLS recursion
     const { data: roleData, error: roleError } = await supabase.rpc('has_role', { 
       user_id: session.user.id, 
       required_role: 'admin' 
@@ -22,35 +21,61 @@ export const handleUserSession = async (session: Session): Promise<AuthUserType 
     if (roleError) {
       console.error('Role check error:', roleError);
       
-      // If this is development, try to create an admin role
-      // This is useful for initial setup and testing
-      if (process.env.NODE_ENV === 'development' || window.location.hostname === 'localhost') {
-        console.log('Development environment detected - attempting to create admin role');
+      // Fall back to direct query as a last resort
+      const { data: directRoleData, error: directRoleError } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', session.user.id)
+        .eq('role', 'admin')
+        .maybeSingle();
+      
+      console.log('Direct role check:', { directRoleData, directRoleError });
+      
+      if (directRoleError) {
+        console.error('Direct role check error:', directRoleError);
         
-        const { error: insertError } = await supabase
-          .from('user_roles')
-          .insert({
-            user_id: session.user.id,
-            role: 'admin'
-          });
+        // If this is development, try to create an admin role
+        if (process.env.NODE_ENV === 'development' || window.location.hostname === 'localhost') {
+          console.log('Development environment detected - attempting to create admin role');
           
-        if (insertError) {
-          console.error('Error creating role:', insertError);
-          throw new Error('Could not create user role');
+          const { error: insertError } = await supabase
+            .from('user_roles')
+            .insert({
+              user_id: session.user.id,
+              role: 'admin'
+            });
+            
+          if (insertError) {
+            console.error('Error creating role:', insertError);
+            throw new Error('Could not create user role');
+          } else {
+            console.log('Created admin role for user in development mode');
+            
+            // Return user with admin role after creating it
+            return {
+              id: session.user.id,
+              email: session.user.email || '',
+              role: 'admin',
+              name: session.user.user_metadata?.name || session.user.email?.split('@')[0] || 'Admin User'
+            };
+          }
         } else {
-          console.log('Created admin role for user in development mode');
-          
-          // Return user with admin role after creating it
-          return {
-            id: session.user.id,
-            email: session.user.email || '',
-            role: 'admin',
-            name: session.user.user_metadata?.name || session.user.email?.split('@')[0] || 'Admin User'
-          };
+          throw new Error('Unable to verify admin permissions');
         }
-      } else {
-        throw new Error('Not authorized to access admin area');
       }
+      
+      // If direct query found no admin role
+      if (!directRoleData || directRoleData.role !== 'admin') {
+        throw new Error('You do not have permission to access this area');
+      }
+      
+      // Direct query found admin role
+      return {
+        id: session.user.id,
+        email: session.user.email || '',
+        role: 'admin',
+        name: session.user.user_metadata?.name || session.user.email?.split('@')[0] || 'Admin User'
+      };
     }
     
     // If the role check returned false (not admin)
@@ -82,7 +107,15 @@ export const loginUser = async (email: string, password: string) => {
   
   if (error) {
     console.error('Login error details:', error);
-    throw error;
+    
+    // Check for specific errors to provide better guidance
+    if (error.message.includes('Email not confirmed')) {
+      throw new Error('Please verify your email before logging in');
+    } else if (error.message.includes('Invalid login')) {
+      throw new Error('Invalid email or password. Please try again');
+    } else {
+      throw error;
+    }
   }
   
   console.log('Login successful, user:', data?.user?.id);
