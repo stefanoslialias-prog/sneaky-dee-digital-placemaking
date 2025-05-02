@@ -29,7 +29,8 @@ const AdminDashboard: React.FC = () => {
       .channel('responses-channel')
       .on('postgres_changes', 
         { event: 'INSERT', schema: 'public', table: 'survey_responses' }, 
-        () => {
+        (payload) => {
+          console.log('New response received:', payload);
           setLiveStatus(prev => ({...prev, newResponses: prev.newResponses + 1}));
         }
       )
@@ -40,7 +41,7 @@ const AdminDashboard: React.FC = () => {
       .channel('traffic-channel')
       .on('postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'location_traffic' },
-        () => {
+        (payload) => {
           setLiveStatus(prev => ({...prev, newTraffic: prev.newTraffic + 1}));
         }
       )

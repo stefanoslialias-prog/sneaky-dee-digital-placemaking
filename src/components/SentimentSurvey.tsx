@@ -48,8 +48,7 @@ const SentimentSurvey: React.FC<SentimentSurveyProps> = ({ onComplete }) => {
       if (questionError) {
         // Fallback to mock data behavior if there's an error
         console.error('Error fetching question:', questionError);
-        onComplete(sentiment, comment);
-        toast.success('Thanks for sharing how you feel!');
+        toast.error('Failed to save—please retry');
         return;
       }
       
@@ -63,12 +62,14 @@ const SentimentSurvey: React.FC<SentimentSurveyProps> = ({ onComplete }) => {
           question_id: question.id,
           answer: sentiment,
           comment: comment || null,
-          session_id: sessionId
+          session_id: sessionId,
+          location_id: localStorage.getItem('currentHotspotId') || null
         });
         
       if (insertError) {
         console.error('Error saving response:', insertError);
-        // Still complete the flow even if DB insert fails
+        toast.error('Failed to save—please retry');
+        return;
       }
       
       // Call the onComplete callback to move to the next step

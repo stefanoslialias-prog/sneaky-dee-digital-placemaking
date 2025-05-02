@@ -111,7 +111,22 @@ const ResponseTable: React.FC = () => {
       .on('postgres_changes', 
         { event: 'INSERT', schema: 'public', table: 'survey_responses' }, 
         (payload) => {
+          // Extract the data from the payload
+          const newItem = payload.new;
+          
+          // Format the data
+          const formattedResponse: SurveyResponse = {
+            id: newItem.id,
+            timestamp: newItem.created_at,
+            location: newItem.location_id ? locationMap[newItem.location_id] || newItem.location_id : 'Unknown',
+            sentiment: newItem.answer,
+            comment: newItem.comment
+          };
+          
+          // Add the new response to the top of the list
+          setResponses(prevResponses => [formattedResponse, ...prevResponses.slice(0, pageSize - 1)]);
           setNewResponses(count => count + 1);
+          
           // Show a toast notification
           toast('New response received', {
             description: 'Someone submitted a new survey response'
@@ -123,7 +138,7 @@ const ResponseTable: React.FC = () => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, []);
+  }, [locationMap, pageSize]);
   
   // Get total count for pagination
   const [totalResponses, setTotalResponses] = useState(0);
