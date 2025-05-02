@@ -25,8 +25,7 @@ const AdminDashboard: React.FC = () => {
   useEffect(() => {
     // Clear any previous channels to avoid duplicates
     const cleanup = async () => {
-      const { error } = await supabase.removeAllChannels();
-      if (error) console.error('Error removing channels:', error);
+      await supabase.removeAllChannels();
     };
     
     cleanup();

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -115,8 +114,7 @@ const ResponseTable: React.FC = () => {
   useEffect(() => {
     // Clear previous channels
     const cleanup = async () => {
-      const { error } = await supabase.removeAllChannels();
-      if (error) console.error('Error removing channels:', error);
+      await supabase.removeAllChannels();
     };
     
     cleanup();
