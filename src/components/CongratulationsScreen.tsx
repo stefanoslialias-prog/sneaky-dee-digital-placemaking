@@ -5,7 +5,6 @@ import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card'
 import { Copy, Download, Check } from 'lucide-react';
 import { toast } from 'sonner';
 import { Coupon } from './CouponPicker';
-import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 
 interface CongratulationsScreenProps {
@@ -16,7 +15,7 @@ interface CongratulationsScreenProps {
 const CongratulationsScreen: React.FC<CongratulationsScreenProps> = ({ coupon, onDone }) => {
   const [copied, setCopied] = useState(false);
   const [showConfetti, setShowConfetti] = useState(true);
-  const [optIn, setOptIn] = useState(false);
+  const [optIn, setOptIn] = useState<boolean | null>(null);
 
   useEffect(() => {
     // Hide confetti after 5 seconds
@@ -60,7 +59,7 @@ Thank you for your feedback!`;
   };
 
   const handleDone = () => {
-    if (optIn) {
+    if (optIn === true) {
       console.log('User opted in for more offers');
       // Here you would typically save this preference to a database
       toast.success('You\'ll receive more exclusive offers!');
@@ -140,17 +139,29 @@ Thank you for your feedback!`;
             </p>
           </div>
           
-          {/* Opt-in Toggle */}
-          <div className="flex items-center justify-between space-x-2 p-3 border rounded-md bg-toronto-gray/50">
-            <Label htmlFor="opt-in" className="font-medium">
+          {/* Yes/No Options */}
+          <div className="p-4 border rounded-md bg-toronto-gray/50">
+            <Label className="font-medium block mb-3 text-center">
               Would you like to receive more exclusive offers?
             </Label>
-            <Switch 
-              id="opt-in" 
-              checked={optIn} 
-              onCheckedChange={setOptIn} 
-              className="data-[state=checked]:bg-toronto-blue" 
-            />
+            <div className="flex gap-3 justify-center">
+              <Button 
+                variant={optIn === true ? "default" : "outline"}
+                size="sm"
+                className={optIn === true ? "bg-toronto-blue hover:bg-toronto-lightblue" : ""}
+                onClick={() => setOptIn(true)}
+              >
+                Yes
+              </Button>
+              <Button 
+                variant={optIn === false ? "default" : "outline"}
+                size="sm"
+                className={optIn === false ? "bg-toronto-blue hover:bg-toronto-lightblue" : ""}
+                onClick={() => setOptIn(false)}
+              >
+                No
+              </Button>
+            </div>
           </div>
         </CardContent>
         
