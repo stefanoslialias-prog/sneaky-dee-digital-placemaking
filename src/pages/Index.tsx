@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import SentimentSurvey from '@/components/SentimentSurvey';
@@ -12,7 +11,7 @@ import CongratulationsScreen from '@/components/CongratulationsScreen';
 import CommentStep from '@/components/CommentStep';
 
 const Index = () => {
-  const [step, setStep] = useState<'welcome' | 'couponPicker' | 'survey' | 'comment' | 'congratulations'>('welcome');
+  const [step, setStep] = useState<'welcome' | 'couponPicker' | 'comment' | 'congratulations'>('welcome');
   const [selectedCoupon, setSelectedCoupon] = useState<Coupon | null>(null);
   const [sentiment, setSentiment] = useState<Sentiment | null>(null);
   const [comment, setComment] = useState<string | undefined>(undefined);
@@ -23,31 +22,18 @@ const Index = () => {
 
   const handleCouponSelected = (coupon: Coupon) => {
     setSelectedCoupon(coupon);
-    // Skip the connecting step and go directly to the survey
-    setStep('survey');
-  };
-
-  const handleSurveyComplete = (sentiment: Sentiment, surveyComment?: string) => {
-    // Save sentiment for later use
-    setSentiment(sentiment);
-    
-    // Set initial comment if provided from survey
-    if (surveyComment) {
-      setComment(surveyComment);
-    }
-    
-    // Move to comment step
+    // Skip the survey step and go directly to the comment step
     setStep('comment');
   };
   
-  const handleCommentComplete = (additionalComment?: string) => {
-    if (additionalComment) {
-      setComment(additionalComment);
-    }
-    
-    // Add to mock database with the combined comment
-    if (sentiment) {
-      mockDatabase.addResponse('1', sentiment, comment);
+  const handleCommentComplete = (commentText?: string) => {
+    if (commentText) {
+      setComment(commentText);
+      // Set a default sentiment of 'neutral' since we're skipping the sentiment survey
+      setSentiment('neutral');
+      
+      // Add to mock database
+      mockDatabase.addResponse('1', 'neutral', commentText);
     }
     
     // Show congratulations screen
@@ -120,10 +106,6 @@ const Index = () => {
         
         {step === 'couponPicker' && (
           <CouponPicker onCouponSelected={handleCouponSelected} />
-        )}
-        
-        {step === 'survey' && (
-          <SentimentSurvey onComplete={handleSurveyComplete} />
         )}
         
         {step === 'comment' && (

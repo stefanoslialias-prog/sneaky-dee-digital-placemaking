@@ -24,7 +24,7 @@ const CommentStep: React.FC<CommentStepProps> = ({ onComplete }) => {
     <div className="w-full max-w-md mx-auto">
       <Card>
         <CardHeader className="text-center">
-          <CardTitle className="text-2xl font-playfair">Share Your Thoughts (Optional)</CardTitle>
+          <CardTitle className="text-2xl font-playfair">Tell us how you feel today!</CardTitle>
           <CardDescription>
             Got anything else to tell us? This step is 100% optional.
           </CardDescription>
