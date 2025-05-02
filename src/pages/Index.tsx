@@ -8,11 +8,19 @@ import Logo from '@/components/Logo';
 import { Link } from 'react-router-dom';
 import mockDatabase, { Sentiment } from '@/services/mockData';
 import { ArrowUpRightFromCircle, Wifi } from 'lucide-react';
+import CouponPicker, { Coupon } from '@/components/CouponPicker';
+import CongratulationsScreen from '@/components/CongratulationsScreen';
 
 const Index = () => {
-  const [step, setStep] = useState<'welcome' | 'connecting' | 'survey' | 'deal'>('welcome');
+  const [step, setStep] = useState<'welcome' | 'couponPicker' | 'connecting' | 'survey' | 'congratulations'>('welcome');
+  const [selectedCoupon, setSelectedCoupon] = useState<Coupon | null>(null);
 
   const handleStartSurvey = () => {
+    setStep('couponPicker');
+  };
+
+  const handleCouponSelected = (coupon: Coupon) => {
+    setSelectedCoupon(coupon);
     setStep('connecting');
   };
 
@@ -27,8 +35,14 @@ const Index = () => {
     // Add to mock database
     mockDatabase.addResponse('1', sentiment, comment);
     
-    // Show deals
-    setStep('deal');
+    // Show congratulations screen
+    setStep('congratulations');
+  };
+
+  const handleDone = () => {
+    // Reset the flow
+    setStep('welcome');
+    setSelectedCoupon(null);
   };
 
   return (
@@ -87,6 +101,10 @@ const Index = () => {
           </div>
         )}
         
+        {step === 'couponPicker' && (
+          <CouponPicker onCouponSelected={handleCouponSelected} />
+        )}
+        
         {step === 'connecting' && (
           <WifiDetector onWifiDetected={handleWifiDetected} />
         )}
@@ -95,8 +113,21 @@ const Index = () => {
           <SentimentSurvey onComplete={handleSurveyComplete} />
         )}
         
-        {step === 'deal' && (
-          <DealDisplay />
+        {step === 'congratulations' && selectedCoupon && (
+          <CongratulationsScreen coupon={selectedCoupon} onDone={handleDone} />
+        )}
+        
+        {step !== 'welcome' && step !== 'congratulations' && (
+          <div className="mt-8 text-center">
+            <img 
+              src="/lovable-uploads/bd068280-e55a-4131-8a50-96bb2b06a92a.png" 
+              alt="Shop Local Win Local" 
+              className="mx-auto h-24 object-contain"
+              onError={(e) => {
+                e.currentTarget.style.display = 'none';
+              }}
+            />
+          </div>
         )}
       </main>
       
