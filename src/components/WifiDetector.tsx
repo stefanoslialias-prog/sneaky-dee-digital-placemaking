@@ -47,9 +47,9 @@ const WifiDetector: React.FC<WifiDetectorProps> = ({ onWifiDetected }) => {
               </div>
             </div>
           </div>
-          <h2 className="text-xl font-semibold mb-2">Detecting WiFi</h2>
+          <h2 className="text-xl font-semibold mb-2">Connecting to Free WiFi</h2>
           <p className="text-gray-500 text-center">
-            Please wait while we connect you to Toronto Public WiFi...
+            Please wait while we connect you...
           </p>
         </>
       ) : (
@@ -66,7 +66,7 @@ const WifiDetector: React.FC<WifiDetectorProps> = ({ onWifiDetected }) => {
           </div>
           <h2 className="text-xl font-semibold mb-2">WiFi Connected!</h2>
           <p className="text-gray-500 text-center">
-            You're now connected to Toronto Public WiFi
+            You're now connected to Free WiFi
           </p>
         </>
       )}

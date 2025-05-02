@@ -5,6 +5,8 @@ import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card'
 import { Copy, Download, Check } from 'lucide-react';
 import { toast } from 'sonner';
 import { Coupon } from './CouponPicker';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 
 interface CongratulationsScreenProps {
   coupon: Coupon;
@@ -14,6 +16,7 @@ interface CongratulationsScreenProps {
 const CongratulationsScreen: React.FC<CongratulationsScreenProps> = ({ coupon, onDone }) => {
   const [copied, setCopied] = useState(false);
   const [showConfetti, setShowConfetti] = useState(true);
+  const [optIn, setOptIn] = useState(false);
 
   useEffect(() => {
     // Hide confetti after 5 seconds
@@ -54,6 +57,15 @@ Thank you for your feedback!`;
     URL.revokeObjectURL(href);
     
     toast.success('Coupon downloaded!');
+  };
+
+  const handleDone = () => {
+    if (optIn) {
+      console.log('User opted in for more offers');
+      // Here you would typically save this preference to a database
+      toast.success('You\'ll receive more exclusive offers!');
+    }
+    onDone();
   };
 
   // Extract percentage from the title if it exists
@@ -127,6 +139,19 @@ Thank you for your feedback!`;
               🎉 Your {getDiscountPercentage()} coupon has been sent to your e-wallet!
             </p>
           </div>
+          
+          {/* Opt-in Toggle */}
+          <div className="flex items-center justify-between space-x-2 p-3 border rounded-md bg-toronto-gray/50">
+            <Label htmlFor="opt-in" className="font-medium">
+              Would you like to receive more exclusive offers?
+            </Label>
+            <Switch 
+              id="opt-in" 
+              checked={optIn} 
+              onCheckedChange={setOptIn} 
+              className="data-[state=checked]:bg-toronto-blue" 
+            />
+          </div>
         </CardContent>
         
         <CardFooter className="flex flex-col space-y-3">
@@ -153,7 +178,7 @@ Thank you for your feedback!`;
           <Button 
             variant="default" 
             className="w-full bg-toronto-blue hover:bg-toronto-lightblue"
-            onClick={onDone}
+            onClick={handleDone}
           >
             Done
           </Button>

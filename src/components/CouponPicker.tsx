@@ -143,7 +143,7 @@ const CouponPicker: React.FC<CouponPickerProps> = ({ onCouponSelected }) => {
       <div className="text-center mb-6">
         <h2 className="text-2xl font-bold font-playfair mb-2">Pick Your Prize!</h2>
         <p className="text-gray-600">
-          Choose one of these offers before taking our quick survey
+          Just one quick question—your feedback unlocks your deal!
         </p>
       </div>
       

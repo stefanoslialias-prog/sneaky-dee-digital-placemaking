@@ -68,9 +68,9 @@ const Index = () => {
               <div className="mx-auto w-24 h-24 rounded-full bg-toronto-blue flex items-center justify-center mb-4">
                 <Wifi size={48} className="text-white" />
               </div>
-              <h1 className="text-4xl font-bold mb-4 font-playfair">Toronto Public WiFi</h1>
+              <h1 className="text-4xl font-bold mb-4 font-playfair">Welcome to Free WiFi</h1>
               <p className="text-gray-600 mb-6">
-                Click on the button below to get connected with free Wi-Fi and see promotions nearby.
+                Click on the button below to see exclusive offers.
               </p>
               <Button onClick={handleStartSurvey} size="lg" className="bg-toronto-blue hover:bg-toronto-lightblue">
                 Start Quick Survey
