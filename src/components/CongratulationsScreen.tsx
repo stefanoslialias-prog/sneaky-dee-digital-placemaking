@@ -5,7 +5,6 @@ import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card'
 import { Copy, Download, Check } from 'lucide-react';
 import { toast } from 'sonner';
 import { Coupon } from './CouponPicker';
-import Confetti from 'react-confetti';
 
 interface CongratulationsScreenProps {
   coupon: Coupon;
@@ -14,31 +13,15 @@ interface CongratulationsScreenProps {
 
 const CongratulationsScreen: React.FC<CongratulationsScreenProps> = ({ coupon, onDone }) => {
   const [copied, setCopied] = useState(false);
-  const [confettiActive, setConfettiActive] = useState(true);
-  const [windowSize, setWindowSize] = useState({
-    width: window.innerWidth,
-    height: window.innerHeight,
-  });
+  const [showConfetti, setShowConfetti] = useState(true);
 
   useEffect(() => {
-    const handleResize = () => {
-      setWindowSize({
-        width: window.innerWidth,
-        height: window.innerHeight,
-      });
-    };
-
-    window.addEventListener('resize', handleResize);
-
-    // Stop the confetti after 5 seconds
+    // Hide confetti after 5 seconds
     const timer = setTimeout(() => {
-      setConfettiActive(false);
+      setShowConfetti(false);
     }, 5000);
 
-    return () => {
-      window.removeEventListener('resize', handleResize);
-      clearTimeout(timer);
-    };
+    return () => clearTimeout(timer);
   }, []);
 
   const copyCode = () => {
@@ -87,14 +70,20 @@ Thank you for your feedback!`;
 
   return (
     <div className="w-full max-w-md mx-auto relative">
-      {confettiActive && (
-        <Confetti
-          width={windowSize.width}
-          height={windowSize.height}
-          recycle={false}
-          numberOfPieces={200}
-          gravity={0.15}
-        />
+      {showConfetti && (
+        <div className="confetti-container">
+          {Array.from({ length: 50 }).map((_, i) => (
+            <div 
+              key={i} 
+              className={`confetti confetti-${i % 5}`}
+              style={{
+                left: `${Math.random() * 100}%`,
+                animationDelay: `${Math.random() * 3}s`,
+                backgroundColor: ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff', '#00ffff'][i % 6]
+              }}
+            />
+          ))}
+        </div>
       )}
       
       <Card className="w-full">
@@ -170,6 +159,41 @@ Thank you for your feedback!`;
           </Button>
         </CardFooter>
       </Card>
+
+      <style jsx>{`
+        .confetti-container {
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          z-index: 10;
+          pointer-events: none;
+          overflow: hidden;
+        }
+        .confetti {
+          position: absolute;
+          width: 10px;
+          height: 10px;
+          opacity: 0.7;
+          animation: confetti-fall 5s ease-out forwards;
+        }
+        @keyframes confetti-fall {
+          0% {
+            transform: translateY(-100px) rotate(0deg);
+            opacity: 1;
+          }
+          100% {
+            transform: translateY(500px) rotate(360deg);
+            opacity: 0;
+          }
+        }
+        .confetti-0 { animation-duration: 2.5s; transform-origin: left top; }
+        .confetti-1 { animation-duration: 3.5s; transform-origin: right top; }
+        .confetti-2 { animation-duration: 4s; transform-origin: left bottom; }
+        .confetti-3 { animation-duration: 3s; transform-origin: right bottom; }
+        .confetti-4 { animation-duration: 4.5s; transform-origin: center; }
+      `}</style>
     </div>
   );
 };
