@@ -3,21 +3,27 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { ArrowRight, MessageSquare } from 'lucide-react';
+import { ArrowLeft, ArrowRight } from 'lucide-react';
 
 interface CommentStepProps {
   onComplete: (comment: string | undefined) => void;
+  onGoBack?: () => void;
 }
 
-const CommentStep: React.FC<CommentStepProps> = ({ onComplete }) => {
+const CommentStep: React.FC<CommentStepProps> = ({ onComplete, onGoBack }) => {
   const [comment, setComment] = useState<string>('');
 
   const handleSubmit = () => {
     onComplete(comment.trim() || undefined);
   };
 
-  const handleSkip = () => {
-    onComplete(undefined);
+  const handleGoBack = () => {
+    if (onGoBack) {
+      onGoBack();
+    } else {
+      // Fallback if no onGoBack provided
+      onComplete(undefined);
+    }
   };
 
   return (
@@ -44,16 +50,16 @@ const CommentStep: React.FC<CommentStepProps> = ({ onComplete }) => {
         <CardFooter className="flex justify-between">
           <Button 
             variant="outline" 
-            onClick={handleSkip}
-            className="w-full md:w-auto"
+            onClick={handleGoBack}
+            className="w-full md:w-auto flex items-center gap-2"
           >
-            Skip
+            <ArrowLeft className="h-4 w-4" /> Go Back
           </Button>
           <Button 
             onClick={handleSubmit}
-            className="w-full md:w-auto flex items-center gap-2"
+            className="w-full md:w-auto"
           >
-            Continue <ArrowRight className="h-4 w-4" />
+            Skip
           </Button>
         </CardFooter>
       </Card>

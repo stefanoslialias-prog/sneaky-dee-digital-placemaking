@@ -40,6 +40,11 @@ const Index = () => {
     setStep('congratulations');
   };
 
+  const handleGoBack = () => {
+    // Go back to the coupon picker step
+    setStep('couponPicker');
+  };
+
   const handleDone = () => {
     // Reset the flow
     setStep('welcome');
@@ -109,7 +114,7 @@ const Index = () => {
         )}
         
         {step === 'comment' && (
-          <CommentStep onComplete={handleCommentComplete} />
+          <CommentStep onComplete={handleCommentComplete} onGoBack={handleGoBack} />
         )}
         
         {step === 'congratulations' && selectedCoupon && (
