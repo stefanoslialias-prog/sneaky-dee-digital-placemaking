@@ -160,7 +160,8 @@ Thank you for your feedback!`;
         </CardFooter>
       </Card>
 
-      <style jsx>{`
+      <style>
+        {`
         @keyframes confetti-fall {
           0% {
             transform: translateY(-100px) rotate(0deg);
@@ -171,7 +172,8 @@ Thank you for your feedback!`;
             opacity: 0;
           }
         }
-      `}</style>
+        `}
+      </style>
     </div>
   );
 };
