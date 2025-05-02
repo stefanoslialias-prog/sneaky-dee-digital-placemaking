@@ -1,7 +1,6 @@
 
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import WifiDetector from '@/components/WifiDetector';
 import SentimentSurvey from '@/components/SentimentSurvey';
 import DealDisplay from '@/components/DealDisplay';
 import Logo from '@/components/Logo';
@@ -12,7 +11,7 @@ import CouponPicker, { Coupon } from '@/components/CouponPicker';
 import CongratulationsScreen from '@/components/CongratulationsScreen';
 
 const Index = () => {
-  const [step, setStep] = useState<'welcome' | 'couponPicker' | 'connecting' | 'survey' | 'congratulations'>('welcome');
+  const [step, setStep] = useState<'welcome' | 'couponPicker' | 'survey' | 'congratulations'>('welcome');
   const [selectedCoupon, setSelectedCoupon] = useState<Coupon | null>(null);
 
   const handleStartSurvey = () => {
@@ -21,14 +20,8 @@ const Index = () => {
 
   const handleCouponSelected = (coupon: Coupon) => {
     setSelectedCoupon(coupon);
-    setStep('connecting');
-  };
-
-  const handleWifiDetected = () => {
-    // Wait 1 second to show the connected state before moving to the survey
-    setTimeout(() => {
-      setStep('survey');
-    }, 1000);
+    // Skip the connecting step and go directly to the survey
+    setStep('survey');
   };
 
   const handleSurveyComplete = (sentiment: Sentiment, comment?: string) => {
@@ -103,10 +96,6 @@ const Index = () => {
         
         {step === 'couponPicker' && (
           <CouponPicker onCouponSelected={handleCouponSelected} />
-        )}
-        
-        {step === 'connecting' && (
-          <WifiDetector onWifiDetected={handleWifiDetected} />
         )}
         
         {step === 'survey' && (

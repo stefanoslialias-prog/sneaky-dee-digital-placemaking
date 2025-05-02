@@ -161,23 +161,6 @@ Thank you for your feedback!`;
       </Card>
 
       <style jsx>{`
-        .confetti-container {
-          position: absolute;
-          top: 0;
-          left: 0;
-          width: 100%;
-          height: 100%;
-          z-index: 10;
-          pointer-events: none;
-          overflow: hidden;
-        }
-        .confetti {
-          position: absolute;
-          width: 10px;
-          height: 10px;
-          opacity: 0.7;
-          animation: confetti-fall 5s ease-out forwards;
-        }
         @keyframes confetti-fall {
           0% {
             transform: translateY(-100px) rotate(0deg);
@@ -188,11 +171,6 @@ Thank you for your feedback!`;
             opacity: 0;
           }
         }
-        .confetti-0 { animation-duration: 2.5s; transform-origin: left top; }
-        .confetti-1 { animation-duration: 3.5s; transform-origin: right top; }
-        .confetti-2 { animation-duration: 4s; transform-origin: left bottom; }
-        .confetti-3 { animation-duration: 3s; transform-origin: right bottom; }
-        .confetti-4 { animation-duration: 4.5s; transform-origin: center; }
       `}</style>
     </div>
   );
