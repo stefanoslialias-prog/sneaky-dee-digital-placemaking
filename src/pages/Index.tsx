@@ -9,10 +9,13 @@ import mockDatabase, { Sentiment } from '@/services/mockData';
 import { ArrowUpRightFromCircle, Wifi } from 'lucide-react';
 import CouponPicker, { Coupon } from '@/components/CouponPicker';
 import CongratulationsScreen from '@/components/CongratulationsScreen';
+import CommentStep from '@/components/CommentStep';
 
 const Index = () => {
-  const [step, setStep] = useState<'welcome' | 'couponPicker' | 'survey' | 'congratulations'>('welcome');
+  const [step, setStep] = useState<'welcome' | 'couponPicker' | 'survey' | 'comment' | 'congratulations'>('welcome');
   const [selectedCoupon, setSelectedCoupon] = useState<Coupon | null>(null);
+  const [sentiment, setSentiment] = useState<Sentiment | null>(null);
+  const [comment, setComment] = useState<string | undefined>(undefined);
 
   const handleStartSurvey = () => {
     setStep('couponPicker');
@@ -24,9 +27,28 @@ const Index = () => {
     setStep('survey');
   };
 
-  const handleSurveyComplete = (sentiment: Sentiment, comment?: string) => {
-    // Add to mock database
-    mockDatabase.addResponse('1', sentiment, comment);
+  const handleSurveyComplete = (sentiment: Sentiment, surveyComment?: string) => {
+    // Save sentiment for later use
+    setSentiment(sentiment);
+    
+    // Set initial comment if provided from survey
+    if (surveyComment) {
+      setComment(surveyComment);
+    }
+    
+    // Move to comment step
+    setStep('comment');
+  };
+  
+  const handleCommentComplete = (additionalComment?: string) => {
+    if (additionalComment) {
+      setComment(additionalComment);
+    }
+    
+    // Add to mock database with the combined comment
+    if (sentiment) {
+      mockDatabase.addResponse('1', sentiment, comment);
+    }
     
     // Show congratulations screen
     setStep('congratulations');
@@ -36,6 +58,8 @@ const Index = () => {
     // Reset the flow
     setStep('welcome');
     setSelectedCoupon(null);
+    setSentiment(null);
+    setComment(undefined);
   };
 
   return (
@@ -100,6 +124,10 @@ const Index = () => {
         
         {step === 'survey' && (
           <SentimentSurvey onComplete={handleSurveyComplete} />
+        )}
+        
+        {step === 'comment' && (
+          <CommentStep onComplete={handleCommentComplete} />
         )}
         
         {step === 'congratulations' && selectedCoupon && (
