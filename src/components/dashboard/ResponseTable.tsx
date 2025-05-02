@@ -60,11 +60,15 @@ const ResponseTable: React.FC = () => {
   // Fetch initial data
   useEffect(() => {
     fetchResponses();
+    
+    // Set up logging to debug any issues
+    console.log('Setting up ResponseTable with locationMap:', locationMap);
   }, [page, locationMap]);
   
   const fetchResponses = async () => {
     try {
       setLoading(true);
+      console.log('Fetching responses, page:', page);
       
       const startIndex = (page - 1) * pageSize;
       
@@ -80,6 +84,8 @@ const ResponseTable: React.FC = () => {
         `)
         .order('created_at', { ascending: false })
         .range(startIndex, startIndex + pageSize - 1);
+      
+      console.log('Fetched survey_responses data:', data);
         
       if (error) throw error;
       
@@ -92,6 +98,7 @@ const ResponseTable: React.FC = () => {
         comment: item.comment
       })) || [];
       
+      console.log('Formatted responses:', formattedResponses);
       setResponses(formattedResponses);
       
       // Reset new response counter when fetching new data
@@ -104,13 +111,24 @@ const ResponseTable: React.FC = () => {
     }
   };
   
-  // Set up real-time subscription
+  // Set up real-time subscription with clearer channel name
   useEffect(() => {
+    // Clear previous channels
+    const cleanup = async () => {
+      const { error } = await supabase.removeAllChannels();
+      if (error) console.error('Error removing channels:', error);
+    };
+    
+    cleanup();
+    
+    // Create a new channel with a specific name for this component
     const channel = supabase
-      .channel('public:survey_responses')
+      .channel('response_table_updates')
       .on('postgres_changes', 
         { event: 'INSERT', schema: 'public', table: 'survey_responses' }, 
         (payload) => {
+          console.log('New response received in ResponseTable:', payload);
+          
           // Extract the data from the payload
           const newItem = payload.new;
           
@@ -123,6 +141,8 @@ const ResponseTable: React.FC = () => {
             comment: newItem.comment
           };
           
+          console.log('Adding new response to table:', formattedResponse);
+          
           // Add the new response to the top of the list
           setResponses(prevResponses => [formattedResponse, ...prevResponses.slice(0, pageSize - 1)]);
           setNewResponses(count => count + 1);
@@ -133,7 +153,9 @@ const ResponseTable: React.FC = () => {
           });
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log('Realtime subscription status:', status);
+      });
       
     return () => {
       supabase.removeChannel(channel);

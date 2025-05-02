@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
@@ -24,13 +23,21 @@ const AdminDashboard: React.FC = () => {
   
   // Subscribe to real-time events
   useEffect(() => {
+    // Clear any previous channels to avoid duplicates
+    const cleanup = async () => {
+      const { error } = await supabase.removeAllChannels();
+      if (error) console.error('Error removing channels:', error);
+    };
+    
+    cleanup();
+    
     // Subscribe to new responses
     const responseChannel = supabase
       .channel('responses-channel')
       .on('postgres_changes', 
         { event: 'INSERT', schema: 'public', table: 'survey_responses' }, 
         (payload) => {
-          console.log('New response received:', payload);
+          console.log('New response received in AdminDashboard:', payload);
           setLiveStatus(prev => ({...prev, newResponses: prev.newResponses + 1}));
         }
       )

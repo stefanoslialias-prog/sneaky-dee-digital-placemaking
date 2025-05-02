@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -36,6 +35,8 @@ const SentimentSurvey: React.FC<SentimentSurveyProps> = ({ onComplete }) => {
   const handleSubmit = async (sentiment: Sentiment = selectedSentiment as Sentiment) => {
     setIsSubmitting(true);
     try {
+      console.log('Submitting survey response:', { sentiment, comment });
+      
       // Get the first active question from the database
       const { data: question, error: questionError } = await supabase
         .from('survey_questions')
@@ -46,25 +47,34 @@ const SentimentSurvey: React.FC<SentimentSurveyProps> = ({ onComplete }) => {
         .single();
         
       if (questionError) {
-        // Fallback to mock data behavior if there's an error
+        // Error handling for question fetch failure
         console.error('Error fetching question:', questionError);
         toast.error('Failed to save—please retry');
         return;
       }
       
-      // Generate a simple session ID (in a real app, this would be more sophisticated)
+      // Generate a session ID
       const sessionId = `${Math.floor(Math.random() * 6) + 1}-${Date.now()}`;
+      
+      // Get location ID from local storage
+      const locationId = localStorage.getItem('currentHotspotId');
+      console.log('Location ID for submission:', locationId);
+      
+      // Prepare the data to insert
+      const responseData = {
+        question_id: question.id,
+        answer: sentiment,
+        comment: comment || null,
+        session_id: sessionId,
+        location_id: locationId || null
+      };
+      
+      console.log('Inserting survey response data:', responseData);
       
       // Insert response into Supabase
       const { error: insertError } = await supabase
         .from('survey_responses')
-        .insert({
-          question_id: question.id,
-          answer: sentiment,
-          comment: comment || null,
-          session_id: sessionId,
-          location_id: localStorage.getItem('currentHotspotId') || null
-        });
+        .insert(responseData);
         
       if (insertError) {
         console.error('Error saving response:', insertError);
