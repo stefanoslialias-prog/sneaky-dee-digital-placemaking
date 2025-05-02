@@ -24,7 +24,7 @@ const CouponPicker: React.FC<CouponPickerProps> = ({ onCouponSelected }) => {
   const [loading, setLoading] = useState(true);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   
-  // Demo coupons if we can't load from Supabase
+  // Demo coupons to use since we don't have a coupons table
   const demoCoupons: Coupon[] = [
     {
       id: '1',
@@ -54,33 +54,22 @@ const CouponPicker: React.FC<CouponPickerProps> = ({ onCouponSelected }) => {
   ];
   
   useEffect(() => {
-    const fetchCoupons = async () => {
+    // Since we don't have a coupons table in Supabase, we'll just use demo coupons
+    // and simulate loading
+    const loadDemoCoupons = async () => {
       try {
-        const { data, error } = await supabase
-          .from('coupons')
-          .select('*')
-          .eq('active', true);
-          
-        if (error) {
-          throw error;
-        }
-        
-        if (data && data.length > 0) {
-          setCoupons(data);
-        } else {
-          console.log('No active coupons found in database, using demo coupons');
-          setCoupons(demoCoupons);
-        }
-      } catch (error) {
-        console.error('Error fetching coupons:', error);
-        toast.error('Failed to load offers');
+        // Short delay to simulate loading
+        await new Promise(resolve => setTimeout(resolve, 800));
         setCoupons(demoCoupons);
+      } catch (error) {
+        console.error('Error loading coupons:', error);
+        toast.error('Failed to load offers');
       } finally {
         setLoading(false);
       }
     };
     
-    fetchCoupons();
+    loadDemoCoupons();
   }, []);
   
   const handleCouponSelect = (coupon: Coupon) => {
