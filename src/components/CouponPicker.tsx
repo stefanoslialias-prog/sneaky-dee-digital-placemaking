@@ -1,8 +1,8 @@
 
-import React, { useState, useEffect } from 'react';
-import { Card } from '@/components/ui/card';
-import { motion } from 'framer-motion';
-import { Gift, Sparkles } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
 export interface Coupon {
@@ -10,73 +10,10 @@ export interface Coupon {
   title: string;
   description: string;
   code: string;
-  image: string;
-  discount?: string;
   expiresIn: string;
+  image?: string;
+  discount?: string;
 }
-
-// Our master list of coupons
-const allCoupons: Coupon[] = [
-  {
-    id: 'cafe15',
-    title: '15% Off at Toronto Café',
-    description: 'Enjoy a discount on your next coffee or pastry purchase',
-    code: 'TORONTOCAFE15',
-    image: '/lovable-uploads/bd068280-e55a-4131-8a50-96bb2b06a92a.png',
-    discount: '15%',
-    expiresIn: '24 hours',
-  },
-  {
-    id: 'museum',
-    title: 'Free Museum Admission',
-    description: 'Visit the Toronto Heritage Museum at no cost',
-    code: 'TOMUSEUM',
-    image: '/lovable-uploads/bd068280-e55a-4131-8a50-96bb2b06a92a.png',
-    expiresIn: '48 hours',
-  },
-  {
-    id: 'bike20',
-    title: '20% Off Bike Share',
-    description: 'Explore the city with a discount on bike sharing',
-    code: 'BIKETORONTO',
-    discount: '20%',
-    image: '/lovable-uploads/bd068280-e55a-4131-8a50-96bb2b06a92a.png',
-    expiresIn: '24 hours',
-  },
-  {
-    id: 'coffee',
-    title: 'Free Coffee',
-    description: 'Enjoy a complimentary coffee at any participating café',
-    code: 'FREECOFFEE',
-    image: '/lovable-uploads/bd068280-e55a-4131-8a50-96bb2b06a92a.png',
-    expiresIn: '72 hours',
-  },
-  {
-    id: 'bogo',
-    title: 'Buy 1 Get 1 Free',
-    description: 'Purchase one item and get another one free at local shops',
-    code: 'BOGO2023',
-    image: '/lovable-uploads/bd068280-e55a-4131-8a50-96bb2b06a92a.png',
-    expiresIn: '48 hours',
-  },
-  {
-    id: 'gift5',
-    title: '$5 Gift Card',
-    description: 'Redeem at any participating local business',
-    code: 'GIFT5CARD',
-    discount: '$5',
-    image: '/lovable-uploads/bd068280-e55a-4131-8a50-96bb2b06a92a.png',
-    expiresIn: '7 days',
-  },
-  {
-    id: 'parking',
-    title: '2 Hours Free Parking',
-    description: 'Park for free in any city lot for up to 2 hours',
-    code: 'PARKTO2HR',
-    image: '/lovable-uploads/bd068280-e55a-4131-8a50-96bb2b06a92a.png',
-    expiresIn: '24 hours',
-  },
-];
 
 interface CouponPickerProps {
   onCouponSelected: (coupon: Coupon) => void;
@@ -84,127 +21,128 @@ interface CouponPickerProps {
 
 const CouponPicker: React.FC<CouponPickerProps> = ({ onCouponSelected }) => {
   const [coupons, setCoupons] = useState<Coupon[]>([]);
+  const [loading, setLoading] = useState(true);
   const [selectedId, setSelectedId] = useState<string | null>(null);
-
-  // Randomly pick 3 distinct coupons
+  
+  // Demo coupons if we can't load from Supabase
+  const demoCoupons: Coupon[] = [
+    {
+      id: '1',
+      title: '20% OFF Coffee',
+      description: 'Get 20% off your next coffee at SipCo',
+      code: 'COFFEE20',
+      expiresIn: '48 hours',
+      discount: '20%',
+      image: '/lovable-uploads/bd068280-e55a-4131-8a50-96bb2b06a92a.png'
+    },
+    {
+      id: '2',
+      title: '15% OFF Lunch',
+      description: 'Enjoy lunch at any participating restaurant',
+      code: 'LUNCH15',
+      expiresIn: '7 days',
+      discount: '15%'
+    },
+    {
+      id: '3',
+      title: '$5 OFF Books',
+      description: 'At your local Toronto bookstore',
+      code: 'BOOKS5',
+      expiresIn: '30 days',
+      discount: '$5'
+    }
+  ];
+  
   useEffect(() => {
-    const shuffled = [...allCoupons].sort(() => 0.5 - Math.random());
-    setCoupons(shuffled.slice(0, 3));
-  }, []);
-
-  const handleSelect = (coupon: Coupon) => {
-    setSelectedId(coupon.id);
-    toast.success("Great choice! Let's continue to the survey");
+    const fetchCoupons = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('coupons')
+          .select('*')
+          .eq('active', true);
+          
+        if (error) {
+          throw error;
+        }
+        
+        if (data && data.length > 0) {
+          setCoupons(data);
+        } else {
+          console.log('No active coupons found in database, using demo coupons');
+          setCoupons(demoCoupons);
+        }
+      } catch (error) {
+        console.error('Error fetching coupons:', error);
+        toast.error('Failed to load offers');
+        setCoupons(demoCoupons);
+      } finally {
+        setLoading(false);
+      }
+    };
     
-    // Small delay before proceeding to survey for better UX
+    fetchCoupons();
+  }, []);
+  
+  const handleCouponSelect = (coupon: Coupon) => {
+    setSelectedId(coupon.id);
     setTimeout(() => {
       onCouponSelected(coupon);
-    }, 800);
+    }, 300); // Small delay for visual feedback
   };
-
-  // Animation variants
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: { 
-      opacity: 1,
-      transition: { 
-        staggerChildren: 0.2
-      }
-    }
-  };
-
-  const itemVariants = {
-    hidden: { y: 20, opacity: 0 },
-    visible: { 
-      y: 0, 
-      opacity: 1,
-      transition: { 
-        type: "spring",
-        stiffness: 260,
-        damping: 20
-      }
-    }
-  };
-
-  if (coupons.length === 0) {
-    return (
-      <div className="flex justify-center items-center h-40">
-        <div className="animate-pulse flex space-x-2">
-          <div className="h-3 w-3 bg-toronto-blue rounded-full"></div>
-          <div className="h-3 w-3 bg-toronto-blue rounded-full"></div>
-          <div className="h-3 w-3 bg-toronto-blue rounded-full"></div>
-        </div>
-      </div>
-    );
-  }
 
   return (
-    <div className="w-full max-w-4xl mx-auto">
-      <div className="text-center mb-6">
-        <h2 className="text-2xl font-bold font-playfair mb-2">Pick Your Prize!</h2>
-        <p className="text-gray-600">
-          Just one quick question—your feedback unlocks your deal!
-        </p>
-      </div>
-      
-      <motion.div 
-        className="grid grid-cols-1 md:grid-cols-3 gap-6"
-        variants={containerVariants}
-        initial="hidden"
-        animate="visible"
-      >
-        {coupons.map((coupon) => (
-          <motion.div
-            key={coupon.id}
-            variants={itemVariants}
-            whileHover={{ scale: 1.03, transition: { duration: 0.2 } }}
-            className={`relative ${selectedId !== null && selectedId !== coupon.id ? 'opacity-50' : ''}`}
-          >
-            <Card 
-              className={`h-full cursor-pointer border-2 hover:shadow-lg transition-shadow ${
-                selectedId === coupon.id ? 'border-toronto-blue bg-toronto-gray' : 'border-transparent'
-              }`}
-              onClick={() => handleSelect(coupon)}
-            >
-              {selectedId === coupon.id && (
-                <motion.div 
-                  className="absolute inset-0 pointer-events-none"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                >
-                  <div className="absolute top-0 left-0 w-full h-full overflow-hidden">
-                    <Sparkles 
-                      className="absolute text-yellow-400" 
-                      size={24} 
-                      style={{ top: '10px', right: '10px' }}
-                    />
-                    <Sparkles 
-                      className="absolute text-yellow-400" 
-                      size={16} 
-                      style={{ top: '30px', left: '10px' }}
-                    />
+    <div className="w-full max-w-md mx-auto">
+      <Card>
+        <CardHeader className="text-center">
+          <CardTitle className="text-2xl font-playfair">Choose Your Offer</CardTitle>
+          <CardDescription>
+            Unlock your deal instantly when you share your feedback.
+          </CardDescription>
+        </CardHeader>
+        
+        <CardContent className="space-y-4">
+          {loading ? (
+            <div className="flex justify-center p-4">
+              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-toronto-blue"></div>
+            </div>
+          ) : coupons.length > 0 ? (
+            coupons.map((coupon) => (
+              <div 
+                key={coupon.id} 
+                className={`p-4 border rounded-lg cursor-pointer transition-all ${
+                  selectedId === coupon.id ? 'border-toronto-blue bg-toronto-blue/5' : 'hover:border-gray-400'
+                }`}
+                onClick={() => handleCouponSelect(coupon)}
+              >
+                <div className="flex items-center gap-3">
+                  {coupon.image && (
+                    <div className="flex-shrink-0 w-12 h-12 rounded-full overflow-hidden bg-toronto-gray">
+                      <img 
+                        src={coupon.image} 
+                        alt={coupon.title}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          e.currentTarget.style.display = 'none';
+                        }}
+                      />
+                    </div>
+                  )}
+                  
+                  <div className="flex-grow">
+                    <h3 className="font-bold text-lg">{coupon.title}</h3>
+                    <p className="text-sm text-gray-600">{coupon.description}</p>
+                    <p className="text-xs text-gray-500 mt-1">Expires in {coupon.expiresIn}</p>
                   </div>
-                </motion.div>
-              )}
-              
-              <div className="p-4 flex flex-col h-full">
-                <div className="flex justify-center mb-3 flex-1">
-                  <div className="w-24 h-24 rounded-full bg-toronto-gray flex items-center justify-center">
-                    <Gift size={40} className="text-toronto-blue" />
-                  </div>
-                </div>
-                <h3 className="font-bold text-lg text-center mb-2">{coupon.title}</h3>
-                <p className="text-gray-600 text-center text-sm">{coupon.description}</p>
-                <div className="mt-4 text-center">
-                  <span className="inline-block px-3 py-1 bg-toronto-blue text-white rounded-full text-sm">
-                    Tap to Select
-                  </span>
                 </div>
               </div>
-            </Card>
-          </motion.div>
-        ))}
-      </motion.div>
+            ))
+          ) : (
+            <div className="text-center p-4">
+              <p>No offers available at the moment.</p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 };
