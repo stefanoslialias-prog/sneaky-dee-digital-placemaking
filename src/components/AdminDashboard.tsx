@@ -1,9 +1,10 @@
+
 import React, { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
 import Logo from '@/components/Logo';
-import { DatabaseBackup, Users, FileText, LayoutGrid, Settings, Wifi, ArrowUpRightFromCircle, ArrowLeft } from 'lucide-react';
+import { DatabaseBackup, Users, FileText, LayoutGrid, Settings, Wifi, ArrowLeft } from 'lucide-react';
 import SentimentOverview from '@/components/dashboard/SentimentOverview';
 import LocationMap from '@/components/dashboard/LocationMap';
 import ResponseTable from '@/components/dashboard/ResponseTable';
@@ -11,7 +12,7 @@ import QuestionDesigner from '@/components/dashboard/QuestionDesigner';
 import LiveTraffic from '@/components/dashboard/LiveTraffic';
 import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 const AdminDashboard: React.FC = () => {
   const { user, logout } = useAuth();
@@ -20,6 +21,13 @@ const AdminDashboard: React.FC = () => {
     newResponses: 0,
     newTraffic: 0
   });
+  
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    await logout();
+    navigate('/'); // Redirect directly to the survey page
+  };
   
   // Subscribe to real-time events
   useEffect(() => {
@@ -90,7 +98,7 @@ const AdminDashboard: React.FC = () => {
           />
         </div>
         <div className="flex items-center gap-4">
-          <Link to="/survey">
+          <Link to="/">
             <Button variant="outline" size="sm" className="flex items-center gap-1 mr-2">
               <ArrowLeft size={12} className="mr-1" />
               Back to Survey
@@ -99,7 +107,7 @@ const AdminDashboard: React.FC = () => {
           <span className="text-sm text-gray-600">
             Welcome, {user?.name || 'Admin'}
           </span>
-          <Button variant="outline" size="sm" onClick={logout}>
+          <Button variant="outline" size="sm" onClick={handleLogout}>
             Log out
           </Button>
         </div>

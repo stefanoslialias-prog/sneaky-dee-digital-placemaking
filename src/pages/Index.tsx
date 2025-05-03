@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import SentimentSurvey from '@/components/SentimentSurvey';
@@ -11,7 +12,7 @@ import CongratulationsScreen from '@/components/CongratulationsScreen';
 import CommentStep from '@/components/CommentStep';
 
 const Index = () => {
-  const [step, setStep] = useState<'welcome' | 'couponPicker' | 'comment' | 'congratulations'>('welcome');
+  const [step, setStep] = useState<'welcome' | 'couponPicker' | 'sentiment' | 'comment' | 'congratulations'>('welcome');
   const [selectedCoupon, setSelectedCoupon] = useState<Coupon | null>(null);
   const [sentiment, setSentiment] = useState<Sentiment | null>(null);
   const [comment, setComment] = useState<string | undefined>(undefined);
@@ -22,18 +23,34 @@ const Index = () => {
 
   const handleCouponSelected = (coupon: Coupon) => {
     setSelectedCoupon(coupon);
-    // Skip the survey step and go directly to the comment step
-    setStep('comment');
+    // Go to the sentiment survey step
+    setStep('sentiment');
+  };
+  
+  const handleSentimentComplete = (selectedSentiment: Sentiment, commentText?: string) => {
+    setSentiment(selectedSentiment);
+    
+    // If a comment was provided during sentiment selection, store it
+    if (commentText) {
+      setComment(commentText);
+      // Add to mock database
+      mockDatabase.addResponse('1', selectedSentiment, commentText);
+      // Skip the comment step
+      setStep('congratulations');
+    } else {
+      // Go to the comment step for more feedback if no comment was provided
+      setStep('comment');
+    }
   };
   
   const handleCommentComplete = (commentText?: string) => {
     if (commentText) {
       setComment(commentText);
-      // Set a default sentiment of 'neutral' since we're skipping the sentiment survey
-      setSentiment('neutral');
       
-      // Add to mock database
-      mockDatabase.addResponse('1', 'neutral', commentText);
+      // Add to mock database (we already have the sentiment from previous step)
+      if (sentiment) {
+        mockDatabase.addResponse('1', sentiment, commentText);
+      }
     }
     
     // Show congratulations screen
@@ -41,8 +58,8 @@ const Index = () => {
   };
 
   const handleGoBack = () => {
-    // Go back to the coupon picker step
-    setStep('couponPicker');
+    // Go back to the sentiment survey step
+    setStep('sentiment');
   };
 
   const handleDone = () => {
@@ -111,6 +128,10 @@ const Index = () => {
         
         {step === 'couponPicker' && (
           <CouponPicker onCouponSelected={handleCouponSelected} />
+        )}
+        
+        {step === 'sentiment' && (
+          <SentimentSurvey onComplete={handleSentimentComplete} />
         )}
         
         {step === 'comment' && (
