@@ -17,12 +17,19 @@ const LocationMap: React.FC = () => {
   const neutralCount = locationResponses.filter(r => r.sentiment === 'neutral').length;
   const concernedCount = locationResponses.filter(r => r.sentiment === 'concerned').length;
   
-  const happyPercent = totalResponses > 0 ? Math.round((happyCount / totalResponses) * 100) : 0;
-  const neutralPercent = totalResponses > 0 ? Math.round((neutralCount / totalResponses) * 100) : 0;
-  const concernedPercent = totalResponses > 0 ? Math.round((concernedCount / totalResponses) * 100) : 0;
+  // Updated to show decimal point after first digit
+  const happyPercent = totalResponses > 0 
+    ? (Math.round((happyCount / totalResponses) * 100 * 10) / 10).toFixed(1)
+    : '0.0';
+  const neutralPercent = totalResponses > 0 
+    ? (Math.round((neutralCount / totalResponses) * 100 * 10) / 10).toFixed(1)
+    : '0.0';
+  const concernedPercent = totalResponses > 0 
+    ? (Math.round((concernedCount / totalResponses) * 100 * 10) / 10).toFixed(1)
+    : '0.0';
   
-  // Participation rate at this location
-  const participationRate = Math.round((location.totalSessions / location.footTraffic) * 100);
+  // Participation rate at this location with decimal point
+  const participationRate = (Math.round((location.totalSessions / location.footTraffic) * 100 * 10) / 10).toFixed(1);
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
