@@ -493,7 +493,10 @@ const SentimentOverview: React.FC = () => {
                         location.totalSessions > 200 ? 'bg-green-400' : 
                         location.totalSessions > 100 ? 'bg-blue-400' : 'bg-gray-400'
                       }`}></span>
-                      {location.footTraffic > 0 ? Math.round((location.totalSessions / location.footTraffic) * 100) : 0}% participation rate
+                      {/* Format participation rate with decimal place */}
+                      {location.footTraffic > 0 ? 
+                        (location.totalSessions / location.footTraffic * 100).toFixed(1) : 
+                        '0.0'}% participation rate
                     </div>
                   </div>
                   <div className="text-2xl font-semibold">
