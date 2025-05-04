@@ -9,11 +9,12 @@ import mockDatabase, { Sentiment } from '@/services/mockData';
 import { ArrowUpRightFromCircle, Gift, Wifi } from 'lucide-react';
 import CouponPicker, { Coupon } from '@/components/CouponPicker';
 import CongratulationsScreen from '@/components/CongratulationsScreen';
+import CommentStep from '@/components/CommentStep';
 import PromotionOptIn from '@/components/PromotionOptIn';
 import { toast } from 'sonner';
 
 const Index = () => {
-  const [step, setStep] = useState<'welcome' | 'promotionOptIn' | 'couponPicker' | 'sentiment' | 'congratulations'>('welcome');
+  const [step, setStep] = useState<'welcome' | 'promotionOptIn' | 'couponPicker' | 'sentiment' | 'comment' | 'congratulations'>('welcome');
   const [selectedCoupon, setSelectedCoupon] = useState<Coupon | null>(null);
   const [sentiment, setSentiment] = useState<Sentiment | null>(null);
   const [userInfo, setUserInfo] = useState<{email?: string, name?: string, provider?: string} | null>(null);
@@ -57,7 +58,17 @@ const Index = () => {
     // Add to mock database
     mockDatabase.addResponse('1', selectedSentiment);
     
-    // Go straight to congratulations screen
+    // Go to comment step after sentiment survey
+    setStep('comment');
+  };
+
+  const handleCommentComplete = (comment?: string) => {
+    // If the user provided a comment, save it
+    if (comment) {
+      console.log('User comment:', comment);
+    }
+    
+    // Go to congratulations screen
     setStep('congratulations');
   };
 
@@ -149,6 +160,15 @@ const Index = () => {
         {step === 'sentiment' && (
           <div className="animate-fade-in">
             <SentimentSurvey onComplete={handleSentimentComplete} />
+          </div>
+        )}
+        
+        {step === 'comment' && (
+          <div className="animate-fade-in">
+            <CommentStep 
+              onComplete={handleCommentComplete} 
+              onGoBack={() => setStep('sentiment')}
+            />
           </div>
         )}
         
