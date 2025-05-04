@@ -9,15 +9,13 @@ import mockDatabase, { Sentiment } from '@/services/mockData';
 import { ArrowUpRightFromCircle, Gift, Wifi } from 'lucide-react';
 import CouponPicker, { Coupon } from '@/components/CouponPicker';
 import CongratulationsScreen from '@/components/CongratulationsScreen';
-import CommentStep from '@/components/CommentStep';
 import PromotionOptIn from '@/components/PromotionOptIn';
 import { toast } from 'sonner';
 
 const Index = () => {
-  const [step, setStep] = useState<'welcome' | 'promotionOptIn' | 'couponPicker' | 'sentiment' | 'comment' | 'congratulations'>('welcome');
+  const [step, setStep] = useState<'welcome' | 'promotionOptIn' | 'couponPicker' | 'sentiment' | 'congratulations'>('welcome');
   const [selectedCoupon, setSelectedCoupon] = useState<Coupon | null>(null);
   const [sentiment, setSentiment] = useState<Sentiment | null>(null);
-  const [comment, setComment] = useState<string | undefined>(undefined);
   const [userInfo, setUserInfo] = useState<{email?: string, name?: string, provider?: string} | null>(null);
 
   const handleStartSurvey = () => {
@@ -53,39 +51,14 @@ const Index = () => {
     setStep('sentiment');
   };
   
-  const handleSentimentComplete = (selectedSentiment: Sentiment, commentText?: string) => {
+  const handleSentimentComplete = (selectedSentiment: Sentiment) => {
     setSentiment(selectedSentiment);
     
-    // If a comment was provided during sentiment selection, store it
-    if (commentText) {
-      setComment(commentText);
-      // Add to mock database
-      mockDatabase.addResponse('1', selectedSentiment, commentText);
-      // Skip the comment step
-      setStep('congratulations');
-    } else {
-      // Go to the comment step for more feedback if no comment was provided
-      setStep('comment');
-    }
-  };
-  
-  const handleCommentComplete = (commentText?: string) => {
-    if (commentText) {
-      setComment(commentText);
-      
-      // Add to mock database (we already have the sentiment from previous step)
-      if (sentiment) {
-        mockDatabase.addResponse('1', sentiment, commentText);
-      }
-    }
+    // Add to mock database
+    mockDatabase.addResponse('1', selectedSentiment);
     
-    // Show congratulations screen
+    // Go straight to congratulations screen
     setStep('congratulations');
-  };
-
-  const handleGoBack = () => {
-    // Go back to the sentiment survey step
-    setStep('sentiment');
   };
 
   const handleDone = () => {
@@ -93,7 +66,6 @@ const Index = () => {
     setStep('welcome');
     setSelectedCoupon(null);
     setSentiment(null);
-    setComment(undefined);
     setUserInfo(null);
   };
 
@@ -177,12 +149,6 @@ const Index = () => {
         {step === 'sentiment' && (
           <div className="animate-fade-in">
             <SentimentSurvey onComplete={handleSentimentComplete} />
-          </div>
-        )}
-        
-        {step === 'comment' && (
-          <div className="animate-scale-in">
-            <CommentStep onComplete={handleCommentComplete} onGoBack={handleGoBack} />
           </div>
         )}
         
