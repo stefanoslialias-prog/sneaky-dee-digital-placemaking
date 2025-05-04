@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import SentimentSurvey from '@/components/SentimentSurvey';
@@ -10,10 +11,11 @@ import CouponPicker, { Coupon } from '@/components/CouponPicker';
 import CongratulationsScreen from '@/components/CongratulationsScreen';
 import CommentStep from '@/components/CommentStep';
 import PromotionOptIn from '@/components/PromotionOptIn';
+import ThankYou from '@/components/ThankYou';
 import { toast } from 'sonner';
 
 const Index = () => {
-  const [step, setStep] = useState<'welcome' | 'promotionOptIn' | 'couponPicker' | 'sentiment' | 'comment' | 'congratulations'>('welcome');
+  const [step, setStep] = useState<'welcome' | 'promotionOptIn' | 'couponPicker' | 'sentiment' | 'comment' | 'congratulations' | 'thankYou'>('welcome');
   const [selectedCoupon, setSelectedCoupon] = useState<Coupon | null>(null);
   const [sentiment, setSentiment] = useState<Sentiment | null>(null);
   const [userInfo, setUserInfo] = useState<{email?: string, name?: string, provider?: string} | null>(null);
@@ -24,7 +26,8 @@ const Index = () => {
   };
 
   const handleSkipRegistration = () => {
-    setStep('couponPicker');
+    // When "Maybe later" is clicked, go back to the survey start
+    setStep('welcome');
   };
 
   const handleRegister = (email: string, name: string) => {
@@ -32,8 +35,8 @@ const Index = () => {
     setUserInfo({ email, name });
     // Log the registration
     console.log('User registered:', { email, name });
-    // Proceed to coupon picker
-    setStep('couponPicker');
+    // Proceed to thank you page
+    setStep('thankYou');
   };
 
   const handleSocialSignIn = (provider: 'google' | 'apple') => {
@@ -42,8 +45,8 @@ const Index = () => {
     // Log the social sign-in
     console.log('User signed in with:', provider);
     toast.success(`Signed in with ${provider.charAt(0).toUpperCase() + provider.slice(1)}!`);
-    // Proceed to coupon picker
-    setStep('couponPicker');
+    // Proceed to thank you page
+    setStep('thankYou');
   };
 
   const handleCouponSelected = (coupon: Coupon) => {
@@ -91,6 +94,12 @@ const Index = () => {
     setStep('welcome');
     setSelectedCoupon(null);
     setSentiment(null);
+    setUserInfo(null);
+  };
+
+  const handleThankYouDone = () => {
+    // Return to welcome screen after thank you
+    setStep('welcome');
     setUserInfo(null);
   };
 
@@ -197,7 +206,13 @@ const Index = () => {
           </div>
         )}
         
-        {step !== 'welcome' && step !== 'congratulations' && (
+        {step === 'thankYou' && (
+          <div className="animate-fade-in">
+            <ThankYou onDone={handleThankYouDone} />
+          </div>
+        )}
+        
+        {step !== 'welcome' && step !== 'congratulations' && step !== 'thankYou' && (
           <div className="mt-8 text-center">
             <img 
               src="/lovable-uploads/a5c50d31-a577-40dd-b769-0f586cc4f47e.png" 
