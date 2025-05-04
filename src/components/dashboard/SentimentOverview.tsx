@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -18,6 +19,7 @@ interface LocationSummary {
   name: string;
   totalSessions: number;
   footTraffic: number;
+  participationRate: number;
 }
 
 interface TrafficData {
@@ -37,6 +39,7 @@ const SentimentOverview: React.FC = () => {
   const [newResponses, setNewResponses] = useState(0);
   const [chartLoaded, setChartLoaded] = useState(false);
   const [trafficData, setTrafficData] = useState<TrafficData[]>([]);
+  const [averageParticipationRate, setAverageParticipationRate] = useState<string>("0.0");
   
   // Generate more interesting demo traffic data
   const generateTrafficData = () => {
@@ -105,13 +108,18 @@ const SentimentOverview: React.FC = () => {
           console.log('Using demo location data instead');
           // Use demo data if we can't get real data
           const demoLocations = [
-            { id: '1', name: 'Downtown Plaza', totalSessions: 320, footTraffic: 1850 },
-            { id: '2', name: 'City Park', totalSessions: 210, footTraffic: 1540 },
-            { id: '3', name: 'Market Square', totalSessions: 175, footTraffic: 1280 },
-            { id: '4', name: 'Public Library', totalSessions: 140, footTraffic: 980 },
-            { id: '5', name: 'Recreation Center', totalSessions: 115, footTraffic: 850 }
+            { id: '1', name: 'Downtown Plaza', totalSessions: 320, footTraffic: 1850, participationRate: 17.3 },
+            { id: '2', name: 'City Park', totalSessions: 210, footTraffic: 1540, participationRate: 13.6 },
+            { id: '3', name: 'Market Square', totalSessions: 175, footTraffic: 1280, participationRate: 13.7 },
+            { id: '4', name: 'Public Library', totalSessions: 140, footTraffic: 980, participationRate: 14.3 },
+            { id: '5', name: 'Recreation Center', totalSessions: 115, footTraffic: 850, participationRate: 13.5 }
           ];
           setLocations(demoLocations);
+          
+          // Calculate average participation rate
+          const totalRate = demoLocations.reduce((sum, loc) => sum + loc.participationRate, 0);
+          const avgRate = totalRate / demoLocations.length;
+          setAverageParticipationRate(avgRate.toFixed(1));
         } else if (locationData) {
           // Fetch traffic data for each location
           const locationSummaries = await Promise.all(
@@ -131,16 +139,26 @@ const SentimentOverview: React.FC = () => {
                 .select('*', { count: 'exact', head: true })
                 .eq('location_id', location.id);
                 
+              const sessions = responseCount || Math.floor(Math.random() * 200) + 100;
+              const traffic = trafficData?.device_count || Math.floor(Math.random() * 1000) + 800;
+              const participationRate = traffic > 0 ? (sessions / traffic) * 100 : 0;
+              
               return {
                 id: location.id,
                 name: location.name,
-                totalSessions: responseCount || Math.floor(Math.random() * 200) + 100, // Add demo data if no real data
-                footTraffic: trafficData?.device_count || Math.floor(Math.random() * 1000) + 800 // Add demo data if no real data
+                totalSessions: sessions,
+                footTraffic: traffic,
+                participationRate: participationRate
               };
             })
           );
           
           setLocations(locationSummaries);
+          
+          // Calculate average participation rate
+          const totalRate = locationSummaries.reduce((sum, loc) => sum + loc.participationRate, 0);
+          const avgRate = totalRate / locationSummaries.length;
+          setAverageParticipationRate(avgRate.toFixed(1));
         }
       } catch (error) {
         console.error('Error fetching dashboard data:', error);
@@ -155,13 +173,18 @@ const SentimentOverview: React.FC = () => {
         });
         
         const demoLocations = [
-          { id: '1', name: 'Downtown Plaza', totalSessions: 320, footTraffic: 1850 },
-          { id: '2', name: 'City Park', totalSessions: 210, footTraffic: 1540 },
-          { id: '3', name: 'Market Square', totalSessions: 175, footTraffic: 1280 },
-          { id: '4', name: 'Public Library', totalSessions: 140, footTraffic: 980 },
-          { id: '5', name: 'Recreation Center', totalSessions: 115, footTraffic: 850 }
+          { id: '1', name: 'Downtown Plaza', totalSessions: 320, footTraffic: 1850, participationRate: 17.3 },
+          { id: '2', name: 'City Park', totalSessions: 210, footTraffic: 1540, participationRate: 13.6 },
+          { id: '3', name: 'Market Square', totalSessions: 175, footTraffic: 1280, participationRate: 13.7 },
+          { id: '4', name: 'Public Library', totalSessions: 140, footTraffic: 980, participationRate: 14.3 },
+          { id: '5', name: 'Recreation Center', totalSessions: 115, footTraffic: 850, participationRate: 13.5 }
         ];
         setLocations(demoLocations);
+        
+        // Calculate average participation rate
+        const totalRate = demoLocations.reduce((sum, loc) => sum + loc.participationRate, 0);
+        const avgRate = totalRate / demoLocations.length;
+        setAverageParticipationRate(avgRate.toFixed(1));
         
       } finally {
         setLoading(false);
@@ -262,7 +285,6 @@ const SentimentOverview: React.FC = () => {
   // Calculate totals from actual data
   const totalSessions = locations.reduce((sum, loc) => sum + loc.totalSessions, 0);
   const totalFootTraffic = locations.reduce((sum, loc) => sum + loc.footTraffic, 0);
-  const participationRate = "29.8";
     
   // Calculate percentages for chart
   const happyPercentage = "76.2";
@@ -330,10 +352,10 @@ const SentimentOverview: React.FC = () => {
       <Card className="transform transition-all duration-500 hover:shadow-lg hover:-translate-y-1">
         <CardHeader className="pb-2">
           <CardTitle className="text-lg">Participation Rate</CardTitle>
-          <CardDescription>Survey completion</CardDescription>
+          <CardDescription>Average across locations</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className={`text-3xl font-bold ${chartLoaded ? 'animate-fade-in' : ''}`}>{participationRate}%</div>
+          <div className={`text-3xl font-bold ${chartLoaded ? 'animate-fade-in' : ''}`}>{averageParticipationRate}%</div>
         </CardContent>
       </Card>
       
@@ -490,13 +512,11 @@ const SentimentOverview: React.FC = () => {
                     <div className="font-medium text-lg">{location.name}</div>
                     <div className="text-sm text-gray-500 flex items-center">
                       <span className={`inline-block w-2 h-2 rounded-full mr-1 ${
-                        location.totalSessions > 200 ? 'bg-green-400' : 
-                        location.totalSessions > 100 ? 'bg-blue-400' : 'bg-gray-400'
+                        location.participationRate > 15 ? 'bg-green-400' : 
+                        location.participationRate > 10 ? 'bg-blue-400' : 'bg-gray-400'
                       }`}></span>
-                      {/* Format participation rate with decimal before the third digit */}
-                      {location.footTraffic > 0 ? 
-                        ((location.totalSessions / location.footTraffic * 100) / 10).toFixed(1) : 
-                        '0.0'}% participation rate
+                      {/* Display actual participation rate */}
+                      {location.participationRate.toFixed(1)}% participation rate
                     </div>
                   </div>
                   <div className="text-2xl font-semibold">

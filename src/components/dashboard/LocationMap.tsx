@@ -17,13 +17,15 @@ const LocationMap: React.FC = () => {
   const neutralCount = locationResponses.filter(r => r.sentiment === 'neutral').length;
   const concernedCount = locationResponses.filter(r => r.sentiment === 'concerned').length;
   
-  // Fixed percentages as requested
+  // Calculate actual participation rate based on the location data
+  const participationRate = location.footTraffic > 0 
+    ? ((location.totalSessions / location.footTraffic) * 100).toFixed(1) 
+    : '0.0';
+
+  // Fixed percentages for sentiment distribution visualization
   const happyPercent = '74.6';
   const neutralPercent = '63.5';
   const concernedPercent = '44.2';
-  
-  // Fixed participation rate
-  const participationRate = '32.1';
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
