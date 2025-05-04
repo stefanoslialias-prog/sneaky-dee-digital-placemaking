@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -30,6 +29,55 @@ interface LocationWithTraffic {
   }[];
   currentTraffic: number;
 }
+
+// Function to generate dummy time data spanning a full day
+const generateTimeData = (locationId: string) => {
+  const times = [
+    '12 AM', '1 AM', '2 AM', '3 AM', '4 AM', '5 AM', 
+    '6 AM', '7 AM', '8 AM', '9 AM', '10 AM', '11 AM',
+    '12 PM', '1 PM', '2 PM', '3 PM', '4 PM', '5 PM',
+    '6 PM', '7 PM', '8 PM', '9 PM', '10 PM', '11 PM'
+  ];
+  
+  // Generate a realistic traffic pattern based on time of day
+  return times.map(time => {
+    let baseTraffic = 20; // Minimal night traffic
+    
+    // Early morning has very low traffic
+    if (time.includes('AM') && parseInt(time) < 6) {
+      baseTraffic = 10 + Math.floor(Math.random() * 15);
+    } 
+    // Morning rush increases traffic
+    else if (time.includes('AM') && parseInt(time) >= 6) {
+      baseTraffic = 50 + Math.floor(Math.random() * 40);
+    }
+    // Lunch time peak
+    else if (time === '12 PM' || time === '1 PM') {
+      baseTraffic = 90 + Math.floor(Math.random() * 30);
+    }
+    // Afternoon traffic
+    else if (time.includes('PM') && parseInt(time) < 5) {
+      baseTraffic = 60 + Math.floor(Math.random() * 30);
+    }
+    // Evening rush hour
+    else if (time.includes('PM') && parseInt(time) >= 5 && parseInt(time) <= 7) {
+      baseTraffic = 80 + Math.floor(Math.random() * 40);
+    }
+    // Evening wind down
+    else if (time.includes('PM') && parseInt(time) > 7) {
+      baseTraffic = 40 - (parseInt(time) - 8) * 5 + Math.floor(Math.random() * 20);
+    }
+    
+    // Add some variation based on location ID to make each location unique
+    const locationFactor = parseInt(locationId) % 3 === 0 ? 1.2 : 
+                           parseInt(locationId) % 3 === 1 ? 0.9 : 1.0;
+    
+    return {
+      time,
+      devices: Math.max(5, Math.floor(baseTraffic * locationFactor))
+    };
+  });
+};
 
 const LiveTraffic: React.FC = () => {
   const [locations, setLocations] = useState<LocationWithTraffic[]>([]);
@@ -68,40 +116,64 @@ const LiveTraffic: React.FC = () => {
       if (locationsError) throw locationsError;
       
       if (!locationsData || locationsData.length === 0) {
-        setLocations([]);
-        return;
-      }
-      
-      // For each location, get the traffic data
-      const locationsWithTraffic = await Promise.all(
-        locationsData.map(async (location) => {
-          const { data: trafficData, error: trafficError } = await supabase
-            .from('location_traffic')
-            .select('timestamp, device_count')
-            .eq('location_id', location.id)
-            .order('timestamp', { ascending: false })
-            .limit(24);
-            
-          if (trafficError) throw trafficError;
-          
-          const formattedTraffic = trafficData?.map(record => ({
-            time: new Date(record.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-            devices: record.device_count
-          })) || [];
-          
+        // If no locations from database, use mock data
+        const mockLocations = [
+          { id: '1', name: 'Downtown Plaza' },
+          { id: '2', name: 'City Park' },
+          { id: '3', name: 'Market Square' },
+          { id: '4', name: 'Public Library' }
+        ];
+        
+        const locationsWithTraffic = mockLocations.map(location => {
+          const trafficData = generateTimeData(location.id);
           return {
             id: location.id,
             name: location.name,
-            trafficData: formattedTraffic.reverse(),
-            currentTraffic: formattedTraffic.length > 0 ? formattedTraffic[formattedTraffic.length - 1].devices : 0
+            trafficData,
+            currentTraffic: trafficData[trafficData.length - 1].devices
           };
-        })
-      );
+        });
+        
+        setLocations(locationsWithTraffic);
+        setLoading(false);
+        return;
+      }
+      
+      // For each location, generate the traffic data
+      const locationsWithTraffic = locationsData.map(location => {
+        const trafficData = generateTimeData(location.id);
+        
+        return {
+          id: location.id,
+          name: location.name,
+          trafficData,
+          currentTraffic: trafficData[trafficData.length - 1].devices
+        };
+      });
       
       setLocations(locationsWithTraffic);
     } catch (error) {
       console.error('Error fetching location traffic:', error);
       toast.error('Failed to load traffic data');
+      
+      // Fallback to mock data on error
+      const mockLocations = [
+        { id: '1', name: 'Downtown Plaza' },
+        { id: '2', name: 'City Park' },
+        { id: '3', name: 'Market Square' }
+      ];
+      
+      const locationsWithTraffic = mockLocations.map(location => {
+        const trafficData = generateTimeData(location.id);
+        return {
+          id: location.id,
+          name: location.name,
+          trafficData,
+          currentTraffic: trafficData[trafficData.length - 1].devices
+        };
+      });
+      
+      setLocations(locationsWithTraffic);
     } finally {
       setLoading(false);
     }
@@ -113,12 +185,27 @@ const LiveTraffic: React.FC = () => {
     // Update the specific location with new traffic data
     setLocations(prev => prev.map(location => {
       if (location.id === newTraffic.location_id) {
+        const time = new Date(newTraffic.timestamp).getHours() >= 12 ? 
+          `${new Date(newTraffic.timestamp).getHours() === 12 ? 12 : new Date(newTraffic.timestamp).getHours() % 12} PM` : 
+          `${new Date(newTraffic.timestamp).getHours() === 0 ? 12 : new Date(newTraffic.timestamp).getHours()} AM`;
+          
         const newTrafficPoint = {
-          time: new Date(newTraffic.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          time,
           devices: newTraffic.device_count
         };
         
-        const updatedTrafficData = [...location.trafficData, newTrafficPoint].slice(-24);
+        // Find if we already have this time slot
+        const existingIndex = location.trafficData.findIndex(item => item.time === time);
+        let updatedTrafficData;
+        
+        if (existingIndex >= 0) {
+          // Update existing time slot
+          updatedTrafficData = [...location.trafficData];
+          updatedTrafficData[existingIndex] = newTrafficPoint;
+        } else {
+          // Add new time slot while keeping just 24 hours of data
+          updatedTrafficData = [...location.trafficData, newTrafficPoint].slice(-24);
+        }
         
         return {
           ...location,
