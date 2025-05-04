@@ -19,7 +19,8 @@ const Index = () => {
   const [userInfo, setUserInfo] = useState<{email?: string, name?: string, provider?: string} | null>(null);
 
   const handleStartSurvey = () => {
-    setStep('promotionOptIn');
+    // Changed to go directly to coupon picker instead of promotion opt-in
+    setStep('couponPicker');
   };
 
   const handleSkipRegistration = () => {
