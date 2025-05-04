@@ -1,6 +1,7 @@
 
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Progress } from '@/components/ui/progress';
 import mockDatabase from '@/services/mockData';
 
 const LocationMap: React.FC = () => {
@@ -22,8 +23,8 @@ const LocationMap: React.FC = () => {
   const neutralPercent = '63.5';
   const concernedPercent = '44.2';
   
-  // Fixed participation rate
-  const participationRate = '32.1';
+  // Calculate participation rate for the selected location
+  const participationRate = (totalResponses / location.footTraffic * 100).toFixed(1);
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

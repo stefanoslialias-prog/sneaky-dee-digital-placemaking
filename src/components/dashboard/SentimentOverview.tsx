@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Progress } from '@/components/ui/progress';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -472,49 +473,56 @@ const SentimentOverview: React.FC = () => {
         <CardHeader>
           <CardTitle>Location Insights</CardTitle>
           <CardDescription>
-            Hotspots with highest engagement rates
+            Hotspots with engagement rates
           </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {locations.map((location, index) => (
-              <div 
-                key={location.id} 
-                className={`p-4 border rounded-lg transform transition-all duration-500 
-                  ${index === 0 ? 'bg-gradient-to-br from-blue-50 to-green-50 border-green-200' : ''}
-                  ${chartLoaded ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`}
-                style={{ transitionDelay: `${index * 100}ms` }}
-              >
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="font-medium text-lg">{location.name}</div>
-                    <div className="text-sm text-gray-500 flex items-center">
-                      <span className={`inline-block w-2 h-2 rounded-full mr-1 ${
-                        location.totalSessions > 200 ? 'bg-green-400' : 
-                        location.totalSessions > 100 ? 'bg-blue-400' : 'bg-gray-400'
-                      }`}></span>
-                      {/* Format participation rate with decimal before the third digit */}
-                      {location.footTraffic > 0 ? 
-                        ((location.totalSessions / location.footTraffic * 100) / 10).toFixed(1) : 
-                        '0.0'}% participation rate
+            {locations.map((location, index) => {
+              // Calculate participation rate for this location
+              const participationRate = location.footTraffic > 0 
+                ? (location.totalSessions / location.footTraffic * 100)
+                : 0;
+              
+              // Determine progress bar color based on participation rate
+              const progressBarColor = participationRate >= 50 
+                ? 'bg-green-500' 
+                : 'bg-toronto-blue';
+              
+              return (
+                <div 
+                  key={location.id} 
+                  className={`p-4 border rounded-lg transform transition-all duration-500 
+                    ${index === 0 ? 'bg-gradient-to-br from-blue-50 to-green-50 border-green-200' : ''}
+                    ${chartLoaded ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`}
+                  style={{ transitionDelay: `${index * 100}ms` }}
+                >
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="font-medium text-lg">{location.name}</div>
+                      <div className="text-sm text-gray-500 flex items-center">
+                        <span className={`inline-block w-2 h-2 rounded-full mr-1 ${
+                          location.totalSessions > 200 ? 'bg-green-400' : 
+                          location.totalSessions > 100 ? 'bg-blue-400' : 'bg-gray-400'
+                        }`}></span>
+                        {participationRate.toFixed(1)}% participation rate
+                      </div>
+                    </div>
+                    <div className="text-2xl font-semibold">
+                      {location.totalSessions.toLocaleString()}
+                      <div className="text-xs text-gray-500 text-right">responses</div>
                     </div>
                   </div>
-                  <div className="text-2xl font-semibold">
-                    {location.totalSessions.toLocaleString()}
-                    <div className="text-xs text-gray-500 text-right">responses</div>
+                  <div className="mt-2">
+                    <Progress 
+                      value={Math.min(100, participationRate)}
+                      className="h-2"
+                      indicatorClassName={`${progressBarColor}`}
+                    />
                   </div>
                 </div>
-                <div className="mt-2 bg-gray-100 rounded-full h-1.5">
-                  <div 
-                    className="bg-toronto-blue h-1.5 rounded-full transition-all duration-1000 ease-out"
-                    style={{ 
-                      width: `${chartLoaded ? Math.min(100, (location.totalSessions / 350) * 100) : 0}%`,
-                      transitionDelay: `${index * 100 + 500}ms`
-                    }}
-                  ></div>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </CardContent>
       </Card>
