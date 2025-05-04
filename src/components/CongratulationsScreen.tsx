@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
@@ -10,9 +9,16 @@ import { Label } from '@/components/ui/label';
 interface CongratulationsScreenProps {
   coupon: Coupon;
   onDone: () => void;
+  onOptInYes: () => void;
+  onOptInNo: () => void;
 }
 
-const CongratulationsScreen: React.FC<CongratulationsScreenProps> = ({ coupon, onDone }) => {
+const CongratulationsScreen: React.FC<CongratulationsScreenProps> = ({ 
+  coupon, 
+  onDone,
+  onOptInYes,
+  onOptInNo
+}) => {
   const [copied, setCopied] = useState(false);
   const [showConfetti, setShowConfetti] = useState(true);
   const [optIn, setOptIn] = useState<boolean | null>(null);
@@ -58,13 +64,15 @@ Thank you for your feedback!`;
     toast.success('Coupon downloaded!');
   };
 
-  const handleDone = () => {
+  const handleOptionSelected = () => {
     if (optIn === true) {
-      console.log('User opted in for more offers');
-      // Here you would typically save this preference to a database
-      toast.success('You\'ll receive more exclusive offers!');
+      onOptInYes();
+    } else if (optIn === false) {
+      onOptInNo();
+    } else {
+      // If no option selected, just use the default done handler
+      onDone();
     }
-    onDone();
   };
 
   // Extract percentage from the title if it exists
@@ -189,7 +197,7 @@ Thank you for your feedback!`;
           <Button 
             variant="default" 
             className="w-full bg-toronto-blue hover:bg-toronto-lightblue"
-            onClick={handleDone}
+            onClick={handleOptionSelected}
           >
             Done
           </Button>

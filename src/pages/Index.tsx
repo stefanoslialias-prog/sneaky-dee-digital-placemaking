@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import SentimentSurvey from '@/components/SentimentSurvey';
@@ -74,6 +73,20 @@ const Index = () => {
 
   const handleDone = () => {
     // Reset the flow
+    setStep('welcome');
+    setSelectedCoupon(null);
+    setSentiment(null);
+    setUserInfo(null);
+  };
+
+  const handleOptInYes = () => {
+    console.log('User opted in for more offers');
+    // Go to the promotion opt-in step
+    setStep('promotionOptIn');
+  };
+
+  const handleOptInNo = () => {
+    // Reset the flow and go back to welcome screen
     setStep('welcome');
     setSelectedCoupon(null);
     setSentiment(null);
@@ -174,7 +187,12 @@ const Index = () => {
         
         {step === 'congratulations' && selectedCoupon && (
           <div className="animate-fade-in">
-            <CongratulationsScreen coupon={selectedCoupon} onDone={handleDone} />
+            <CongratulationsScreen 
+              coupon={selectedCoupon} 
+              onDone={handleDone}
+              onOptInYes={handleOptInYes}
+              onOptInNo={handleOptInNo}
+            />
           </div>
         )}
         
