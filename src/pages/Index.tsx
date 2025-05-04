@@ -6,18 +6,44 @@ import DealDisplay from '@/components/DealDisplay';
 import Logo from '@/components/Logo';
 import { Link } from 'react-router-dom';
 import mockDatabase, { Sentiment } from '@/services/mockData';
-import { ArrowUpRightFromCircle, Wifi } from 'lucide-react';
+import { ArrowUpRightFromCircle, Gift, Wifi } from 'lucide-react';
 import CouponPicker, { Coupon } from '@/components/CouponPicker';
 import CongratulationsScreen from '@/components/CongratulationsScreen';
 import CommentStep from '@/components/CommentStep';
+import PromotionOptIn from '@/components/PromotionOptIn';
+import { toast } from 'sonner';
 
 const Index = () => {
-  const [step, setStep] = useState<'welcome' | 'couponPicker' | 'sentiment' | 'comment' | 'congratulations'>('welcome');
+  const [step, setStep] = useState<'welcome' | 'promotionOptIn' | 'couponPicker' | 'sentiment' | 'comment' | 'congratulations'>('welcome');
   const [selectedCoupon, setSelectedCoupon] = useState<Coupon | null>(null);
   const [sentiment, setSentiment] = useState<Sentiment | null>(null);
   const [comment, setComment] = useState<string | undefined>(undefined);
+  const [userInfo, setUserInfo] = useState<{email?: string, name?: string, provider?: string} | null>(null);
 
   const handleStartSurvey = () => {
+    setStep('promotionOptIn');
+  };
+
+  const handleSkipRegistration = () => {
+    setStep('couponPicker');
+  };
+
+  const handleRegister = (email: string, name: string) => {
+    // Store user info for future promotions
+    setUserInfo({ email, name });
+    // Log the registration
+    console.log('User registered:', { email, name });
+    // Proceed to coupon picker
+    setStep('couponPicker');
+  };
+
+  const handleSocialSignIn = (provider: 'google' | 'apple') => {
+    // Store provider info for future promotions
+    setUserInfo({ provider });
+    // Log the social sign-in
+    console.log('User signed in with:', provider);
+    toast.success(`Signed in with ${provider.charAt(0).toUpperCase() + provider.slice(1)}!`);
+    // Proceed to coupon picker
     setStep('couponPicker');
   };
 
@@ -68,6 +94,7 @@ const Index = () => {
     setSelectedCoupon(null);
     setSentiment(null);
     setComment(undefined);
+    setUserInfo(null);
   };
 
   return (
@@ -95,7 +122,7 @@ const Index = () => {
       
       <main className="flex-1 flex flex-col items-center justify-center p-4 md:p-8 bg-toronto-gray">
         {step === 'welcome' && (
-          <div className="text-center max-w-lg">
+          <div className="text-center max-w-lg animate-fade-in">
             <div className="mb-8">
               <div className="mx-auto w-24 h-24 rounded-full bg-toronto-blue flex items-center justify-center mb-4">
                 <Wifi size={48} className="text-white" />
@@ -104,8 +131,13 @@ const Index = () => {
               <p className="text-gray-600 mb-6">
                 Click on the button below to see exclusive offers.
               </p>
-              <Button onClick={handleStartSurvey} size="lg" className="bg-toronto-blue hover:bg-toronto-lightblue">
-                Start Quick Survey
+              <Button 
+                onClick={handleStartSurvey} 
+                size="lg" 
+                className="bg-toronto-blue hover:bg-toronto-lightblue transition-all transform hover:scale-105 active:scale-95 shadow-md"
+              >
+                <Gift size={18} className="mr-1" />
+                Claim My Reward
               </Button>
               
               <div className="mt-10">
@@ -125,21 +157,39 @@ const Index = () => {
             </div>
           </div>
         )}
+
+        {step === 'promotionOptIn' && (
+          <div className="animate-scale-in">
+            <PromotionOptIn 
+              onSkip={handleSkipRegistration}
+              onRegister={handleRegister}
+              onSocialSignIn={handleSocialSignIn}
+            />
+          </div>
+        )}
         
         {step === 'couponPicker' && (
-          <CouponPicker onCouponSelected={handleCouponSelected} />
+          <div className="animate-slide-in-right">
+            <CouponPicker onCouponSelected={handleCouponSelected} />
+          </div>
         )}
         
         {step === 'sentiment' && (
-          <SentimentSurvey onComplete={handleSentimentComplete} />
+          <div className="animate-fade-in">
+            <SentimentSurvey onComplete={handleSentimentComplete} />
+          </div>
         )}
         
         {step === 'comment' && (
-          <CommentStep onComplete={handleCommentComplete} onGoBack={handleGoBack} />
+          <div className="animate-scale-in">
+            <CommentStep onComplete={handleCommentComplete} onGoBack={handleGoBack} />
+          </div>
         )}
         
         {step === 'congratulations' && selectedCoupon && (
-          <CongratulationsScreen coupon={selectedCoupon} onDone={handleDone} />
+          <div className="animate-fade-in">
+            <CongratulationsScreen coupon={selectedCoupon} onDone={handleDone} />
+          </div>
         )}
         
         {step !== 'welcome' && step !== 'congratulations' && (
