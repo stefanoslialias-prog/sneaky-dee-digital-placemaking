@@ -125,7 +125,7 @@ const Index = () => {
               
               <div className="mt-10">
                 <img 
-                  src="/lovable-uploads/85ab9848-7cfd-4345-94a6-8bd9914ee24a.png" 
+                  src="/lovable-uploads/a5c50d31-a577-40dd-b769-0f586cc4f47e.png" 
                   alt="Shop Local Win Local" 
                   className="mx-auto h-48 w-auto"
                   onError={(e) => {
@@ -181,7 +181,7 @@ const Index = () => {
         {step !== 'welcome' && step !== 'congratulations' && (
           <div className="mt-8 text-center">
             <img 
-              src="/lovable-uploads/bd068280-e55a-4131-8a50-96bb2b06a92a.png" 
+              src="/lovable-uploads/a5c50d31-a577-40dd-b769-0f586cc4f47e.png" 
               alt="Shop Local Win Local" 
               className="mx-auto h-24 object-contain"
               onError={(e) => {
