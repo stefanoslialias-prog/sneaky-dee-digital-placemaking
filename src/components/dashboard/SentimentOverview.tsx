@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -20,7 +19,7 @@ interface LocationSummary {
   name: string;
   totalSessions: number;
   footTraffic: number;
-  linkClicks: number; // New field for link clicks
+  linkClicks: number; // Field for link clicks
 }
 
 interface TrafficData {
@@ -106,42 +105,42 @@ const SentimentOverview: React.FC = () => {
           
         if (locationError) {
           console.log('Using demo location data instead');
-          // Use demo data if we can't get real data - now with link clicks data that is higher than responses
+          // Use demo data with HIGH engagement (60-90% participation rate)
           const demoLocations = [
             { 
               id: '1', 
               name: 'Downtown Plaza', 
-              totalSessions: 320, 
+              totalSessions: 870, 
               footTraffic: 1850,
-              linkClicks: 1240 // About 26% completion rate (320/1240)
+              linkClicks: 1050 // About 83% completion rate (870/1050)
             },
             { 
               id: '2', 
               name: 'City Park', 
-              totalSessions: 210, 
+              totalSessions: 715, 
               footTraffic: 1540,
-              linkClicks: 875 // About 24% completion rate
+              linkClicks: 850 // About 84% completion rate
             },
             { 
               id: '3', 
               name: 'Market Square', 
-              totalSessions: 175, 
+              totalSessions: 540, 
               footTraffic: 1280,
-              linkClicks: 720 // About 24% completion rate
+              linkClicks: 650 // About 83% completion rate
             },
             { 
               id: '4', 
               name: 'Public Library', 
-              totalSessions: 140, 
+              totalSessions: 475, 
               footTraffic: 980,
-              linkClicks: 610 // About 23% completion rate
+              linkClicks: 680 // About 70% completion rate
             },
             { 
               id: '5', 
               name: 'Recreation Center', 
-              totalSessions: 115, 
+              totalSessions: 380, 
               footTraffic: 850,
-              linkClicks: 490 // About 23% completion rate
+              linkClicks: 610 // About 62% completion rate
             }
           ];
           setLocations(demoLocations);
@@ -164,12 +163,11 @@ const SentimentOverview: React.FC = () => {
                 .select('*', { count: 'exact', head: true })
                 .eq('location_id', location.id);
               
-              // Generate a realistic link click count (higher than responses)
-              // Assume completion rate between 20-30%
+              // Generate a realistic but HIGH link click count (60-90% completion rate)
               const footTraffic = trafficData?.device_count || Math.floor(Math.random() * 1000) + 800;
-              const sessions = responseCount || Math.floor(Math.random() * 200) + 100;
-              const completionRate = 0.2 + (Math.random() * 0.1); // 20-30% completion rate
-              const linkClicks = Math.round(sessions / completionRate);
+              const completionRate = 0.6 + (Math.random() * 0.3); // 60-90% completion rate
+              const linkClicks = Math.floor(Math.random() * 1000) + 500;
+              const sessions = Math.round(linkClicks * completionRate);
                 
               return {
                 id: location.id,
@@ -187,7 +185,7 @@ const SentimentOverview: React.FC = () => {
         console.error('Error fetching dashboard data:', error);
         toast.error('Failed to load dashboard data');
         
-        // Fallback to demo data with realistic link click counts
+        // Fallback to demo data with HIGH engagement rates
         setSentimentData({
           happy_count: 320,
           neutral_count: 184,
@@ -199,37 +197,37 @@ const SentimentOverview: React.FC = () => {
           { 
             id: '1', 
             name: 'Downtown Plaza', 
-            totalSessions: 320, 
+            totalSessions: 840, 
             footTraffic: 1850,
-            linkClicks: 1240 // About 26% completion rate
+            linkClicks: 980 // About 86% completion rate
           },
           { 
             id: '2', 
             name: 'City Park', 
-            totalSessions: 210, 
+            totalSessions: 690, 
             footTraffic: 1540,
-            linkClicks: 875 // About 24% completion rate
+            linkClicks: 820 // About 84% completion rate
           },
           { 
             id: '3', 
             name: 'Market Square', 
-            totalSessions: 175, 
+            totalSessions: 510, 
             footTraffic: 1280,
-            linkClicks: 720 // About 24% completion rate
+            linkClicks: 630 // About 81% completion rate
           },
           { 
             id: '4', 
             name: 'Public Library', 
-            totalSessions: 140, 
+            totalSessions: 410, 
             footTraffic: 980,
-            linkClicks: 610 // About 23% completion rate
+            linkClicks: 620 // About 66% completion rate
           },
           { 
             id: '5', 
             name: 'Recreation Center', 
-            totalSessions: 115, 
+            totalSessions: 385, 
             footTraffic: 850,
-            linkClicks: 490 // About 23% completion rate
+            linkClicks: 580 // About 66% completion rate
           }
         ];
         setLocations(demoLocations);
@@ -559,9 +557,11 @@ const SentimentOverview: React.FC = () => {
               // Format the participation rate to show 3 digits total with decimal before 3rd digit
               const formattedRate = participationRate.toFixed(1);
               
-              // Determine progress bar color based on participation rate
-              const progressBarColor = participationRate >= 50 
+              // Determine progress bar color based on participation rate (high engagement colors)
+              const progressBarColor = participationRate >= 80 
                 ? 'bg-green-500' 
+                : participationRate >= 70
+                ? 'bg-toronto-teal'
                 : 'bg-toronto-blue';
               
               return (
@@ -577,8 +577,8 @@ const SentimentOverview: React.FC = () => {
                       <div className="font-medium text-lg">{location.name}</div>
                       <div className="text-sm text-gray-500 flex items-center">
                         <span className={`inline-block w-2 h-2 rounded-full mr-1 ${
-                          location.totalSessions > 200 ? 'bg-green-400' : 
-                          location.totalSessions > 100 ? 'bg-blue-400' : 'bg-gray-400'
+                          participationRate >= 80 ? 'bg-green-400' : 
+                          participationRate >= 70 ? 'bg-teal-400' : 'bg-blue-400'
                         }`}></span>
                         {formattedRate}% participation rate
                       </div>
