@@ -484,6 +484,9 @@ const SentimentOverview: React.FC = () => {
                 ? (location.totalSessions / location.footTraffic * 100)
                 : 0;
               
+              // Format the participation rate to show 3 digits total with decimal before 3rd digit
+              const formattedRate = participationRate.toFixed(1);
+              
               // Determine progress bar color based on participation rate
               const progressBarColor = participationRate >= 50 
                 ? 'bg-green-500' 
@@ -505,7 +508,7 @@ const SentimentOverview: React.FC = () => {
                           location.totalSessions > 200 ? 'bg-green-400' : 
                           location.totalSessions > 100 ? 'bg-blue-400' : 'bg-gray-400'
                         }`}></span>
-                        {participationRate.toFixed(1)}% participation rate
+                        {formattedRate}% participation rate
                       </div>
                     </div>
                     <div className="text-2xl font-semibold">
