@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import SentimentSurvey from '@/components/SentimentSurvey';
@@ -45,16 +44,10 @@ const Index = () => {
   const checkUserSession = async () => {
     const { data: { session } } = await supabase.auth.getSession();
     if (session?.user) {
-      // Get user profile info
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('name, email')
-        .eq('id', session.user.id)
-        .single();
-        
+      // Set user info directly from session data since we don't have a profiles table
       setUserInfo({
         email: session.user.email,
-        name: profile?.name || session.user.user_metadata?.name || session.user.email?.split('@')[0],
+        name: session.user.user_metadata?.name || session.user.email?.split('@')[0],
       });
     }
   };

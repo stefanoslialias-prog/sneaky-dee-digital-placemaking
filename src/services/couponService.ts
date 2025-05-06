@@ -75,7 +75,9 @@ export const claimCoupon = async (params: ClaimCouponParams): Promise<ClaimCoupo
       };
     }
 
-    return data as ClaimCouponResult;
+    // Need to cast the data as our expected type since Supabase returns Json type
+    const result = data as unknown as ClaimCouponResult;
+    return result;
   } catch (error: any) {
     console.error('Unexpected error claiming coupon:', error);
     return {

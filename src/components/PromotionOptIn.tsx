@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -9,6 +10,7 @@ import * as z from 'zod';
 import { toast } from 'sonner';
 import { Apple, LucideArrowRight } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { ClaimCouponResult } from '@/services/couponService';
 
 interface PromotionOptInProps {
   onSkip: () => void;
@@ -55,8 +57,12 @@ const PromotionOptIn: React.FC<PromotionOptInProps> = ({ onSkip, onRegister, onS
         if (error) {
           console.error('Error claiming coupon:', error);
           // Continue with registration even if coupon claim fails
-        } else if (data && data.success) {
-          console.log('Coupon claimed successfully:', data);
+        } else {
+          // Type-cast the result and check for success
+          const result = data as unknown as ClaimCouponResult;
+          if (result && result.success) {
+            console.log('Coupon claimed successfully:', result);
+          }
         }
       }
       
