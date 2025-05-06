@@ -1,9 +1,10 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import { Shuffle } from 'lucide-react';
 
 export type Sentiment = 'happy' | 'neutral' | 'concerned';
 
@@ -19,23 +20,48 @@ interface SentimentSurveyProps {
 
 const SentimentSurvey: React.FC<SentimentSurveyProps> = ({ onComplete }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [question, setQuestion] = useState<{ id: string; text: string } | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  // Fetch random question on component mount
+  useEffect(() => {
+    fetchRandomQuestion();
+  }, []);
+
+  const fetchRandomQuestion = async () => {
+    setLoading(true);
+    try {
+      // Get a random active question from the database
+      const { data, error } = await supabase
+        .from('survey_questions')
+        .select('id, text')
+        .eq('active', true)
+        .order('RANDOM()')
+        .limit(1)
+        .single();
+        
+      if (error) {
+        console.error('Error fetching question:', error);
+        toast.error('Failed to load question');
+        return;
+      }
+      
+      if (data) {
+        setQuestion(data);
+      }
+    } catch (error) {
+      console.error('Failed to fetch question:', error);
+      toast.error('Failed to load question');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleSentimentSelect = async (sentiment: Sentiment) => {
     setIsSubmitting(true);
     try {
-      // Get the first active question from the database
-      const { data: question, error: questionError } = await supabase
-        .from('survey_questions')
-        .select('id')
-        .eq('active', true)
-        .order('order')
-        .limit(1)
-        .single();
-        
-      if (questionError) {
-        // Error handling for question fetch failure
-        console.error('Error fetching question:', questionError);
-        toast.error('Failed to save—please retry');
+      if (!question) {
+        toast.error('No question available');
         return;
       }
       
@@ -77,13 +103,49 @@ const SentimentSurvey: React.FC<SentimentSurveyProps> = ({ onComplete }) => {
     }
   };
 
+  // Show loading state
+  if (loading) {
+    return (
+      <div className="w-full max-w-md mx-auto">
+        <Card>
+          <CardHeader className="text-center">
+            <CardTitle className="text-2xl font-playfair">Loading Question...</CardTitle>
+            <CardDescription>
+              Please wait while we prepare your survey question.
+            </CardDescription>
+          </CardHeader>
+        </Card>
+      </div>
+    );
+  }
+
+  // Show no questions available message
+  if (!question) {
+    return (
+      <div className="w-full max-w-md mx-auto">
+        <Card>
+          <CardHeader className="text-center">
+            <CardTitle className="text-2xl font-playfair">No Questions Available</CardTitle>
+            <CardDescription>
+              Sorry, no survey questions are currently available.
+            </CardDescription>
+          </CardHeader>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="w-full max-w-md mx-auto">
       <Card>
         <CardHeader className="text-center">
+          <div className="flex items-center justify-center gap-2 mb-2">
+            <Shuffle size={16} className="text-toronto-blue animate-pulse" />
+            <span className="text-sm text-toronto-blue">Your survey just got a remix—enjoy!</span>
+          </div>
           <CardTitle className="text-2xl font-playfair">Quick Poll</CardTitle>
           <CardDescription>
-            How are you feeling about this area today?
+            {question.text}
           </CardDescription>
         </CardHeader>
         <CardContent>
