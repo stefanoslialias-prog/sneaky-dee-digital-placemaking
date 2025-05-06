@@ -12,6 +12,7 @@ interface CommentStepProps {
 
 const CommentStep: React.FC<CommentStepProps> = ({ onComplete, onGoBack }) => {
   const [comment, setComment] = useState<string>('');
+  const [hasStartedTyping, setHasStartedTyping] = useState<boolean>(false);
 
   const handleSubmit = () => {
     onComplete(comment.trim() || undefined);
@@ -25,6 +26,21 @@ const CommentStep: React.FC<CommentStepProps> = ({ onComplete, onGoBack }) => {
       onComplete(undefined);
     }
   };
+
+  const handleCommentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const newComment = e.target.value;
+    setComment(newComment);
+    
+    // Set hasStartedTyping to true if the user has typed something
+    if (!hasStartedTyping && newComment.length > 0) {
+      setHasStartedTyping(true);
+    } else if (hasStartedTyping && newComment.length === 0) {
+      setHasStartedTyping(false);
+    }
+  };
+
+  // Determine button text based on typing state
+  const buttonText = hasStartedTyping ? "Continue" : "Skip";
 
   return (
     <div className="w-full max-w-md mx-auto">
@@ -42,7 +58,7 @@ const CommentStep: React.FC<CommentStepProps> = ({ onComplete, onGoBack }) => {
               placeholder="Leave your feedback here..."
               className="h-32 resize-none"
               value={comment}
-              onChange={(e) => setComment(e.target.value)}
+              onChange={handleCommentChange}
             />
           </div>
         </CardContent>
@@ -59,7 +75,7 @@ const CommentStep: React.FC<CommentStepProps> = ({ onComplete, onGoBack }) => {
             onClick={handleSubmit}
             className="w-full md:w-auto"
           >
-            Skip
+            {buttonText}
           </Button>
         </CardFooter>
       </Card>
