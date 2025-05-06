@@ -15,11 +15,13 @@ import { useAuthState } from '@/hooks/useAuthState';
 import { toast } from 'sonner';
 import mockDatabase from '@/services/mockData';
 import { supabase } from '@/integrations/supabase/client';
+import QuestionsStep from '@/components/QuestionsStep';
 
 type AppStep = 
   | 'welcome' 
   | 'promotionOptIn' 
   | 'couponPicker' 
+  | 'questions'
   | 'sentiment' 
   | 'comment' 
   | 'congratulations' 
@@ -80,10 +82,15 @@ const Index = () => {
 
   const handleCouponSelected = (coupon: Coupon) => {
     setSelectedCoupon(coupon);
-    // Go to the sentiment survey step
-    setStep('sentiment');
+    // Go to the questions step before sentiment survey
+    setStep('questions');
   };
   
+  const handleQuestionsComplete = () => {
+    // After questions, go to sentiment survey
+    setStep('sentiment');
+  };
+
   const handleSentimentComplete = (selectedSentiment: Sentiment) => {
     setSentiment(selectedSentiment);
     
@@ -155,6 +162,16 @@ const Index = () => {
         return (
           <div className="animate-slide-in-right">
             <CouponPicker onCouponSelected={handleCouponSelected} />
+          </div>
+        );
+      
+      case 'questions':
+        return (
+          <div className="animate-fade-in">
+            <QuestionsStep 
+              onComplete={handleQuestionsComplete} 
+              couponId={selectedCoupon?.id}
+            />
           </div>
         );
         
