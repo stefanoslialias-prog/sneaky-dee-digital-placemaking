@@ -31,23 +31,27 @@ const SentimentSurvey: React.FC<SentimentSurveyProps> = ({ onComplete }) => {
   const fetchRandomQuestion = async () => {
     setLoading(true);
     try {
-      // Get a random active question from the database
+      // Get a random active question from the database - using a different approach for randomization
       const { data, error } = await supabase
         .from('survey_questions')
         .select('id, text')
         .eq('active', true)
-        .order('RANDOM()')
-        .limit(1)
-        .single();
+        .limit(100); // Get up to 100 active questions
         
       if (error) {
-        console.error('Error fetching question:', error);
+        console.error('Error fetching questions:', error);
         toast.error('Failed to load question');
+        setLoading(false);
         return;
       }
       
-      if (data) {
-        setQuestion(data);
+      if (data && data.length > 0) {
+        // Client-side randomization
+        const randomIndex = Math.floor(Math.random() * data.length);
+        setQuestion(data[randomIndex]);
+      } else {
+        // No questions found
+        setQuestion(null);
       }
     } catch (error) {
       console.error('Failed to fetch question:', error);
