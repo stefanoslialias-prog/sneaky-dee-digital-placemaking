@@ -27,6 +27,69 @@ export type Database = {
         }
         Relationships: []
       }
+      coupons: {
+        Row: {
+          active: boolean
+          code: string
+          created_at: string
+          description: string
+          discount: string
+          expires_at: string
+          id: string
+          image_url: string | null
+          title: string
+        }
+        Insert: {
+          active?: boolean
+          code: string
+          created_at?: string
+          description: string
+          discount: string
+          expires_at: string
+          id?: string
+          image_url?: string | null
+          title: string
+        }
+        Update: {
+          active?: boolean
+          code?: string
+          created_at?: string
+          description?: string
+          discount?: string
+          expires_at?: string
+          id?: string
+          image_url?: string | null
+          title?: string
+        }
+        Relationships: []
+      }
+      devices: {
+        Row: {
+          first_seen_at: string
+          id: string
+          last_seen_at: string
+          mac_address: string
+          opt_in: boolean
+          user_id: string | null
+        }
+        Insert: {
+          first_seen_at?: string
+          id?: string
+          last_seen_at?: string
+          mac_address: string
+          opt_in?: boolean
+          user_id?: string | null
+        }
+        Update: {
+          first_seen_at?: string
+          id?: string
+          last_seen_at?: string
+          mac_address?: string
+          opt_in?: boolean
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       location_traffic: {
         Row: {
           device_count: number
@@ -121,6 +184,47 @@ export type Database = {
           },
         ]
       }
+      user_coupons: {
+        Row: {
+          claimed_at: string
+          coupon_id: string
+          device_id: string | null
+          email: string | null
+          id: string
+          name: string | null
+          redeemed_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          claimed_at?: string
+          coupon_id: string
+          device_id?: string | null
+          email?: string | null
+          id?: string
+          name?: string | null
+          redeemed_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          claimed_at?: string
+          coupon_id?: string
+          device_id?: string | null
+          email?: string | null
+          id?: string
+          name?: string | null
+          redeemed_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_coupons_coupon_id_fkey"
+            columns: ["coupon_id"]
+            isOneToOne: false
+            referencedRelation: "coupons"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           id: string
@@ -195,6 +299,15 @@ export type Database = {
       }
     }
     Functions: {
+      claim_coupon: {
+        Args: {
+          p_coupon_id: string
+          p_device_id?: string
+          p_email?: string
+          p_name?: string
+        }
+        Returns: Json
+      }
       has_role: {
         Args: { user_id: string; required_role: string }
         Returns: boolean

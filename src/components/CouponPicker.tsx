@@ -2,8 +2,8 @@
 import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { fetchCoupons } from '@/services/couponService';
 
 export interface Coupon {
   id: string;
@@ -13,6 +13,8 @@ export interface Coupon {
   expiresIn: string;
   image?: string;
   discount?: string;
+  claimedAt?: Date;
+  redeemedAt?: Date;
 }
 
 interface CouponPickerProps {
@@ -24,43 +26,12 @@ const CouponPicker: React.FC<CouponPickerProps> = ({ onCouponSelected }) => {
   const [loading, setLoading] = useState(true);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   
-  // Demo coupons to use since we don't have a coupons table
-  const demoCoupons: Coupon[] = [
-    {
-      id: '1',
-      title: '20% OFF Coffee',
-      description: 'Get 20% off your next coffee at SipCo',
-      code: 'COFFEE20',
-      expiresIn: '48 hours',
-      discount: '20%',
-      image: '/lovable-uploads/bd068280-e55a-4131-8a50-96bb2b06a92a.png'
-    },
-    {
-      id: '2',
-      title: '15% OFF Lunch',
-      description: 'Enjoy lunch at any participating restaurant',
-      code: 'LUNCH15',
-      expiresIn: '7 days',
-      discount: '15%'
-    },
-    {
-      id: '3',
-      title: '$5 OFF Books',
-      description: 'At your local Toronto bookstore',
-      code: 'BOOKS5',
-      expiresIn: '30 days',
-      discount: '$5'
-    }
-  ];
-  
   useEffect(() => {
-    // Since we don't have a coupons table in Supabase, we'll just use demo coupons
-    // and simulate loading
-    const loadDemoCoupons = async () => {
+    const loadCoupons = async () => {
       try {
-        // Short delay to simulate loading
-        await new Promise(resolve => setTimeout(resolve, 800));
-        setCoupons(demoCoupons);
+        setLoading(true);
+        const availableCoupons = await fetchCoupons();
+        setCoupons(availableCoupons);
       } catch (error) {
         console.error('Error loading coupons:', error);
         toast.error('Failed to load offers');
@@ -69,7 +40,7 @@ const CouponPicker: React.FC<CouponPickerProps> = ({ onCouponSelected }) => {
       }
     };
     
-    loadDemoCoupons();
+    loadCoupons();
   }, []);
   
   const handleCouponSelect = (coupon: Coupon) => {

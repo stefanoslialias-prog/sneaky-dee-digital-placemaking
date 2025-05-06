@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -9,11 +8,13 @@ import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 import { toast } from 'sonner';
 import { Apple, LucideArrowRight } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 
 interface PromotionOptInProps {
   onSkip: () => void;
   onRegister: (email: string, name: string) => void;
   onSocialSignIn: (provider: 'google' | 'apple') => void;
+  couponId?: string; // Pass the selected coupon ID
 }
 
 const formSchema = z.object({
@@ -21,7 +22,7 @@ const formSchema = z.object({
   email: z.string().email({ message: 'Please enter a valid email' })
 });
 
-const PromotionOptIn: React.FC<PromotionOptInProps> = ({ onSkip, onRegister, onSocialSignIn }) => {
+const PromotionOptIn: React.FC<PromotionOptInProps> = ({ onSkip, onRegister, onSocialSignIn, couponId }) => {
   const [isLoading, setIsLoading] = useState(false);
   
   const form = useForm<z.infer<typeof formSchema>>({
@@ -32,23 +33,59 @@ const PromotionOptIn: React.FC<PromotionOptInProps> = ({ onSkip, onRegister, onS
     }
   });
 
-  const handleRegister = (values: z.infer<typeof formSchema>) => {
+  const handleRegister = async (values: z.infer<typeof formSchema>) => {
     setIsLoading(true);
-    // Simulate a delay for the form submission
-    setTimeout(() => {
+    
+    try {
+      // If we have a coupon ID, let's claim it
+      if (couponId) {
+        // Simple check to simulate device
+        const deviceId = `browser-${Math.random().toString(36).substring(7)}`;
+        
+        const { data, error } = await supabase.rpc(
+          'claim_coupon', 
+          {
+            p_coupon_id: couponId,
+            p_email: values.email,
+            p_name: values.name,
+            p_device_id: deviceId
+          }
+        );
+        
+        if (error) {
+          console.error('Error claiming coupon:', error);
+          // Continue with registration even if coupon claim fails
+        } else if (data && data.success) {
+          console.log('Coupon claimed successfully:', data);
+        }
+      }
+      
+      // Register for newsletter (could connect to a real email service)
       onRegister(values.email, values.name);
-      setIsLoading(false);
       toast.success('Registration successful!');
-    }, 800);
+    } catch (err) {
+      console.error('Error during registration:', err);
+      toast.error('Registration failed. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
   };
   
-  const handleSocialSignIn = (provider: 'google' | 'apple') => {
+  const handleSocialSignIn = async (provider: 'google' | 'apple') => {
     setIsLoading(true);
-    // Simulate social sign-in process
-    setTimeout(() => {
-      onSocialSignIn(provider);
+    
+    try {
+      // In a real app, we would implement social sign-in with Supabase Auth
+      // For now, we'll just simulate it
+      setTimeout(() => {
+        onSocialSignIn(provider);
+        setIsLoading(false);
+      }, 800);
+    } catch (error) {
+      console.error(`Error during ${provider} sign-in:`, error);
+      toast.error('Sign in failed. Please try again.');
       setIsLoading(false);
-    }, 800);
+    }
   };
 
   return (

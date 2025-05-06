@@ -5,6 +5,7 @@ import { Copy, Download, Check } from 'lucide-react';
 import { toast } from 'sonner';
 import { Coupon } from './CouponPicker';
 import { Label } from '@/components/ui/label';
+import { claimCoupon } from '@/services/couponService';
 
 interface CongratulationsScreenProps {
   coupon: Coupon;
@@ -22,6 +23,8 @@ const CongratulationsScreen: React.FC<CongratulationsScreenProps> = ({
   const [copied, setCopied] = useState(false);
   const [showConfetti, setShowConfetti] = useState(true);
   const [optIn, setOptIn] = useState<boolean | null>(null);
+  const [isClaiming, setIsClaiming] = useState(false);
+  const [claimed, setClaimed] = useState(false);
 
   useEffect(() => {
     // Hide confetti after 5 seconds
@@ -29,8 +32,45 @@ const CongratulationsScreen: React.FC<CongratulationsScreenProps> = ({
       setShowConfetti(false);
     }, 5000);
 
+    // Automatically claim the coupon when component mounts
+    const claimSelectedCoupon = async () => {
+      if (!claimed && !isClaiming) {
+        await handleClaimCoupon();
+      }
+    };
+    
+    claimSelectedCoupon();
+
     return () => clearTimeout(timer);
   }, []);
+
+  const handleClaimCoupon = async () => {
+    try {
+      setIsClaiming(true);
+      
+      // Get device ID if available (this would come from your WiFi sniffer)
+      // For demo purposes, we'll generate a random device ID
+      const deviceId = `demo-device-${Math.random().toString(36).substring(7)}`;
+      
+      const result = await claimCoupon({
+        couponId: coupon.id,
+        deviceId
+      });
+      
+      if (result.success) {
+        toast.success('Coupon claimed successfully!');
+        setClaimed(true);
+      } else {
+        console.error('Failed to claim coupon:', result.message);
+        toast.error(result.message || 'Failed to claim coupon');
+      }
+    } catch (error) {
+      console.error('Error claiming coupon:', error);
+      toast.error('Failed to claim coupon. Please try again.');
+    } finally {
+      setIsClaiming(false);
+    }
+  };
 
   const copyCode = () => {
     navigator.clipboard.writeText(coupon.code);
@@ -143,7 +183,19 @@ Thank you for your feedback!`;
           
           <div className="p-3 bg-green-50 text-green-700 rounded-md text-center">
             <p className="font-medium">
-              🎉 Your {getDiscountPercentage()} coupon has been sent to your e-wallet!
+              {isClaiming ? (
+                <span className="flex items-center justify-center">
+                  <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-green-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Processing your coupon...
+                </span>
+              ) : claimed ? (
+                <>🎉 Your {getDiscountPercentage()} coupon has been sent to your e-wallet!</>
+              ) : (
+                <>Your {getDiscountPercentage()} coupon is ready to use</>
+              )}
             </p>
           </div>
           

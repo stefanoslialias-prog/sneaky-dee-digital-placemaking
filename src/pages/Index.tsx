@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import SentimentSurvey from '@/components/SentimentSurvey';
 import DealDisplay from '@/components/DealDisplay';
@@ -12,15 +13,71 @@ import CommentStep from '@/components/CommentStep';
 import PromotionOptIn from '@/components/PromotionOptIn';
 import ThankYou from '@/components/ThankYou';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 
 const Index = () => {
   const [step, setStep] = useState<'welcome' | 'promotionOptIn' | 'couponPicker' | 'sentiment' | 'comment' | 'congratulations' | 'thankYou'>('welcome');
   const [selectedCoupon, setSelectedCoupon] = useState<Coupon | null>(null);
   const [sentiment, setSentiment] = useState<Sentiment | null>(null);
   const [userInfo, setUserInfo] = useState<{email?: string, name?: string, provider?: string} | null>(null);
+  const [deviceId, setDeviceId] = useState<string | null>(null);
+
+  // Generate a unique device ID for tracking
+  useEffect(() => {
+    // In a real implementation, this would come from the WiFi sniffer
+    // For demo purposes, we'll use a random ID or get from local storage
+    const storedDeviceId = localStorage.getItem('deviceId');
+    if (storedDeviceId) {
+      setDeviceId(storedDeviceId);
+    } else {
+      const newDeviceId = `browser-${Math.random().toString(36).substring(7)}`;
+      localStorage.setItem('deviceId', newDeviceId);
+      setDeviceId(newDeviceId);
+      
+      // Record device in database
+      recordDeviceInDatabase(newDeviceId);
+    }
+    
+    // Check for existing user session
+    checkUserSession();
+  }, []);
+
+  const checkUserSession = async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session?.user) {
+      // Get user profile info
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('name, email')
+        .eq('id', session.user.id)
+        .single();
+        
+      setUserInfo({
+        email: session.user.email,
+        name: profile?.name || session.user.user_metadata?.name || session.user.email?.split('@')[0],
+      });
+    }
+  };
+
+  const recordDeviceInDatabase = async (deviceId: string) => {
+    try {
+      const { error } = await supabase
+        .from('devices')
+        .insert({
+          mac_address: deviceId,
+          opt_in: false
+        });
+        
+      if (error) {
+        console.error('Error recording device:', error);
+      }
+    } catch (err) {
+      console.error('Failed to record device:', err);
+    }
+  };
 
   const handleStartSurvey = () => {
-    // Changed to go directly to coupon picker instead of promotion opt-in
+    // Changed to go directly to coupon picker
     setStep('couponPicker');
   };
 
@@ -29,21 +86,38 @@ const Index = () => {
     setStep('welcome');
   };
 
-  const handleRegister = (email: string, name: string) => {
+  const handleRegister = async (email: string, name: string) => {
     // Store user info for future promotions
     setUserInfo({ email, name });
+    
+    // Update device opt-in status if we have a device ID
+    if (deviceId) {
+      try {
+        await supabase
+          .from('devices')
+          .update({ opt_in: true })
+          .eq('mac_address', deviceId);
+      } catch (err) {
+        console.error('Failed to update device opt-in status:', err);
+      }
+    }
+    
     // Log the registration
-    console.log('User registered:', { email, name });
+    console.log('User registered:', { email, name, deviceId });
+    
     // Proceed to thank you page
     setStep('thankYou');
   };
 
   const handleSocialSignIn = (provider: 'google' | 'apple') => {
-    // Store provider info for future promotions
+    // In a real app, this would use supabase.auth.signInWithOAuth
+    // For now, just simulate the sign-in
     setUserInfo({ provider });
+    
     // Log the social sign-in
     console.log('User signed in with:', provider);
     toast.success(`Signed in with ${provider.charAt(0).toUpperCase() + provider.slice(1)}!`);
+    
     // Proceed to thank you page
     setStep('thankYou');
   };
@@ -64,10 +138,13 @@ const Index = () => {
     setStep('comment');
   };
 
-  const handleCommentComplete = (comment?: string) => {
+  const handleCommentComplete = async (comment?: string) => {
     // If the user provided a comment, save it
     if (comment) {
       console.log('User comment:', comment);
+      
+      // In a real implementation, we would save this to Supabase
+      // For now we'll just use the mock database
     }
     
     // Go to congratulations screen
@@ -79,7 +156,6 @@ const Index = () => {
     setStep('welcome');
     setSelectedCoupon(null);
     setSentiment(null);
-    setUserInfo(null);
   };
 
   const handleOptInYes = () => {
@@ -169,6 +245,7 @@ const Index = () => {
               onSkip={handleSkipRegistration}
               onRegister={handleRegister}
               onSocialSignIn={handleSocialSignIn}
+              couponId={selectedCoupon?.id}
             />
           </div>
         )}
