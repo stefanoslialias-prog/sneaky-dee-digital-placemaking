@@ -2,13 +2,18 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { CheckCircle } from 'lucide-react';
+import { CheckCircle, Gift, Mail } from 'lucide-react';
 
 interface ThankYouProps {
   onDone: () => void;
+  userInfo?: {
+    email?: string;
+    name?: string;
+    provider?: string;
+  } | null;
 }
 
-const ThankYou: React.FC<ThankYouProps> = ({ onDone }) => {
+const ThankYou: React.FC<ThankYouProps> = ({ onDone, userInfo }) => {
   return (
     <div className="w-full max-w-md mx-auto">
       <Card>
@@ -20,11 +25,42 @@ const ThankYou: React.FC<ThankYouProps> = ({ onDone }) => {
         </CardHeader>
         
         <CardContent className="text-center">
-          <p className="text-gray-600 mb-4">
-            Your registration is complete. You'll now receive exclusive offers and updates.
-          </p>
+          {userInfo?.name ? (
+            <p className="text-gray-600 mb-4">
+              Thanks {userInfo.name}! Your registration is complete. You'll now receive exclusive offers and updates.
+            </p>
+          ) : userInfo?.provider ? (
+            <p className="text-gray-600 mb-4">
+              Thanks for signing in with {userInfo.provider.charAt(0).toUpperCase() + userInfo.provider.slice(1)}! 
+              You'll now receive exclusive offers and updates.
+            </p>
+          ) : (
+            <p className="text-gray-600 mb-4">
+              Your registration is complete. You'll now receive exclusive offers and updates.
+            </p>
+          )}
           
-          <div className="p-4 bg-toronto-gray/50 rounded-md mt-4">
+          <div className="flex flex-col gap-4 mt-6">
+            {userInfo?.email && (
+              <div className="p-4 bg-blue-50 rounded-lg flex items-center gap-3 text-left">
+                <Mail className="text-blue-500 flex-shrink-0" />
+                <div>
+                  <p className="font-medium">Email Confirmation Sent</p>
+                  <p className="text-sm text-gray-600">We've sent a confirmation to {userInfo.email}</p>
+                </div>
+              </div>
+            )}
+            
+            <div className="p-4 bg-green-50 rounded-lg flex items-center gap-3 text-left">
+              <Gift className="text-green-500 flex-shrink-0" />
+              <div>
+                <p className="font-medium">Offers Coming Soon</p>
+                <p className="text-sm text-gray-600">Keep an eye out for exclusive offers straight to your inbox!</p>
+              </div>
+            </div>
+          </div>
+          
+          <div className="p-4 bg-toronto-gray/50 rounded-md mt-6">
             <p className="text-sm text-gray-500">
               We value your privacy. You can unsubscribe from our communications at any time.
             </p>

@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import SentimentSurvey from '@/components/SentimentSurvey';
@@ -208,7 +207,10 @@ const Index = () => {
         
         {step === 'thankYou' && (
           <div className="animate-fade-in">
-            <ThankYou onDone={handleThankYouDone} />
+            <ThankYou 
+              onDone={handleThankYouDone}
+              userInfo={userInfo}  
+            />
           </div>
         )}
         
