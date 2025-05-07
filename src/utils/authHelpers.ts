@@ -10,7 +10,18 @@ export const handleUserSession = async (session: Session): Promise<AuthUserType 
     if (session?.user) {
       console.log('Processing user session for user:', session.user.id);
       
-      // Try to get user role from user_roles table
+      // Special case for our default admin account
+      if (session.user.email === 'admin@digitalplacemaking.ca') {
+        console.log('Default admin account detected, granting admin privileges');
+        return {
+          id: session.user.id,
+          email: session.user.email,
+          role: 'admin',
+          name: 'Admin User'
+        };
+      }
+      
+      // Try to get user role from user_roles table for other users
       const { data: roleData, error: roleError } = await supabase
         .from('user_roles')
         .select('role')
@@ -26,9 +37,9 @@ export const handleUserSession = async (session: Session): Promise<AuthUserType 
       // Return user data with role
       return {
         id: session.user.id,
-        email: session.user.email || 'admin@digitalplacemaking.ca',
+        email: session.user.email || '',
         role: roleData?.role === 'admin' ? 'admin' : 'manager',
-        name: session.user.user_metadata?.name || 'Admin User'
+        name: session.user.user_metadata?.name || 'User'
       };
     }
     
@@ -43,6 +54,11 @@ export const loginUser = async (email: string, password: string) => {
   console.log('Attempting login for:', email);
   
   try {
+    // Special handling for default admin account
+    if (email === 'admin@digitalplacemaking.ca' && password === '123456') {
+      console.log('Default admin login detected, attempting login...');
+    }
+    
     // Use Supabase's email/password auth
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
@@ -51,6 +67,16 @@ export const loginUser = async (email: string, password: string) => {
     
     if (error) {
       console.error('Login error:', error);
+      
+      // Special case for default admin account - provide more helpful error
+      if (email === 'admin@digitalplacemaking.ca') {
+        return { 
+          error: { 
+            message: 'Default admin account login failed. Make sure this account exists in your Supabase Auth.' 
+          } 
+        };
+      }
+      
       return { error };
     }
     

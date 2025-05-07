@@ -59,17 +59,23 @@ export const AuthProvider: React.FC<{children: React.ReactNode}> = ({ children }
         if (existingSession) {
           console.log('Found existing session for user:', existingSession.user.id);
           setSession(existingSession);
-          try {
-            const userData = await handleUserSession(existingSession);
-            console.log('User data from existing session:', userData);
-            setUser(userData);
-          } catch (err: any) {
-            console.error('Error handling existing session:', err.message);
-            setError(err.message);
-          }
+          
+          // Use setTimeout to prevent auth deadlock
+          setTimeout(async () => {
+            try {
+              const userData = await handleUserSession(existingSession);
+              console.log('User data from existing session:', userData);
+              setUser(userData);
+            } catch (err: any) {
+              console.error('Error handling existing session:', err.message);
+              setError(err.message);
+            } finally {
+              setIsLoading(false);
+            }
+          }, 0);
+        } else {
+          setIsLoading(false);
         }
-        
-        setIsLoading(false);
         
         // Return cleanup function
         return () => {
@@ -96,8 +102,14 @@ export const AuthProvider: React.FC<{children: React.ReactNode}> = ({ children }
     
     try {
       const result = await loginUser(email, password);
+      
+      // If using default admin and login failed, provide more helpful error
+      if (result?.error && email === 'admin@digitalplacemaking.ca') {
+        console.warn('Default admin login failed. This account must exist in Supabase Auth.');
+      }
+      
       // Authentication state will be updated through the auth state listener
-      console.log('Login successful, waiting for auth state change');
+      console.log('Login attempt completed, result:', result);
       return result;
     } catch (err: any) {
       console.error('Login error:', err);

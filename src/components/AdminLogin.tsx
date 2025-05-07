@@ -28,8 +28,16 @@ const AdminLogin: React.FC = () => {
       console.log('Login attempt result:', result);
       
       if (result?.error) {
-        setErrorMsg(result.error.message || 'Login failed. Please check your credentials.');
-        toast.error('Login failed: ' + (result.error.message || 'Unknown error'));
+        const message = result.error.message || 'Login failed. Please check your credentials.';
+        setErrorMsg(message);
+        toast.error('Login failed: ' + message);
+        
+        // More helpful message for default admin
+        if (email === 'admin@digitalplacemaking.ca') {
+          const helpText = "If using default admin, make sure this account exists in Supabase Auth.";
+          setErrorMsg(message + " " + helpText);
+        }
+        
         setIsLoading(false);
         return;
       }
@@ -95,6 +103,7 @@ const AdminLogin: React.FC = () => {
             
             <div className="text-center text-sm text-gray-500">
               <p>Default login: admin@digitalplacemaking.ca / 123456</p>
+              <p className="mt-1 text-xs text-orange-500">Note: This account must exist in your Supabase Auth system</p>
             </div>
           </CardFooter>
         </form>
