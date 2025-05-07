@@ -24,7 +24,19 @@ export const useSentimentData = () => {
       const { data: session } = await supabase.auth.getSession();
       const isAuthenticated = !!session.session;
       
-      // Try to fetch data from sentiment_summary view
+      if (!isAuthenticated) {
+        console.log('User not authenticated, using demo data');
+        // Use demo data for non-authenticated users
+        setSentimentData({
+          happy_count: 320,
+          neutral_count: 184,
+          concerned_count: 96,
+          total_count: 600
+        });
+        return sentimentData;
+      }
+      
+      // Try to fetch data from sentiment_summary view using RLS-secured approach
       const { data: summaryData, error: summaryError } = await supabase
         .from('sentiment_summary')
         .select('*')

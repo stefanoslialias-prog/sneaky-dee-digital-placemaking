@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -8,15 +8,22 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { AlertTriangle } from 'lucide-react';
+import { AlertTriangle, Shield } from 'lucide-react';
 
 const AdminLogin: React.FC = () => {
   const [email, setEmail] = useState('admin@digitalplacemaking.ca');
   const [password, setPassword] = useState('123456');
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
-  const { login } = useAuth();
+  const { user, login } = useAuth();
   const navigate = useNavigate();
+  
+  // If user is already logged in, redirect to dashboard
+  useEffect(() => {
+    if (user) {
+      navigate('/admin/dashboard');
+    }
+  }, [user, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -57,9 +64,12 @@ const AdminLogin: React.FC = () => {
     <div className="min-h-screen flex flex-col items-center justify-center bg-toronto-gray p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl font-playfair">Community Pulse Dashboard</CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-2xl font-playfair">Community Pulse Dashboard</CardTitle>
+            <Shield className="h-6 w-6 text-blue-500" />
+          </div>
           <CardDescription>
-            Sign in to access the real-time admin dashboard
+            Secure admin access - Sign in to manage the real-time dashboard
           </CardDescription>
         </CardHeader>
         <form onSubmit={handleSubmit}>
