@@ -5,65 +5,69 @@ import { AuthUserType } from '@/types/auth';
 import { toast } from 'sonner';
 
 export const handleUserSession = async (session: Session): Promise<AuthUserType | null> => {
-  // Always return admin user regardless of session
-  return {
-    id: session?.user?.id || 'admin-id',
-    email: session?.user?.email || 'admin@toronto.ca',
-    role: 'admin',
-    name: session?.user?.user_metadata?.name || 'Admin User'
-  };
+  try {
+    // If session exists, first check if user has admin role
+    if (session?.user) {
+      // Try to get user role from user_roles table
+      const { data: roleData, error: roleError } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', session.user.id)
+        .single();
+      
+      if (roleError) {
+        console.warn('Error fetching user role:', roleError);
+      }
+      
+      // Return user data with role
+      return {
+        id: session.user.id,
+        email: session.user.email || 'admin@digitalplacemaking.ca',
+        role: roleData?.role || 'admin',
+        name: session.user.user_metadata?.name || 'Admin User'
+      };
+    }
+    
+    return null;
+  } catch (error) {
+    console.error('Error handling user session:', error);
+    return null;
+  }
 };
 
 export const loginUser = async (email: string, password: string) => {
   console.log('Attempting login for:', email);
   
   try {
-    // Still call supabase but don't rely on the response
+    // Use Supabase's email/password auth
     const response = await supabase.auth.signInWithPassword({
       email,
       password
     });
     
-    console.log('Login attempt made:', response);
+    if (response.error) {
+      console.error('Login error:', response.error);
+      return { error: response.error };
+    }
     
-    // Return a successful response regardless of actual authentication result
+    console.log('Login successful:', response);
+    
     return {
-      user: {
-        id: 'admin-id',
-        email: email,
-        role: 'admin'
-      },
-      session: response.data.session || { 
-        access_token: 'dummy-token', 
-        refresh_token: 'dummy-refresh',
-        expires_at: Date.now() + 3600
-      }
+      user: response.data.user,
+      session: response.data.session
     };
   } catch (err) {
-    console.error('Login error (ignored):', err);
-    
-    // Return a fake successful response even on error
-    return {
-      user: {
-        id: 'admin-id',
-        email: email,
-        role: 'admin'
-      },
-      session: { 
-        access_token: 'dummy-token', 
-        refresh_token: 'dummy-refresh',
-        expires_at: Date.now() + 3600
-      }
-    };
+    console.error('Login error:', err);
+    return { error: { message: 'An unexpected error occurred' } };
   }
 };
 
 export const logoutUser = async () => {
   try {
     await supabase.auth.signOut();
+    toast.success('Logged out successfully');
   } catch (error) {
-    console.error('Logout error (ignored):', error);
+    console.error('Logout error:', error);
+    toast.error('Failed to log out');
   }
-  
-  toast.success('Logged out successfully');
 };

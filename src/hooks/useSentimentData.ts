@@ -21,6 +21,10 @@ export const useSentimentData = () => {
 
   const fetchSentimentData = async () => {
     try {
+      const { data: session } = await supabase.auth.getSession();
+      const isAuthenticated = !!session.session;
+      
+      // Try to fetch data from sentiment_summary view
       const { data: summaryData, error: summaryError } = await supabase
         .from('sentiment_summary')
         .select('*')
@@ -29,6 +33,7 @@ export const useSentimentData = () => {
         .single();
           
       if (summaryError) {
+        console.log('Error fetching sentiment summary:', summaryError);
         console.log('Using demo sentiment data instead');
         // Use demo data if we can't get real data
         setSentimentData({
