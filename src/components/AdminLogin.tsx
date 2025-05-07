@@ -8,7 +8,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { ExclamationTriangleIcon } from 'lucide-react';
+import { AlertTriangle } from 'lucide-react';
 
 const AdminLogin: React.FC = () => {
   const [email, setEmail] = useState('admin@digitalplacemaking.ca');
@@ -58,7 +58,7 @@ const AdminLogin: React.FC = () => {
           <CardContent className="space-y-4">
             {errorMsg && (
               <Alert variant="destructive" className="mb-4">
-                <ExclamationTriangleIcon className="h-4 w-4 mr-2" />
+                <AlertTriangle className="h-4 w-4 mr-2" />
                 <AlertDescription>{errorMsg}</AlertDescription>
               </Alert>
             )}
