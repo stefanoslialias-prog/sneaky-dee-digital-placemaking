@@ -1,4 +1,3 @@
-
 import { Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { AuthUserType } from '@/types/auth';
@@ -22,7 +21,6 @@ export const handleUserSession = async (session: Session): Promise<AuthUserType 
       }
       
       // Try to get user role from user_roles table for other users
-      // Using RPC call that has security_definer privilege to avoid RLS issues
       const { data: roleData, error: roleError } = await supabase
         .from('user_roles')
         .select('role')
