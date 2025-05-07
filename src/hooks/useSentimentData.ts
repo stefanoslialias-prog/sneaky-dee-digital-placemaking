@@ -33,7 +33,7 @@ export const useSentimentData = () => {
           concerned_count: 96,
           total_count: 600
         });
-        return sentimentData;
+        return;
       }
       
       // Try to fetch data from sentiment_summary view using RLS-secured approach
@@ -62,19 +62,17 @@ export const useSentimentData = () => {
           total_count: summaryData.total_count || 0
         });
       }
-      
-      return sentimentData;
     } catch (error) {
       console.error('Error fetching sentiment data:', error);
       toast.error('Failed to load sentiment data');
       
-      // Return fallback data
-      return {
+      // Set fallback data in state
+      setSentimentData({
         happy_count: 320,
         neutral_count: 184,
         concerned_count: 96,
         total_count: 600
-      };
+      });
     }
   };
   

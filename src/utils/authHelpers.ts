@@ -24,31 +24,16 @@ export const handleUserSession = async (session: Session): Promise<AuthUserType 
       // Try to get user role from user_roles table for other users
       // Using RPC call that has security_definer privilege to avoid RLS issues
       const { data: roleData, error: roleError } = await supabase
-        .rpc('get_user_role', { user_id: session.user.id })
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', session.user.id)
         .single();
       
       if (roleError) {
         console.warn('Error fetching user role:', roleError);
-        // Fallback to direct query if RPC doesn't exist yet
-        const { data: directRoleData, error: directRoleError } = await supabase
-          .from('user_roles')
-          .select('role')
-          .eq('user_id', session.user.id)
-          .single();
-          
-        if (directRoleError) {
-          console.warn('Fallback direct role query failed:', directRoleError);
-        } else if (directRoleData) {
-          console.log('User role data (direct query):', directRoleData);
-          return {
-            id: session.user.id,
-            email: session.user.email || '',
-            role: directRoleData.role === 'admin' ? 'admin' : 'manager',
-            name: session.user.user_metadata?.name || 'User'
-          };
-        }
+        console.log('Fallback to default role');
       } else if (roleData) {
-        console.log('User role data (RPC):', roleData);
+        console.log('User role data:', roleData);
         return {
           id: session.user.id,
           email: session.user.email || '',
