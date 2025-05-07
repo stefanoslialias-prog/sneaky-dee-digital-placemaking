@@ -7,24 +7,30 @@ import { Label } from '@/components/ui/label';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { ExclamationTriangleIcon } from 'lucide-react';
 
 const AdminLogin: React.FC = () => {
   const [email, setEmail] = useState('admin@digitalplacemaking.ca');
   const [password, setPassword] = useState('123456');
   const [isLoading, setIsLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
   const { login } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+    setErrorMsg('');
     
     try {
       const result = await login(email, password);
       console.log('Login attempt result:', result);
       
       if (result?.error) {
-        toast.error('Login failed: ' + result.error.message);
+        setErrorMsg(result.error.message || 'Login failed. Please check your credentials.');
+        toast.error('Login failed: ' + (result.error.message || 'Unknown error'));
+        setIsLoading(false);
         return;
       }
       
@@ -32,6 +38,7 @@ const AdminLogin: React.FC = () => {
       navigate('/admin/dashboard');
     } catch (err: any) {
       console.error('Login error:', err);
+      setErrorMsg(err?.message || 'An unexpected error occurred');
       toast.error('Login failed: ' + (err?.message || 'Unknown error'));
     } finally {
       setIsLoading(false);
@@ -49,6 +56,12 @@ const AdminLogin: React.FC = () => {
         </CardHeader>
         <form onSubmit={handleSubmit}>
           <CardContent className="space-y-4">
+            {errorMsg && (
+              <Alert variant="destructive" className="mb-4">
+                <ExclamationTriangleIcon className="h-4 w-4 mr-2" />
+                <AlertDescription>{errorMsg}</AlertDescription>
+              </Alert>
+            )}
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input 

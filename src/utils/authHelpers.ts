@@ -1,3 +1,4 @@
+
 import { Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { AuthUserType } from '@/types/auth';
@@ -7,6 +8,8 @@ export const handleUserSession = async (session: Session): Promise<AuthUserType 
   try {
     // If session exists, first check if user has admin role
     if (session?.user) {
+      console.log('Processing user session for user:', session.user.id);
+      
       // Try to get user role from user_roles table
       const { data: roleData, error: roleError } = await supabase
         .from('user_roles')
@@ -17,6 +20,8 @@ export const handleUserSession = async (session: Session): Promise<AuthUserType 
       if (roleError) {
         console.warn('Error fetching user role:', roleError);
       }
+      
+      console.log('User role data:', roleData);
       
       // Return user data with role
       return {
@@ -39,21 +44,21 @@ export const loginUser = async (email: string, password: string) => {
   
   try {
     // Use Supabase's email/password auth
-    const response = await supabase.auth.signInWithPassword({
+    const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password
     });
     
-    if (response.error) {
-      console.error('Login error:', response.error);
-      return { error: response.error };
+    if (error) {
+      console.error('Login error:', error);
+      return { error };
     }
     
-    console.log('Login successful:', response);
+    console.log('Login successful:', data);
     
     return {
-      user: response.data.user,
-      session: response.data.session
+      user: data.user,
+      session: data.session
     };
   } catch (err) {
     console.error('Login error:', err);

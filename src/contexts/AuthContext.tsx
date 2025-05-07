@@ -1,3 +1,4 @@
+
 import React, { createContext, useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Session } from '@supabase/supabase-js';
@@ -32,6 +33,7 @@ export const AuthProvider: React.FC<{children: React.ReactNode}> = ({ children }
                 setTimeout(async () => {
                   try {
                     const userData = await handleUserSession(newSession);
+                    console.log('User data from session:', userData);
                     setUser(userData);
                     setError(null);
                   } catch (err: any) {
@@ -55,9 +57,11 @@ export const AuthProvider: React.FC<{children: React.ReactNode}> = ({ children }
         }
         
         if (existingSession) {
+          console.log('Found existing session for user:', existingSession.user.id);
           setSession(existingSession);
           try {
             const userData = await handleUserSession(existingSession);
+            console.log('User data from existing session:', userData);
             setUser(userData);
           } catch (err: any) {
             console.error('Error handling existing session:', err.message);
