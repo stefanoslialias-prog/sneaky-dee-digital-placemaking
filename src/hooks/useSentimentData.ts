@@ -36,30 +36,60 @@ export const useSentimentData = () => {
         return;
       }
       
-      // Try to fetch data from sentiment_summary view using RLS-secured approach
-      const { data: summaryData, error: summaryError } = await supabase
-        .from('sentiment_summary')
-        .select('*')
-        .order('survey_date', { ascending: false })
-        .limit(1)
+      // For authenticated users, try to fetch the role first
+      const { data: userData, error: userError } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', session.session.user.id)
         .single();
-          
-      if (summaryError) {
-        console.log('Error fetching sentiment summary:', summaryError);
-        console.log('Using demo sentiment data instead');
-        // Use demo data if we can't get real data
+        
+      if (userError) {
+        console.error('Error fetching user role:', userError);
+        // Use demo data if we can't confirm role
         setSentimentData({
           happy_count: 320,
           neutral_count: 184,
           concerned_count: 96,
           total_count: 600
         });
-      } else if (summaryData) {
+        return;
+      }
+      
+      // If user is admin, fetch the data from the sentiment_summary view
+      if (userData?.role === 'admin') {
+        const { data: summaryData, error: summaryError } = await supabase
+          .from('sentiment_summary')
+          .select('*')
+          .order('survey_date', { ascending: false })
+          .limit(1)
+          .single();
+            
+        if (summaryError) {
+          console.log('Error fetching sentiment summary:', summaryError);
+          console.log('Using demo sentiment data instead');
+          // Use demo data if we can't get real data
+          setSentimentData({
+            happy_count: 320,
+            neutral_count: 184,
+            concerned_count: 96,
+            total_count: 600
+          });
+        } else if (summaryData) {
+          setSentimentData({
+            happy_count: summaryData.happy_count || 0,
+            neutral_count: summaryData.neutral_count || 0,
+            concerned_count: summaryData.concerned_count || 0,
+            total_count: summaryData.total_count || 0
+          });
+        }
+      } else {
+        // For non-admin authenticated users, use personalized demo data
+        console.log('User authenticated but not admin, using demo data');
         setSentimentData({
-          happy_count: summaryData.happy_count || 0,
-          neutral_count: summaryData.neutral_count || 0,
-          concerned_count: summaryData.concerned_count || 0,
-          total_count: summaryData.total_count || 0
+          happy_count: 320,
+          neutral_count: 184,
+          concerned_count: 96,
+          total_count: 600
         });
       }
     } catch (error) {
