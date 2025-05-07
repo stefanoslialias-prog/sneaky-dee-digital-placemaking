@@ -1,4 +1,3 @@
-
 import { Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { AuthUserType } from '@/types/auth';
@@ -23,7 +22,7 @@ export const handleUserSession = async (session: Session): Promise<AuthUserType 
       return {
         id: session.user.id,
         email: session.user.email || 'admin@digitalplacemaking.ca',
-        role: roleData?.role || 'admin',
+        role: roleData?.role === 'admin' ? 'admin' : 'manager',
         name: session.user.user_metadata?.name || 'Admin User'
       };
     }
