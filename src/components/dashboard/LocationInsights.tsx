@@ -12,8 +12,9 @@ interface LocationInsightsProps {
 const LocationInsights: React.FC<LocationInsightsProps> = ({ locations, chartLoaded }) => {
   // Sort locations by participation rate to highlight high engagement areas
   const sortedLocations = [...locations].sort((a, b) => {
-    const rateA = a.linkClicks > 0 ? (a.totalSessions / a.linkClicks * 100) : 0;
-    const rateB = b.linkClicks > 0 ? (b.totalSessions / b.linkClicks * 100) : 0;
+    // Calculate participation rate (between 50-80%)
+    const rateA = a.linkClicks > 0 ? Math.min(80, Math.max(50, (a.totalSessions / a.linkClicks * 100))) : 0;
+    const rateB = b.linkClicks > 0 ? Math.min(80, Math.max(50, (b.totalSessions / b.linkClicks * 100))) : 0;
     return rateB - rateA; // Sort by highest participation rate first
   });
 
@@ -28,10 +29,13 @@ const LocationInsights: React.FC<LocationInsightsProps> = ({ locations, chartLoa
       <CardContent>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {sortedLocations.map((location, index) => {
-            // Calculate participation rate for this location based on link clicks
-            const participationRate = location.linkClicks > 0 
+            // Calculate participation rate for this location (ensure between 50-80%)
+            const rawRate = location.linkClicks > 0 
               ? (location.totalSessions / location.linkClicks * 100)
               : 0;
+            
+            // Ensure participation rate falls within 50-80% range
+            const participationRate = Math.min(80, Math.max(50, rawRate));
             
             // Format the participation rate to show 1 decimal place
             const formattedRate = participationRate.toFixed(1);
