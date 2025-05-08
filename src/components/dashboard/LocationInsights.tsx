@@ -10,29 +10,36 @@ interface LocationInsightsProps {
 }
 
 const LocationInsights: React.FC<LocationInsightsProps> = ({ locations, chartLoaded }) => {
+  // Sort locations by participation rate to highlight high engagement areas
+  const sortedLocations = [...locations].sort((a, b) => {
+    const rateA = a.linkClicks > 0 ? (a.totalSessions / a.linkClicks * 100) : 0;
+    const rateB = b.linkClicks > 0 ? (b.totalSessions / b.linkClicks * 100) : 0;
+    return rateB - rateA; // Sort by highest participation rate first
+  });
+
   return (
     <Card className="md:col-span-4">
       <CardHeader>
         <CardTitle>Location Insights</CardTitle>
         <CardDescription>
-          Hotspots with engagement rates
+          Hotspots with engagement rates (showing 50-80% participation)
         </CardDescription>
       </CardHeader>
       <CardContent>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {locations.map((location, index) => {
+          {sortedLocations.map((location, index) => {
             // Calculate participation rate for this location based on link clicks
             const participationRate = location.linkClicks > 0 
               ? (location.totalSessions / location.linkClicks * 100)
               : 0;
             
-            // Format the participation rate to show 3 digits total with decimal before 3rd digit
+            // Format the participation rate to show 1 decimal place
             const formattedRate = participationRate.toFixed(1);
             
-            // Determine progress bar color based on participation rate (high engagement colors)
-            const progressBarColor = participationRate >= 80 
+            // Determine progress bar color based on participation rate
+            const progressBarColor = participationRate >= 70 
               ? 'bg-green-500' 
-              : participationRate >= 70
+              : participationRate >= 60
               ? 'bg-toronto-teal'
               : 'bg-toronto-blue';
             
@@ -40,7 +47,7 @@ const LocationInsights: React.FC<LocationInsightsProps> = ({ locations, chartLoa
               <div 
                 key={location.id} 
                 className={`p-4 border rounded-lg transform transition-all duration-500 
-                  ${index === 0 ? 'bg-gradient-to-br from-blue-50 to-green-50 border-green-200' : ''}
+                  ${participationRate >= 75 ? 'bg-gradient-to-br from-blue-50 to-green-50 border-green-200' : ''}
                   ${chartLoaded ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`}
                 style={{ transitionDelay: `${index * 100}ms` }}
               >
@@ -49,8 +56,8 @@ const LocationInsights: React.FC<LocationInsightsProps> = ({ locations, chartLoa
                     <div className="font-medium text-lg">{location.name}</div>
                     <div className="text-sm text-gray-500 flex items-center">
                       <span className={`inline-block w-2 h-2 rounded-full mr-1 ${
-                        participationRate >= 80 ? 'bg-green-400' : 
-                        participationRate >= 70 ? 'bg-teal-400' : 'bg-blue-400'
+                        participationRate >= 70 ? 'bg-green-400' : 
+                        participationRate >= 60 ? 'bg-teal-400' : 'bg-blue-400'
                       }`}></span>
                       {formattedRate}% participation rate
                     </div>
@@ -67,8 +74,9 @@ const LocationInsights: React.FC<LocationInsightsProps> = ({ locations, chartLoa
                     indicatorClassName={`${progressBarColor}`}
                   />
                 </div>
-                <div className="mt-2 text-xs text-gray-500">
-                  {location.linkClicks.toLocaleString()} total link clicks
+                <div className="mt-2 text-xs text-gray-500 flex justify-between">
+                  <span>{location.linkClicks.toLocaleString()} link clicks</span>
+                  <span>{location.footTraffic.toLocaleString()} foot traffic</span>
                 </div>
               </div>
             );

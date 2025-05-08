@@ -23,44 +23,8 @@ export const useLocationData = () => {
           
       if (locationError) {
         console.log('Using demo location data instead');
-        // Use demo data with HIGH engagement (60-90% participation rate)
-        const demoLocations = [
-          { 
-            id: '1', 
-            name: 'Downtown Plaza', 
-            totalSessions: 870, 
-            footTraffic: 1850,
-            linkClicks: 1050 // About 83% completion rate (870/1050)
-          },
-          { 
-            id: '2', 
-            name: 'City Park', 
-            totalSessions: 715, 
-            footTraffic: 1540,
-            linkClicks: 850 // About 84% completion rate
-          },
-          { 
-            id: '3', 
-            name: 'Market Square', 
-            totalSessions: 540, 
-            footTraffic: 1280,
-            linkClicks: 650 // About 83% completion rate
-          },
-          { 
-            id: '4', 
-            name: 'Public Library', 
-            totalSessions: 475, 
-            footTraffic: 980,
-            linkClicks: 680 // About 70% completion rate
-          },
-          { 
-            id: '5', 
-            name: 'Recreation Center', 
-            totalSessions: 380, 
-            footTraffic: 850,
-            linkClicks: 610 // About 62% completion rate
-          }
-        ];
+        // Create diverse location data with participation rates between 50-80%
+        const demoLocations = generateDiverseLocationData();
         setLocations(demoLocations);
         return demoLocations;
       } else if (locationData) {
@@ -82,9 +46,9 @@ export const useLocationData = () => {
               .select('*', { count: 'exact', head: true })
               .eq('location_id', location.id);
             
-            // Generate a realistic but HIGH link click count (60-90% completion rate)
+            // Generate diverse but high engagement data (50-80% participation rate)
             const footTraffic = trafficData?.device_count || Math.floor(Math.random() * 1000) + 800;
-            const completionRate = 0.6 + (Math.random() * 0.3); // 60-90% completion rate
+            const completionRate = 0.5 + (Math.random() * 0.3); // 50-80% participation rate
             const linkClicks = Math.floor(Math.random() * 1000) + 500;
             const sessions = Math.round(linkClicks * completionRate);
               
@@ -98,8 +62,10 @@ export const useLocationData = () => {
           })
         );
         
-        setLocations(locationSummaries);
-        return locationSummaries;
+        // Shuffle the locations to randomize the display order
+        const randomizedLocations = shuffleArray(locationSummaries);
+        setLocations(randomizedLocations);
+        return randomizedLocations;
       }
       
       return [];
@@ -107,47 +73,58 @@ export const useLocationData = () => {
       console.error('Error fetching location data:', error);
       toast.error('Failed to load location data');
       
-      // Fallback to demo data with HIGH engagement rates
-      const demoLocations = [
-        { 
-          id: '1', 
-          name: 'Downtown Plaza', 
-          totalSessions: 840, 
-          footTraffic: 1850,
-          linkClicks: 980 // About 86% completion rate
-        },
-        { 
-          id: '2', 
-          name: 'City Park', 
-          totalSessions: 690, 
-          footTraffic: 1540,
-          linkClicks: 820 // About 84% completion rate
-        },
-        { 
-          id: '3', 
-          name: 'Market Square', 
-          totalSessions: 510, 
-          footTraffic: 1280,
-          linkClicks: 630 // About 81% completion rate
-        },
-        { 
-          id: '4', 
-          name: 'Public Library', 
-          totalSessions: 410, 
-          footTraffic: 980,
-          linkClicks: 620 // About 66% completion rate
-        },
-        { 
-          id: '5', 
-          name: 'Recreation Center', 
-          totalSessions: 385, 
-          footTraffic: 850,
-          linkClicks: 580 // About 66% completion rate
-        }
-      ];
+      // Fallback to diverse demo data with high engagement rates
+      const demoLocations = generateDiverseLocationData();
       setLocations(demoLocations);
       return demoLocations;
     }
+  };
+  
+  // Helper function to generate diverse location data with varying participation rates
+  const generateDiverseLocationData = () => {
+    const locationNames = [
+      'Downtown Plaza', 
+      'City Park', 
+      'Market Square', 
+      'Public Library', 
+      'Recreation Center',
+      'Waterfront Park',
+      'Innovation Hub',
+      'Community Center',
+      'Arts District',
+      'Transit Terminal'
+    ];
+    
+    const demoLocations = locationNames.map((name, index) => {
+      // Create more diverse engagement rates between 50-80%
+      const participationRate = 50 + Math.floor(Math.random() * 30);
+      
+      // Calculate realistic numbers based on participation rate
+      const linkClicks = 500 + Math.floor(Math.random() * 800);
+      const totalSessions = Math.round(linkClicks * (participationRate / 100));
+      const footTraffic = linkClicks + 300 + Math.floor(Math.random() * 600);
+      
+      return {
+        id: (index + 1).toString(),
+        name,
+        totalSessions,
+        footTraffic,
+        linkClicks
+      };
+    });
+    
+    // Shuffle the array to randomize the order
+    return shuffleArray(demoLocations);
+  };
+  
+  // Fisher-Yates shuffle algorithm to randomize array order
+  const shuffleArray = <T,>(array: T[]): T[] => {
+    const newArray = [...array];
+    for (let i = newArray.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
+    }
+    return newArray;
   };
   
   return {
