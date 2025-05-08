@@ -28,6 +28,8 @@ export const useSurveyFlow = () => {
     setStep('welcome');
   };
 
+  // This function is no longer used directly in our flow
+  // It's now handled by the PromotionOptIn component
   const handleRegister = async (email: string, name: string) => {
     // Get device ID if available (this would come from your WiFi sniffer)
     // For demo purposes, we'll generate a random device ID
@@ -46,12 +48,11 @@ export const useSurveyFlow = () => {
     // Log the registration
     console.log('User registered:', { email, name, deviceId });
     
-    // Proceed to thank you page
-    setStep('thankYou');
-    
     return { email, name };
   };
 
+  // This function is no longer used directly in our flow
+  // It's now handled by the PromotionOptIn component
   const handleSocialSignIn = (provider: 'google' | 'apple') => {
     // In a real app, this would use supabase.auth.signInWithOAuth
     // For now, just simulate the sign-in
@@ -59,10 +60,6 @@ export const useSurveyFlow = () => {
     
     // Log the social sign-in
     console.log('User signed in with:', provider);
-    toast.success(`Signed in with ${provider.charAt(0).toUpperCase() + provider.slice(1)}!`);
-    
-    // Proceed to thank you page
-    setStep('thankYou');
     
     return userInfo;
   };

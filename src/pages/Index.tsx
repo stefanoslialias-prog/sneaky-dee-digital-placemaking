@@ -26,17 +26,19 @@ const Index = () => {
   const handleRegister = async (email: string, name: string) => {
     // Store user info for future promotions
     setUserInfo({ email, name });
+    
+    // Proceed to thank you page
+    setStep('thankYou');
   };
 
   const handleSocialSignIn = (provider: 'google' | 'apple') => {
     setUserInfo({ provider });
+    
     // Log the social sign-in
     console.log('User signed in with:', provider);
-  };
-
-  // Now with CommentStep's onGoBack implemented
-  const handleCommentBack = () => {
-    setStep('sentiment');
+    
+    // Proceed to thank you page
+    setStep('thankYou');
   };
 
   return (
