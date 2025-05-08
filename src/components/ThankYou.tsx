@@ -1,9 +1,8 @@
 
-import React, { useEffect } from 'react';
+import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { CheckCircle, Gift, Mail } from 'lucide-react';
-import { toast } from 'sonner';
 
 interface ThankYouProps {
   onDone: () => void;
@@ -15,14 +14,6 @@ interface ThankYouProps {
 }
 
 const ThankYou: React.FC<ThankYouProps> = ({ onDone, userInfo }) => {
-  useEffect(() => {
-    // Display a toast notification when the component mounts
-    toast.success('Your coupon has been deposited into your e-wallet!', {
-      duration: 5000,
-      position: 'top-center',
-    });
-  }, []);
-
   return (
     <div className="w-full max-w-md mx-auto">
       <Card>
