@@ -10,9 +10,9 @@ import { claimCoupon } from '@/services/couponService';
 
 interface CongratulationsScreenProps {
   coupon: Coupon;
-  onDone: () => void;
   onOptInYes: () => void;
   onOptInNo: () => void;
+  onDone?: () => void; // Made optional with the '?' operator
 }
 
 const CongratulationsScreen: React.FC<CongratulationsScreenProps> = ({ 
