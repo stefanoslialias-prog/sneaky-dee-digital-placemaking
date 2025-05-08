@@ -1,0 +1,131 @@
+
+import React from 'react';
+import { AppStep } from '@/hooks/useSurveyFlow';
+import WelcomeScreen from '@/components/WelcomeScreen';
+import SentimentSurvey from '@/components/SentimentSurvey';
+import { Coupon } from '@/components/CouponPicker';
+import CouponPicker from '@/components/CouponPicker';
+import { CongratulationsScreen } from '@/components/congratulations';
+import CommentStep from '@/components/CommentStep';
+import PromotionOptIn from '@/components/PromotionOptIn';
+import ThankYou from '@/components/ThankYou';
+import { Sentiment } from '@/services/mockData';
+import BrandImage from '@/components/BrandImage';
+
+interface SurveyStepRendererProps {
+  step: AppStep;
+  selectedCoupon: Coupon | null;
+  userInfo: any;
+  onStartSurvey: () => void;
+  onSkipRegistration: () => void;
+  onRegister: (email: string, name: string) => void;
+  onSocialSignIn: (provider: 'google' | 'apple') => void;
+  onCouponSelected: (coupon: Coupon) => void;
+  onSentimentComplete: (sentiment: Sentiment) => void;
+  onCommentComplete: (comment?: string) => void;
+  onOptInYes: () => void;
+  onOptInNo: () => void;
+  onThankYouDone: () => void;
+}
+
+const SurveyStepRenderer: React.FC<SurveyStepRendererProps> = ({
+  step,
+  selectedCoupon,
+  userInfo,
+  onStartSurvey,
+  onSkipRegistration,
+  onRegister,
+  onSocialSignIn,
+  onCouponSelected,
+  onSentimentComplete,
+  onCommentComplete,
+  onOptInYes,
+  onOptInNo,
+  onThankYouDone,
+}) => {
+
+  const renderCurrentStep = () => {
+    switch (step) {
+      case 'welcome':
+        return <WelcomeScreen onStartSurvey={onStartSurvey} />;
+        
+      case 'promotionOptIn':
+        return (
+          <div className="animate-scale-in">
+            <PromotionOptIn 
+              onSkip={onSkipRegistration}
+              onRegister={onRegister}
+              onSocialSignIn={onSocialSignIn}
+              couponId={selectedCoupon?.id}
+            />
+          </div>
+        );
+        
+      case 'couponPicker':
+        return (
+          <div className="animate-slide-in-right">
+            <CouponPicker onCouponSelected={onCouponSelected} />
+          </div>
+        );
+        
+      case 'sentiment':
+        return (
+          <div className="animate-fade-in">
+            <SentimentSurvey onComplete={onSentimentComplete} />
+          </div>
+        );
+        
+      case 'comment':
+        return (
+          <div className="animate-fade-in">
+            <CommentStep 
+              onComplete={onCommentComplete} 
+              onGoBack={() => onSentimentComplete(null!)} // Go back to sentiment
+            />
+          </div>
+        );
+        
+      case 'congratulations':
+        return selectedCoupon ? (
+          <div className="animate-fade-in">
+            <CongratulationsScreen 
+              coupon={selectedCoupon} 
+              onOptInYes={onOptInYes}
+              onOptInNo={onOptInNo}
+            />
+          </div>
+        ) : null;
+        
+      case 'thankYou':
+        return (
+          <div className="animate-fade-in">
+            <ThankYou 
+              onDone={onThankYouDone}
+              userInfo={userInfo}  
+            />
+          </div>
+        );
+        
+      default:
+        return null;
+    }
+  };
+
+  const shouldShowBrandImage = () => {
+    return step !== 'welcome' && step !== 'congratulations' && step !== 'thankYou';
+  };
+
+  return (
+    <>
+      {renderCurrentStep()}
+      
+      {shouldShowBrandImage() && (
+        <div className="mt-8">
+          <BrandImage />
+        </div>
+      )}
+    </>
+  );
+};
+
+export default SurveyStepRenderer;
