@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
@@ -16,13 +17,11 @@ interface CongratulationsScreenProps {
 
 const CongratulationsScreen: React.FC<CongratulationsScreenProps> = ({ 
   coupon, 
-  onDone,
   onOptInYes,
   onOptInNo
 }) => {
   const [copied, setCopied] = useState(false);
   const [showConfetti, setShowConfetti] = useState(true);
-  const [optIn, setOptIn] = useState<boolean | null>(null);
   const [isClaiming, setIsClaiming] = useState(false);
   const [claimed, setClaimed] = useState(false);
 
@@ -102,17 +101,6 @@ Thank you for your feedback!`;
     URL.revokeObjectURL(href);
     
     toast.success('Coupon downloaded!');
-  };
-
-  const handleOptionSelected = () => {
-    if (optIn === true) {
-      onOptInYes();
-    } else if (optIn === false) {
-      onOptInNo();
-    } else {
-      // If no option selected, just use the default done handler
-      onDone();
-    }
   };
 
   // Extract percentage from the title if it exists
@@ -199,25 +187,24 @@ Thank you for your feedback!`;
             </p>
           </div>
           
-          {/* Yes/No Options */}
+          {/* Yes/No Options with direct actions */}
           <div className="p-4 border rounded-md bg-toronto-gray/50">
             <Label className="font-medium block mb-3 text-center">
               Would you like to receive more exclusive offers?
             </Label>
             <div className="flex gap-3 justify-center">
               <Button 
-                variant={optIn === true ? "default" : "outline"}
+                variant="default"
                 size="sm"
-                className={optIn === true ? "bg-toronto-blue hover:bg-toronto-lightblue" : ""}
-                onClick={() => setOptIn(true)}
+                className="bg-toronto-blue hover:bg-toronto-lightblue"
+                onClick={onOptInYes}
               >
                 Yes
               </Button>
               <Button 
-                variant={optIn === false ? "default" : "outline"}
+                variant="outline"
                 size="sm"
-                className={optIn === false ? "bg-toronto-blue hover:bg-toronto-lightblue" : ""}
-                onClick={() => setOptIn(false)}
+                onClick={onOptInNo}
               >
                 No
               </Button>
@@ -245,14 +232,6 @@ Thank you for your feedback!`;
               <span className="ml-1">Download</span>
             </Button>
           </div>
-          
-          <Button 
-            variant="default" 
-            className="w-full bg-toronto-blue hover:bg-toronto-lightblue"
-            onClick={handleOptionSelected}
-          >
-            Done
-          </Button>
         </CardFooter>
       </Card>
 

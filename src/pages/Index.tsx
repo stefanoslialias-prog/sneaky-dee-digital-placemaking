@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import WelcomeScreen from '@/components/WelcomeScreen';
 import SentimentSurvey from '@/components/SentimentSurvey';
@@ -180,7 +179,6 @@ const Index = () => {
           <div className="animate-fade-in">
             <CongratulationsScreen 
               coupon={selectedCoupon} 
-              onDone={handleDone}
               onOptInYes={handleOptInYes}
               onOptInNo={handleOptInNo}
             />
