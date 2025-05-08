@@ -1,10 +1,11 @@
+
 import React, { useState } from 'react';
 import WelcomeScreen from '@/components/WelcomeScreen';
 import SentimentSurvey from '@/components/SentimentSurvey';
 import AppLayout from '@/components/AppLayout';
 import { Sentiment } from '@/services/mockData';
 import CouponPicker, { Coupon } from '@/components/CouponPicker';
-import CongratulationsScreen from '@/components/CongratulationsScreen';
+import { CongratulationsScreen } from '@/components/congratulations';
 import CommentStep from '@/components/CommentStep';
 import PromotionOptIn from '@/components/PromotionOptIn';
 import ThankYou from '@/components/ThankYou';
