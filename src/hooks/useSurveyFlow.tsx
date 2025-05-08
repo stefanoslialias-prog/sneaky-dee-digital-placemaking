@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Coupon } from '@/components/CouponPicker';
 import { Sentiment } from '@/services/mockData';
@@ -101,7 +100,7 @@ export const useSurveyFlow = () => {
   const handleOptInNo = () => {
     // Show toast notification about coupon being transferred to e-wallet
     if (selectedCoupon) {
-      toast.success(`Your ${selectedCoupon.discount} coupon for ${selectedCoupon.merchant} has been transferred to your e-wallet!`, {
+      toast.success(`Your ${selectedCoupon.discount} coupon for ${selectedCoupon.title} has been transferred to your e-wallet!`, {
         duration: 5000,
         position: 'top-center',
       });
