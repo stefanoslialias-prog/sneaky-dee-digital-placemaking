@@ -99,6 +99,19 @@ export const useSurveyFlow = () => {
   };
 
   const handleOptInNo = () => {
+    // Show toast notification about coupon being transferred to e-wallet
+    if (selectedCoupon) {
+      toast.success(`Your ${selectedCoupon.discount} coupon for ${selectedCoupon.merchant} has been transferred to your e-wallet!`, {
+        duration: 5000,
+        position: 'top-center',
+      });
+    } else {
+      toast.success('Your coupon has been transferred to your e-wallet!', {
+        duration: 5000,
+        position: 'top-center',
+      });
+    }
+    
     setStep('welcome');
     setSelectedCoupon(null);
     setSentiment(null);
