@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -30,53 +31,65 @@ interface LocationWithTraffic {
   currentTraffic: number;
 }
 
-// Function to generate dummy time data spanning a full day
+// Function to generate time data spanning the last 24 hours
 const generateTimeData = (locationId: string) => {
-  const times = [
-    '12 AM', '1 AM', '2 AM', '3 AM', '4 AM', '5 AM', 
-    '6 AM', '7 AM', '8 AM', '9 AM', '10 AM', '11 AM',
-    '12 PM', '1 PM', '2 PM', '3 PM', '4 PM', '5 PM',
-    '6 PM', '7 PM', '8 PM', '9 PM', '10 PM', '11 PM'
-  ];
+  const currentDate = new Date();
+  const timeData = [];
   
-  // Generate a realistic traffic pattern based on time of day
-  return times.map(time => {
+  // Generate data for the past 24 hours
+  for (let i = 23; i >= 0; i--) {
+    const hour = new Date(currentDate);
+    hour.setHours(currentDate.getHours() - i);
+    
+    const timeLabel = hour.getHours() >= 12 ? 
+      `${hour.getHours() === 12 ? 12 : hour.getHours() % 12} PM` : 
+      `${hour.getHours() === 0 ? 12 : hour.getHours()} AM`;
+    
+    // Generate a realistic traffic pattern based on time of day
     let baseTraffic = 20; // Minimal night traffic
+    const hourOfDay = hour.getHours();
     
     // Early morning has very low traffic
-    if (time.includes('AM') && parseInt(time) < 6) {
+    if (hourOfDay >= 0 && hourOfDay < 6) {
       baseTraffic = 10 + Math.floor(Math.random() * 15);
     } 
     // Morning rush increases traffic
-    else if (time.includes('AM') && parseInt(time) >= 6) {
+    else if (hourOfDay >= 6 && hourOfDay < 10) {
       baseTraffic = 50 + Math.floor(Math.random() * 40);
     }
+    // Late morning
+    else if (hourOfDay >= 10 && hourOfDay < 12) {
+      baseTraffic = 60 + Math.floor(Math.random() * 20);
+    }
     // Lunch time peak
-    else if (time === '12 PM' || time === '1 PM') {
+    else if (hourOfDay >= 12 && hourOfDay < 14) {
       baseTraffic = 90 + Math.floor(Math.random() * 30);
     }
     // Afternoon traffic
-    else if (time.includes('PM') && parseInt(time) < 5) {
+    else if (hourOfDay >= 14 && hourOfDay < 17) {
       baseTraffic = 60 + Math.floor(Math.random() * 30);
     }
     // Evening rush hour
-    else if (time.includes('PM') && parseInt(time) >= 5 && parseInt(time) <= 7) {
+    else if (hourOfDay >= 17 && hourOfDay < 20) {
       baseTraffic = 80 + Math.floor(Math.random() * 40);
     }
     // Evening wind down
-    else if (time.includes('PM') && parseInt(time) > 7) {
-      baseTraffic = 40 - (parseInt(time) - 8) * 5 + Math.floor(Math.random() * 20);
+    else {
+      baseTraffic = 40 - (hourOfDay - 20) * 5 + Math.floor(Math.random() * 20);
+      baseTraffic = Math.max(10, baseTraffic); // Ensure we don't go below 10
     }
     
     // Add some variation based on location ID to make each location unique
     const locationFactor = parseInt(locationId) % 3 === 0 ? 1.2 : 
-                           parseInt(locationId) % 3 === 1 ? 0.9 : 1.0;
+                          parseInt(locationId) % 3 === 1 ? 0.9 : 1.0;
     
-    return {
-      time,
+    timeData.push({
+      time: timeLabel,
       devices: Math.max(5, Math.floor(baseTraffic * locationFactor))
-    };
-  });
+    });
+  }
+  
+  return timeData;
 };
 
 const LiveTraffic: React.FC = () => {
@@ -185,9 +198,10 @@ const LiveTraffic: React.FC = () => {
     // Update the specific location with new traffic data
     setLocations(prev => prev.map(location => {
       if (location.id === newTraffic.location_id) {
-        const time = new Date(newTraffic.timestamp).getHours() >= 12 ? 
-          `${new Date(newTraffic.timestamp).getHours() === 12 ? 12 : new Date(newTraffic.timestamp).getHours() % 12} PM` : 
-          `${new Date(newTraffic.timestamp).getHours() === 0 ? 12 : new Date(newTraffic.timestamp).getHours()} AM`;
+        const timestamp = new Date(newTraffic.timestamp);
+        const time = timestamp.getHours() >= 12 ? 
+          `${timestamp.getHours() === 12 ? 12 : timestamp.getHours() % 12} PM` : 
+          `${timestamp.getHours() === 0 ? 12 : timestamp.getHours()} AM`;
           
         const newTrafficPoint = {
           time,
