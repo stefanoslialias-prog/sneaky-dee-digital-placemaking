@@ -32,14 +32,13 @@ const SentimentSurvey: React.FC<SentimentSurveyProps> = ({ onComplete, surveyTyp
   const fetchQuestion = async (type: string) => {
     setLoading(true);
     try {
-      // Query that gets active questions and filters by type if provided
+      // Query that gets active questions and filters by category if provided
       const query = supabase
         .from('survey_questions')
-        .select('id, text, type')
+        .select('id, text, category')
         .eq('active', true);
       
       // If we have a specific survey type, filter by it
-      // This assumes you add a 'category' column to the survey_questions table
       if (type !== 'default') {
         query.eq('category', type);
       }

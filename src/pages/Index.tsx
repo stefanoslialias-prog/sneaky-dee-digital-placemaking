@@ -9,7 +9,7 @@ import SurveyStepRenderer from '@/components/SurveyStepRenderer';
 const Index = () => {
   const { deviceId } = useDeviceTracking();
   const { userInfo, setUserInfo } = useAuthState();
-  const [surveyType, setSurveyType] = useState('default'); // Added state for survey type
+  const [surveyType, setSurveyType] = useState('default'); // Survey type state
   
   const {
     step,
@@ -45,7 +45,7 @@ const Index = () => {
 
   return (
     <AppLayout>
-      {/* Optional: Add survey type selector here if needed */}
+      {/* Survey type selector - only shown on welcome screen */}
       {step === 'welcome' && (
         <div className="mb-4">
           <select
