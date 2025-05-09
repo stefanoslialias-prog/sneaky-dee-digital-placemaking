@@ -21,9 +21,6 @@ const CommentStep: React.FC<CommentStepProps> = ({ onComplete, onGoBack }) => {
   const handleGoBack = () => {
     if (onGoBack) {
       onGoBack();
-    } else {
-      // Fallback if no onGoBack provided
-      onComplete(undefined);
     }
   };
 

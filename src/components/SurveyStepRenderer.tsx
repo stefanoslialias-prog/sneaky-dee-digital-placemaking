@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { AppStep } from '@/hooks/useSurveyFlow';
 import WelcomeScreen from '@/components/WelcomeScreen';
@@ -80,7 +79,10 @@ const SurveyStepRenderer: React.FC<SurveyStepRendererProps> = ({
           <div className="animate-fade-in">
             <CommentStep 
               onComplete={onCommentComplete} 
-              onGoBack={() => onSentimentComplete(null!)} // Go back to sentiment step
+              onGoBack={() => {
+                // This navigates back to the sentiment survey
+                onSentimentComplete(null as any);
+              }} 
             />
           </div>
         );

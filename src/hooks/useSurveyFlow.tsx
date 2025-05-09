@@ -70,6 +70,12 @@ export const useSurveyFlow = () => {
   };
   
   const handleSentimentComplete = (selectedSentiment: Sentiment) => {
+    // Check if we're coming back from comment step (selectedSentiment will be null)
+    if (!selectedSentiment) {
+      setStep('sentiment');
+      return;
+    }
+    
     setSentiment(selectedSentiment);
     
     // Add to mock database
