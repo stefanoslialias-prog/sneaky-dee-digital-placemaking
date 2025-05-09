@@ -80,7 +80,7 @@ const SurveyStepRenderer: React.FC<SurveyStepRendererProps> = ({
           <div className="animate-fade-in">
             <CommentStep 
               onComplete={onCommentComplete} 
-              onGoBack={() => onSentimentComplete(null!)} // Go back to sentiment
+              onGoBack={() => onSentimentComplete(null!)} // Go back to sentiment step
             />
           </div>
         );
