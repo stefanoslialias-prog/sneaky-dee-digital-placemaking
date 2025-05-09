@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { AppStep } from '@/hooks/useSurveyFlow';
 import WelcomeScreen from '@/components/WelcomeScreen';
@@ -15,6 +16,7 @@ interface SurveyStepRendererProps {
   step: AppStep;
   selectedCoupon: Coupon | null;
   userInfo: any;
+  surveyType?: string; // Added surveyType prop
   onStartSurvey: () => void;
   onSkipRegistration: () => void;
   onRegister: (email: string, name: string) => void;
@@ -31,6 +33,7 @@ const SurveyStepRenderer: React.FC<SurveyStepRendererProps> = ({
   step,
   selectedCoupon,
   userInfo,
+  surveyType = 'default', // Default value
   onStartSurvey,
   onSkipRegistration,
   onRegister,
@@ -70,7 +73,10 @@ const SurveyStepRenderer: React.FC<SurveyStepRendererProps> = ({
       case 'sentiment':
         return (
           <div className="animate-fade-in">
-            <SentimentSurvey onComplete={onSentimentComplete} />
+            <SentimentSurvey 
+              onComplete={onSentimentComplete}
+              surveyType={surveyType} // Pass the survey type
+            />
           </div>
         );
         

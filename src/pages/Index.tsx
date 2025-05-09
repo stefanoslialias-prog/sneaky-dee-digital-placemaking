@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import AppLayout from '@/components/AppLayout';
 import { useDeviceTracking } from '@/hooks/useDeviceTracking';
 import { useAuthState } from '@/hooks/useAuthState';
@@ -9,6 +9,8 @@ import SurveyStepRenderer from '@/components/SurveyStepRenderer';
 const Index = () => {
   const { deviceId } = useDeviceTracking();
   const { userInfo, setUserInfo } = useAuthState();
+  const [surveyType, setSurveyType] = useState('default'); // Added state for survey type
+  
   const {
     step,
     setStep,
@@ -43,10 +45,27 @@ const Index = () => {
 
   return (
     <AppLayout>
+      {/* Optional: Add survey type selector here if needed */}
+      {step === 'welcome' && (
+        <div className="mb-4">
+          <select
+            className="p-2 border rounded"
+            value={surveyType}
+            onChange={(e) => setSurveyType(e.target.value)}
+          >
+            <option value="default">General Survey</option>
+            <option value="wifi">WiFi Experience</option>
+            <option value="community">Community Feedback</option>
+            <option value="events">Events Feedback</option>
+          </select>
+        </div>
+      )}
+      
       <SurveyStepRenderer
         step={step}
         selectedCoupon={selectedCoupon}
         userInfo={userInfo}
+        surveyType={surveyType} // Pass the survey type
         onStartSurvey={handleStartSurvey}
         onSkipRegistration={handleSkipRegistration}
         onRegister={handleRegister}

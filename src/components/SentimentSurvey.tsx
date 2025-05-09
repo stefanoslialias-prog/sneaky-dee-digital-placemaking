@@ -16,27 +16,35 @@ const sentimentOptions: { value: Sentiment; emoji: string; label: string }[] = [
 
 interface SentimentSurveyProps {
   onComplete: (sentiment: Sentiment) => void;
+  surveyType?: string; // Optional parameter to filter questions by type/category
 }
 
-const SentimentSurvey: React.FC<SentimentSurveyProps> = ({ onComplete }) => {
+const SentimentSurvey: React.FC<SentimentSurveyProps> = ({ onComplete, surveyType = 'default' }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [question, setQuestion] = useState<{ id: string; text: string } | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Fetch random question on component mount
+  // Fetch question based on surveyType on component mount
   useEffect(() => {
-    fetchRandomQuestion();
-  }, []);
+    fetchQuestion(surveyType);
+  }, [surveyType]);
 
-  const fetchRandomQuestion = async () => {
+  const fetchQuestion = async (type: string) => {
     setLoading(true);
     try {
-      // Get a random active question from the database - using a different approach for randomization
-      const { data, error } = await supabase
+      // Query that gets active questions and filters by type if provided
+      const query = supabase
         .from('survey_questions')
-        .select('id, text')
-        .eq('active', true)
-        .limit(100); // Get up to 100 active questions
+        .select('id, text, type')
+        .eq('active', true);
+      
+      // If we have a specific survey type, filter by it
+      // This assumes you add a 'category' column to the survey_questions table
+      if (type !== 'default') {
+        query.eq('category', type);
+      }
+      
+      const { data, error } = await query.limit(100);
         
       if (error) {
         console.error('Error fetching questions:', error);
@@ -50,7 +58,7 @@ const SentimentSurvey: React.FC<SentimentSurveyProps> = ({ onComplete }) => {
         const randomIndex = Math.floor(Math.random() * data.length);
         setQuestion(data[randomIndex]);
       } else {
-        // No questions found
+        // No questions found for this survey type
         setQuestion(null);
       }
     } catch (error) {
@@ -131,7 +139,7 @@ const SentimentSurvey: React.FC<SentimentSurveyProps> = ({ onComplete }) => {
           <CardHeader className="text-center">
             <CardTitle className="text-2xl font-playfair">No Questions Available</CardTitle>
             <CardDescription>
-              Sorry, no survey questions are currently available.
+              Sorry, no survey questions are currently available for this survey.
             </CardDescription>
           </CardHeader>
         </Card>
