@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
-import { Shuffle } from 'lucide-react';
+import { Shuffle, RefreshCw } from 'lucide-react';
 
 export type Sentiment = 'happy' | 'neutral' | 'concerned';
 
@@ -23,12 +23,9 @@ const SentimentSurvey: React.FC<SentimentSurveyProps> = ({ onComplete, surveyTyp
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [question, setQuestion] = useState<{ id: string; text: string } | null>(null);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
-  // Fetch question based on surveyType on component mount
-  useEffect(() => {
-    fetchQuestion(surveyType);
-  }, [surveyType]);
-
+  // Fetch question based on surveyType - now as a separate function for reusability
   const fetchQuestion = async (type: string) => {
     setLoading(true);
     try {
@@ -67,7 +64,53 @@ const SentimentSurvey: React.FC<SentimentSurveyProps> = ({ onComplete, surveyTyp
       toast.error('Failed to load question');
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
+  };
+  
+  // Initialize survey and set up real-time subscription
+  useEffect(() => {
+    fetchQuestion(surveyType);
+    
+    // Set up real-time subscription to survey_questions table
+    const channel = supabase
+      .channel('survey_questions_changes')
+      .on('postgres_changes', 
+        { 
+          event: '*', // Listen for all events (INSERT, UPDATE, DELETE)
+          schema: 'public', 
+          table: 'survey_questions'
+        }, 
+        (payload) => {
+          // When questions change, we could either:
+          // 1. Immediately fetch a new question (disruptive if user is answering)
+          // 2. Show a notification that new questions are available
+          
+          // Option 2 is less disruptive - show toast with refresh option
+          if (payload.eventType === 'INSERT') {
+            toast('New survey questions available!', {
+              action: {
+                label: 'Refresh',
+                onClick: () => handleRefreshQuestion()
+              }
+            });
+          } else if (payload.eventType === 'UPDATE' && payload.new.id === question?.id) {
+            // If the current question was updated, refresh it
+            fetchQuestion(surveyType);
+          }
+        }
+      )
+      .subscribe();
+    
+    // Cleanup subscription on component unmount
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [surveyType]);
+
+  const handleRefreshQuestion = async () => {
+    setRefreshing(true);
+    await fetchQuestion(surveyType);
   };
 
   const handleSentimentSelect = async (sentiment: Sentiment) => {
@@ -152,9 +195,21 @@ const SentimentSurvey: React.FC<SentimentSurveyProps> = ({ onComplete, surveyTyp
     <div className="w-full max-w-md mx-auto">
       <Card>
         <CardHeader className="text-center">
-          <div className="flex items-center justify-center gap-2 mb-2">
-            <Shuffle size={16} className="text-toronto-blue animate-pulse" />
-            <span className="text-sm text-toronto-blue">Your survey just got a remix—enjoy!</span>
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-2">
+              <Shuffle size={16} className="text-toronto-blue animate-pulse" />
+              <span className="text-sm text-toronto-blue">Your survey just got a remix—enjoy!</span>
+            </div>
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              onClick={handleRefreshQuestion} 
+              disabled={refreshing}
+              title="Get another question"
+              className="h-8 w-8"
+            >
+              <RefreshCw size={16} className={refreshing ? "animate-spin" : ""} />
+            </Button>
           </div>
           <CardTitle className="text-2xl font-playfair">Quick Poll</CardTitle>
           <CardDescription>
