@@ -32,17 +32,19 @@ const SentimentSurvey: React.FC<SentimentSurveyProps> = ({ onComplete, surveyTyp
   const fetchQuestion = async (type: string) => {
     setLoading(true);
     try {
-      // Query that gets active questions and filters by category if provided
-      const query = supabase
+      // Build the query without chaining to avoid TypeScript recursion issues
+      let query = supabase
         .from('survey_questions')
         .select('id, text, category')
         .eq('active', true);
       
-      // If we have a specific survey type, filter by it
+      // Apply category filter if needed
       if (type !== 'default') {
-        query.eq('category', type);
+        // Create a new query to avoid chaining that might cause recursion
+        query = query.eq('category', type);
       }
       
+      // Execute the query with explicit limit
       const { data, error } = await query.limit(100);
         
       if (error) {
