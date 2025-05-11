@@ -21,47 +21,51 @@ interface SentimentSurveyProps {
 
 const SentimentSurvey: React.FC<SentimentSurveyProps> = ({ onComplete, surveyType = 'default' }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [question, setQuestion] = useState<{ id: string; text: string } | null>(null);
+  const [questions, setQuestions] = useState<{ id: string; text: string; order: number }[]>([]);
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
-  // Fetch question based on surveyType - now as a separate function for reusability
-  const fetchQuestion = async (type: string) => {
+  // Get the current question based on index
+  const currentQuestion = questions.length > 0 ? questions[currentQuestionIndex] : null;
+
+  // Fetch questions based on surveyType
+  const fetchQuestions = async (type: string) => {
     setLoading(true);
     try {
-      // Build the query without chaining to avoid TypeScript recursion issues
+      // Build the base query
       let query = supabase
         .from('survey_questions')
-        .select('id, text, category')
+        .select('id, text, order, category')
         .eq('active', true);
       
       // Apply category filter if needed
       if (type !== 'default') {
-        // Create a new query to avoid chaining that might cause recursion
         query = query.eq('category', type);
       }
       
-      // Execute the query with explicit limit
-      const { data, error } = await query.limit(100);
+      // Execute the query with order by
+      const { data, error } = await query
+        .order('order', { ascending: true })
+        .limit(10);
         
       if (error) {
         console.error('Error fetching questions:', error);
-        toast.error('Failed to load question');
+        toast.error('Failed to load questions');
         setLoading(false);
         return;
       }
       
       if (data && data.length > 0) {
-        // Client-side randomization
-        const randomIndex = Math.floor(Math.random() * data.length);
-        setQuestion(data[randomIndex]);
+        setQuestions(data);
+        setCurrentQuestionIndex(0); // Reset to first question
       } else {
         // No questions found for this survey type
-        setQuestion(null);
+        setQuestions([]);
       }
     } catch (error) {
-      console.error('Failed to fetch question:', error);
-      toast.error('Failed to load question');
+      console.error('Failed to fetch questions:', error);
+      toast.error('Failed to load questions');
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -70,7 +74,7 @@ const SentimentSurvey: React.FC<SentimentSurveyProps> = ({ onComplete, surveyTyp
   
   // Initialize survey and set up real-time subscription
   useEffect(() => {
-    fetchQuestion(surveyType);
+    fetchQuestions(surveyType);
     
     // Set up real-time subscription to survey_questions table
     const channel = supabase
@@ -83,7 +87,7 @@ const SentimentSurvey: React.FC<SentimentSurveyProps> = ({ onComplete, surveyTyp
         }, 
         (payload) => {
           // When questions change, we could either:
-          // 1. Immediately fetch a new question (disruptive if user is answering)
+          // 1. Immediately fetch new questions (disruptive if user is answering)
           // 2. Show a notification that new questions are available
           
           // Option 2 is less disruptive - show toast with refresh option
@@ -91,12 +95,17 @@ const SentimentSurvey: React.FC<SentimentSurveyProps> = ({ onComplete, surveyTyp
             toast('New survey questions available!', {
               action: {
                 label: 'Refresh',
-                onClick: () => handleRefreshQuestion()
+                onClick: () => handleRefreshQuestions()
               }
             });
-          } else if (payload.eventType === 'UPDATE' && payload.new.id === question?.id) {
-            // If the current question was updated, refresh it
-            fetchQuestion(surveyType);
+          } else if (payload.eventType === 'UPDATE' && 
+                    currentQuestion && 
+                    payload.new.id === currentQuestion.id) {
+            // If the current question was updated, refresh questions
+            fetchQuestions(surveyType);
+          } else if (payload.eventType === 'DELETE') {
+            // If any question was deleted, refresh to ensure we don't show deleted questions
+            fetchQuestions(surveyType);
           }
         }
       )
@@ -108,15 +117,26 @@ const SentimentSurvey: React.FC<SentimentSurveyProps> = ({ onComplete, surveyTyp
     };
   }, [surveyType]);
 
-  const handleRefreshQuestion = async () => {
+  const handleRefreshQuestions = async () => {
     setRefreshing(true);
-    await fetchQuestion(surveyType);
+    await fetchQuestions(surveyType);
+  };
+
+  const handleNextQuestion = () => {
+    if (currentQuestionIndex < questions.length - 1) {
+      setCurrentQuestionIndex(currentQuestionIndex + 1);
+    } else {
+      // If at the end, cycle back to the first question
+      // or show a message that all questions are completed
+      toast.info('You have gone through all available questions!');
+      setCurrentQuestionIndex(0);
+    }
   };
 
   const handleSentimentSelect = async (sentiment: Sentiment) => {
     setIsSubmitting(true);
     try {
-      if (!question) {
+      if (!currentQuestion) {
         toast.error('No question available');
         return;
       }
@@ -129,7 +149,7 @@ const SentimentSurvey: React.FC<SentimentSurveyProps> = ({ onComplete, surveyTyp
       
       // Prepare the data to insert
       const responseData = {
-        question_id: question.id,
+        question_id: currentQuestion.id,
         answer: sentiment,
         comment: null,
         session_id: sessionId,
@@ -147,9 +167,16 @@ const SentimentSurvey: React.FC<SentimentSurveyProps> = ({ onComplete, surveyTyp
         return;
       }
       
-      // Call the onComplete callback to move to the next step
-      onComplete(sentiment);
-      toast.success('Thanks for sharing how you feel!');
+      // Check if there are more questions
+      if (currentQuestionIndex < questions.length - 1) {
+        // If there are more questions, move to the next one
+        setCurrentQuestionIndex(currentQuestionIndex + 1);
+        toast.success('Thanks for sharing! Here\'s another question.');
+      } else {
+        // If this was the last question, call onComplete
+        onComplete(sentiment);
+        toast.success('Thanks for sharing how you feel!');
+      }
       
     } catch (error) {
       console.error('Survey submission error:', error);
@@ -165,9 +192,9 @@ const SentimentSurvey: React.FC<SentimentSurveyProps> = ({ onComplete, surveyTyp
       <div className="w-full max-w-md mx-auto">
         <Card>
           <CardHeader className="text-center">
-            <CardTitle className="text-2xl font-playfair">Loading Question...</CardTitle>
+            <CardTitle className="text-2xl font-playfair">Loading Questions...</CardTitle>
             <CardDescription>
-              Please wait while we prepare your survey question.
+              Please wait while we prepare your survey questions.
             </CardDescription>
           </CardHeader>
         </Card>
@@ -176,7 +203,7 @@ const SentimentSurvey: React.FC<SentimentSurveyProps> = ({ onComplete, surveyTyp
   }
 
   // Show no questions available message
-  if (!question) {
+  if (questions.length === 0 || !currentQuestion) {
     return (
       <div className="w-full max-w-md mx-auto">
         <Card>
@@ -198,22 +225,33 @@ const SentimentSurvey: React.FC<SentimentSurveyProps> = ({ onComplete, surveyTyp
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2">
               <Shuffle size={16} className="text-toronto-blue animate-pulse" />
-              <span className="text-sm text-toronto-blue">Your survey just got a remix—enjoy!</span>
+              <span className="text-sm text-toronto-blue">Question {currentQuestionIndex + 1} of {questions.length}</span>
             </div>
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              onClick={handleRefreshQuestion} 
-              disabled={refreshing}
-              title="Get another question"
-              className="h-8 w-8"
-            >
-              <RefreshCw size={16} className={refreshing ? "animate-spin" : ""} />
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                onClick={handleNextQuestion}
+                title="Skip to next question" 
+                className="h-8 w-8"
+              >
+                <RefreshCw size={16} />
+              </Button>
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                onClick={handleRefreshQuestions} 
+                disabled={refreshing}
+                title="Refresh all questions"
+                className="h-8 w-8"
+              >
+                <RefreshCw size={16} className={refreshing ? "animate-spin" : ""} />
+              </Button>
+            </div>
           </div>
           <CardTitle className="text-2xl font-playfair">Quick Poll</CardTitle>
           <CardDescription>
-            {question.text}
+            {currentQuestion.text}
           </CardDescription>
         </CardHeader>
         <CardContent>
