@@ -3,14 +3,12 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { ArrowLeft } from 'lucide-react';
 
 interface CommentStepProps {
   onComplete: (comment: string | undefined) => void;
-  onGoBack?: () => void;
 }
 
-const CommentStep: React.FC<CommentStepProps> = ({ onComplete, onGoBack }) => {
+const CommentStep: React.FC<CommentStepProps> = ({ onComplete }) => {
   const [comment, setComment] = useState<string>('');
   const [hasStartedTyping, setHasStartedTyping] = useState<boolean>(false);
 
@@ -18,10 +16,8 @@ const CommentStep: React.FC<CommentStepProps> = ({ onComplete, onGoBack }) => {
     onComplete(comment.trim() || undefined);
   };
 
-  const handleGoBack = () => {
-    if (onGoBack) {
-      onGoBack();
-    }
+  const handleSkip = () => {
+    onComplete(undefined);
   };
 
   const handleCommentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -36,16 +32,13 @@ const CommentStep: React.FC<CommentStepProps> = ({ onComplete, onGoBack }) => {
     }
   };
 
-  // Determine button text based on typing state
-  const buttonText = hasStartedTyping ? "Continue" : "Skip";
-
   return (
     <div className="w-full max-w-md mx-auto">
       <Card>
         <CardHeader className="text-center">
-          <CardTitle className="text-2xl font-playfair">Additional Comments</CardTitle>
+          <CardTitle className="text-2xl font-playfair">Any final thoughts? (Optional)</CardTitle>
           <CardDescription>
-            Got anything else to tell us? This step is 100% optional.
+            Share anything else you'd like us to know
           </CardDescription>
         </CardHeader>
         
@@ -63,16 +56,16 @@ const CommentStep: React.FC<CommentStepProps> = ({ onComplete, onGoBack }) => {
         <CardFooter className="flex justify-between">
           <Button 
             variant="outline" 
-            onClick={handleGoBack}
-            className="w-full md:w-auto flex items-center gap-2"
+            onClick={handleSkip}
+            className="w-full md:w-auto"
           >
-            <ArrowLeft className="h-4 w-4" /> Go Back
+            Skip
           </Button>
           <Button 
             onClick={handleSubmit}
             className="w-full md:w-auto"
           >
-            {buttonText}
+            {hasStartedTyping ? 'Submit Feedback' : 'Continue'}
           </Button>
         </CardFooter>
       </Card>

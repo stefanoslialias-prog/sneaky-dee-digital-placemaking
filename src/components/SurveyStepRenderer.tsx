@@ -16,7 +16,6 @@ interface SurveyStepRendererProps {
   step: AppStep;
   selectedCoupon: Coupon | null;
   userInfo: any;
-  surveyType?: string; // Added surveyType prop
   onStartSurvey: () => void;
   onSkipRegistration: () => void;
   onRegister: (email: string, name: string) => void;
@@ -33,7 +32,6 @@ const SurveyStepRenderer: React.FC<SurveyStepRendererProps> = ({
   step,
   selectedCoupon,
   userInfo,
-  surveyType = 'default', // Default value
   onStartSurvey,
   onSkipRegistration,
   onRegister,
@@ -75,7 +73,6 @@ const SurveyStepRenderer: React.FC<SurveyStepRendererProps> = ({
           <div className="animate-fade-in">
             <SentimentSurvey 
               onComplete={onSentimentComplete}
-              surveyType={surveyType} // Pass the survey type
             />
           </div>
         );
@@ -84,11 +81,7 @@ const SurveyStepRenderer: React.FC<SurveyStepRendererProps> = ({
         return (
           <div className="animate-fade-in">
             <CommentStep 
-              onComplete={onCommentComplete} 
-              onGoBack={() => {
-                // This navigates back to the sentiment survey
-                onSentimentComplete(null as any);
-              }} 
+              onComplete={onCommentComplete}
             />
           </div>
         );
