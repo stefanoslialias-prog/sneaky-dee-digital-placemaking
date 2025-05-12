@@ -1,7 +1,8 @@
+
 import React, { useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { CheckCircle, Gift, Mail } from 'lucide-react';
+import { CheckCircle, Gift, Mail, ArrowRight, Share2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface ThankYouProps {
@@ -21,6 +22,17 @@ const ThankYou: React.FC<ThankYouProps> = ({ onDone, userInfo }) => {
       position: 'top-center',
     });
   }, []);
+  
+  const handleShareCoupon = () => {
+    // Share functionality would go here
+    // For now, just show a toast
+    toast.info('Sharing feature coming soon!');
+  };
+
+  const handleSeeMoreDeals = () => {
+    // Navigate to more deals
+    onDone();
+  };
   
   return (
     <div className="w-full max-w-md mx-auto">
@@ -73,12 +85,38 @@ const ThankYou: React.FC<ThankYouProps> = ({ onDone, userInfo }) => {
               We value your privacy. You can unsubscribe from our communications at any time.
             </p>
           </div>
+
+          <div className="flex flex-col gap-3 mt-6">
+            <Button 
+              className="bg-toronto-blue hover:bg-toronto-lightblue transition-all w-full"
+              onClick={onDone}
+            >
+              Use Coupon Now
+              <ArrowRight size={16} className="ml-1" />
+            </Button>
+            <Button 
+              variant="outline" 
+              className="w-full"
+              onClick={handleSeeMoreDeals}
+            >
+              See More Deals
+            </Button>
+            <Button 
+              variant="secondary" 
+              className="w-full mt-2"
+              onClick={handleShareCoupon}
+            >
+              <Share2 size={16} className="mr-1" />
+              Share with a Friend
+            </Button>
+          </div>
         </CardContent>
         
         <CardFooter className="flex justify-center">
           <Button 
             onClick={onDone} 
-            className="bg-toronto-blue hover:bg-toronto-lightblue transition-all"
+            variant="ghost"
+            className="text-gray-500"
           >
             Return Home
           </Button>

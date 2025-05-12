@@ -14,9 +14,9 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onStartSurvey }) => {
         <div className="mx-auto w-24 h-24 rounded-full bg-toronto-blue flex items-center justify-center mb-4">
           <Wifi size={48} className="text-white" />
         </div>
-        <h1 className="text-4xl font-bold mb-4 font-playfair">Welcome to Free WiFi</h1>
+        <h1 className="text-4xl font-bold mb-4 font-playfair">Scan to get your coupon instantly</h1>
         <p className="text-gray-600 mb-6">
-          Click on the button below to see exclusive offers.
+          Connect to free WiFi and unlock exclusive local offers.
         </p>
         <Button 
           onClick={onStartSurvey} 
