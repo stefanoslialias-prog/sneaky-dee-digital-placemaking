@@ -22,7 +22,7 @@ const SentimentSurvey: React.FC<SentimentSurveyProps> = ({ onComplete }) => {
   const [question, setQuestion] = useState<{ id: string; text: string; } | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Fetch a random question using the database function
+  // Fetch a random question from the survey_questions table
   const fetchRandomQuestion = async () => {
     setLoading(true);
     try {
@@ -31,6 +31,8 @@ const SentimentSurvey: React.FC<SentimentSurveyProps> = ({ onComplete }) => {
         .then(res => res.json())
         .then(data => data.ip)
         .catch(() => 'unknown-ip-' + Math.random().toString(36).substring(7));
+      
+      console.log("Fetching question for IP:", ipAddress);
       
       // Call the database function to get a random question
       const { data, error } = await supabase.rpc(
@@ -41,14 +43,7 @@ const SentimentSurvey: React.FC<SentimentSurveyProps> = ({ onComplete }) => {
       if (error) {
         console.error('Error fetching random question:', error);
         toast.error('Failed to load survey question');
-        setLoading(false);
-        return;
-      }
-      
-      if (data && data.length > 0) {
-        // Set the random question
-        setQuestion(data[0]);
-      } else {
+        
         // Fallback - get any active question
         const { data: fallbackData, error: fallbackError } = await supabase
           .from('survey_questions')
@@ -60,6 +55,27 @@ const SentimentSurvey: React.FC<SentimentSurveyProps> = ({ onComplete }) => {
           console.error('Error fetching fallback question:', fallbackError);
           setQuestion(null);
         } else {
+          console.log("Loaded fallback question:", fallbackData[0]);
+          setQuestion(fallbackData[0]);
+        }
+      } else if (data && data.length > 0) {
+        // Set the random question
+        console.log("Loaded question via function:", data[0]);
+        setQuestion(data[0]);
+      } else {
+        console.log("No questions returned from function, fetching fallback");
+        // Fallback - get any active question
+        const { data: fallbackData, error: fallbackError } = await supabase
+          .from('survey_questions')
+          .select('id, text')
+          .eq('active', true)
+          .limit(1);
+          
+        if (fallbackError || !fallbackData || fallbackData.length === 0) {
+          console.error('Error fetching fallback question:', fallbackError);
+          setQuestion(null);
+        } else {
+          console.log("Loaded fallback question:", fallbackData[0]);
           setQuestion(fallbackData[0]);
         }
       }
@@ -73,6 +89,7 @@ const SentimentSurvey: React.FC<SentimentSurveyProps> = ({ onComplete }) => {
   
   // Initialize survey and set up real-time subscription
   useEffect(() => {
+    console.log("SentimentSurvey component mounted, fetching questions");
     fetchRandomQuestion();
     
     // Set up real-time subscription to survey_questions table
@@ -122,6 +139,8 @@ const SentimentSurvey: React.FC<SentimentSurveyProps> = ({ onComplete }) => {
         return;
       }
       
+      console.log("Submitting answer for question:", question.id, "Answer:", sentiment);
+      
       // Get user's IP address (or a placeholder for testing)
       const ipAddress = await fetch('https://api.ipify.org?format=json')
         .then(res => res.json())
@@ -140,6 +159,8 @@ const SentimentSurvey: React.FC<SentimentSurveyProps> = ({ onComplete }) => {
       if (interactionError) {
         console.error('Error recording interaction:', interactionError);
         // Continue even if recording fails
+      } else {
+        console.log("Recorded interaction:", interactionData);
       }
       
       // Generate a session ID
@@ -156,6 +177,8 @@ const SentimentSurvey: React.FC<SentimentSurveyProps> = ({ onComplete }) => {
         session_id: sessionId,
         location_id: locationId || null
       };
+      
+      console.log("Inserting response:", responseData);
       
       // Insert response into Supabase
       const { error: insertError } = await supabase

@@ -28,6 +28,8 @@ serve(async (req: Request) => {
       );
     }
 
+    console.log("Starting email processing function");
+
     // Create Supabase client with service role key
     const supabase = createClient(supabaseUrl, serviceRoleKey, {
       auth: { persistSession: false },
@@ -43,16 +45,20 @@ serve(async (req: Request) => {
       .limit(10); // Process in batches
 
     if (fetchError) {
+      console.error("Error fetching pending emails:", fetchError);
       throw new Error(`Error fetching pending emails: ${fetchError.message}`);
     }
 
     // No emails to process
     if (!pendingEmails || pendingEmails.length === 0) {
+      console.log("No pending emails to process");
       return new Response(
         JSON.stringify({ message: "No pending emails to process" }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
+
+    console.log(`Found ${pendingEmails.length} pending emails to process`);
 
     // Process each email
     const results = [];
@@ -77,6 +83,7 @@ serve(async (req: Request) => {
           continue;
         }
         
+        console.log(`Successfully sent email to ${email.email_address}`);
         results.push({ id: email.id, status: "sent" });
       } else {
         // Increment the retry counter
@@ -89,6 +96,7 @@ serve(async (req: Request) => {
           console.error(`Error updating retry count: ${retryError.message}`);
         }
         
+        console.log(`Failed to send email to ${email.email_address}, will retry later`);
         results.push({ id: email.id, status: "failed", willRetry: email.retries < 2 });
       }
     }

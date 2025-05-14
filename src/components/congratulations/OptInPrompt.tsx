@@ -20,9 +20,11 @@ export const OptInPrompt: React.FC<OptInPromptProps> = ({ onOptInYes, onOptInNo 
         localStorage.setItem('deviceId', deviceId);
       }
 
+      console.log("User opted in for more deals with device ID:", deviceId);
+
       // Record this opt-in in the user_emails table
       // This is a placeholder until we actually collect the email in the next step
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('user_emails')
         .insert({
           device_id: deviceId,
@@ -35,6 +37,8 @@ export const OptInPrompt: React.FC<OptInPromptProps> = ({ onOptInYes, onOptInNo 
       if (error) {
         console.error("Error recording opt-in:", error);
         toast.error("There was an issue with your opt-in. Please try again.");
+      } else {
+        console.log("Successfully created pending email record:", data);
       }
 
       // Continue to the email collection form

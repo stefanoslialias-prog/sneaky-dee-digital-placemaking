@@ -84,6 +84,27 @@ export const useSurveyFlow = () => {
     // If the user provided a comment, save it
     if (comment) {
       console.log('User comment:', comment);
+      
+      // If we have a previous survey response, update it with the comment
+      try {
+        const { data: recentResponses, error: fetchError } = await supabase
+          .from('survey_responses')
+          .select('id')
+          .order('created_at', { ascending: false })
+          .limit(1);
+          
+        if (!fetchError && recentResponses && recentResponses.length > 0) {
+          const responseId = recentResponses[0].id;
+          
+          // Update the response with the comment
+          await supabase
+            .from('survey_responses')
+            .update({ comment: comment })
+            .eq('id', responseId);
+        }
+      } catch (err) {
+        console.error('Failed to update survey response with comment:', err);
+      }
     }
     
     setStep('congratulations');
@@ -119,7 +140,30 @@ export const useSurveyFlow = () => {
     setSentiment(null);
   };
 
-  const handleThankYouDone = () => {
+  const handleThankYouDone = async () => {
+    // Before redirecting, trigger the email sending function
+    try {
+      console.log("Triggering email sending process");
+      
+      // Call the edge function to process pending emails
+      const { data, error } = await supabase.functions.invoke('send-promo-emails', {
+        method: 'POST',
+        body: { trigger: 'thank-you-page' }
+      });
+      
+      if (error) {
+        console.error("Error triggering email sending:", error);
+      } else {
+        console.log("Email sending triggered:", data);
+        toast.success("Check your email for exclusive deals!", {
+          duration: 5000
+        });
+      }
+    } catch (err) {
+      console.error("Failed to trigger email sending:", err);
+    }
+    
+    // Reset the flow
     setStep('welcome');
   };
 
