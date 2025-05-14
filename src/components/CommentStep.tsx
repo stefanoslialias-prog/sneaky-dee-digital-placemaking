@@ -1,71 +1,84 @@
 
 import React, { useState } from 'react';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 
 interface CommentStepProps {
-  onComplete: (comment: string | undefined) => void;
+  onComplete: (comment?: string) => void;
 }
 
 const CommentStep: React.FC<CommentStepProps> = ({ onComplete }) => {
-  const [comment, setComment] = useState<string>('');
-  const [hasStartedTyping, setHasStartedTyping] = useState<boolean>(false);
+  const [comment, setComment] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = () => {
-    onComplete(comment.trim() || undefined);
+  const handleSubmit = async () => {
+    setIsSubmitting(true);
+    
+    try {
+      // Get the latest survey response for this session
+      const sessionId = localStorage.getItem('currentSessionId');
+      
+      if (comment.trim() && sessionId) {
+        // If we have a comment and a session ID, update the response
+        const { error } = await supabase
+          .from('survey_responses')
+          .update({ comment: comment.trim() })
+          .eq('session_id', sessionId)
+          .order('created_at', { ascending: false })
+          .limit(1);
+          
+        if (error) {
+          console.error('Error saving comment:', error);
+          toast.error('Failed to save comment');
+        }
+      }
+      
+      // Call onComplete callback regardless if we updated or not
+      onComplete(comment);
+      
+    } catch (error) {
+      console.error('Comment submission error:', error);
+      toast.error('Something went wrong. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleSkip = () => {
-    onComplete(undefined);
-  };
-
-  const handleCommentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    const newComment = e.target.value;
-    setComment(newComment);
-    
-    // Set hasStartedTyping to true if the user has typed something
-    if (!hasStartedTyping && newComment.length > 0) {
-      setHasStartedTyping(true);
-    } else if (hasStartedTyping && newComment.length === 0) {
-      setHasStartedTyping(false);
-    }
+    onComplete();
   };
 
   return (
     <div className="w-full max-w-md mx-auto">
       <Card>
-        <CardHeader className="text-center">
-          <CardTitle className="text-2xl font-playfair">Any final thoughts? (Optional)</CardTitle>
-          <CardDescription>
-            Share anything else you'd like us to know
-          </CardDescription>
+        <CardHeader>
+          <CardTitle className="text-2xl font-playfair text-center">Any final thoughts?</CardTitle>
+          <CardDescription className="text-center">(Optional)</CardDescription>
         </CardHeader>
-        
-        <CardContent className="space-y-4">
-          <div className="flex flex-col space-y-1.5">
-            <Textarea
-              placeholder="Leave your feedback here..."
-              className="h-32 resize-none"
-              value={comment}
-              onChange={handleCommentChange}
-            />
-          </div>
+        <CardContent>
+          <Textarea
+            placeholder="Share additional feedback here..."
+            value={comment}
+            onChange={(e) => setComment(e.target.value)}
+            className="min-h-[120px]"
+          />
         </CardContent>
-        
         <CardFooter className="flex justify-between">
           <Button 
             variant="outline" 
             onClick={handleSkip}
-            className="w-full md:w-auto"
+            disabled={isSubmitting}
           >
             Skip
           </Button>
           <Button 
             onClick={handleSubmit}
-            className="w-full md:w-auto"
+            disabled={isSubmitting || !comment.trim()}
           >
-            {hasStartedTyping ? 'Submit Feedback' : 'Continue'}
+            Submit
           </Button>
         </CardFooter>
       </Card>

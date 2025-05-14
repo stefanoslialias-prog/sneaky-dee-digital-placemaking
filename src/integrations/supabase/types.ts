@@ -38,6 +38,7 @@ export type Database = {
           id: string
           image_url: string | null
           title: string
+          wallet_compatible: boolean | null
         }
         Insert: {
           active?: boolean
@@ -49,6 +50,7 @@ export type Database = {
           id?: string
           image_url?: string | null
           title: string
+          wallet_compatible?: boolean | null
         }
         Update: {
           active?: boolean
@@ -60,6 +62,7 @@ export type Database = {
           id?: string
           image_url?: string | null
           title?: string
+          wallet_compatible?: boolean | null
         }
         Relationships: []
       }
@@ -228,6 +231,71 @@ export type Database = {
           },
         ]
       }
+      user_emails: {
+        Row: {
+          device_id: string | null
+          email_address: string
+          email_content: string
+          id: string
+          retries: number
+          sent_at: string
+          status: string
+          subject: string
+          user_id: string | null
+        }
+        Insert: {
+          device_id?: string | null
+          email_address: string
+          email_content: string
+          id?: string
+          retries?: number
+          sent_at?: string
+          status?: string
+          subject: string
+          user_id?: string | null
+        }
+        Update: {
+          device_id?: string | null
+          email_address?: string
+          email_content?: string
+          id?: string
+          retries?: number
+          sent_at?: string
+          status?: string
+          subject?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      user_interactions: {
+        Row: {
+          id: string
+          interaction_timestamp: string
+          ip_address: string
+          question_id: string
+        }
+        Insert: {
+          id?: string
+          interaction_timestamp?: string
+          ip_address: string
+          question_id: string
+        }
+        Update: {
+          id?: string
+          interaction_timestamp?: string
+          ip_address?: string
+          question_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_interactions_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "survey_questions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           id: string
@@ -245,6 +313,44 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      user_wallets: {
+        Row: {
+          claimed_at: string
+          coupon_id: string
+          device_id: string | null
+          id: string
+          platform: string | null
+          redeemed_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          claimed_at?: string
+          coupon_id: string
+          device_id?: string | null
+          id?: string
+          platform?: string | null
+          redeemed_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          claimed_at?: string
+          coupon_id?: string
+          device_id?: string | null
+          id?: string
+          platform?: string | null
+          redeemed_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_wallets_coupon_id_fkey"
+            columns: ["coupon_id"]
+            isOneToOne: false
+            referencedRelation: "coupons"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       wifi_locations: {
         Row: {
@@ -311,6 +417,15 @@ export type Database = {
         }
         Returns: Json
       }
+      get_random_question_for_ip: {
+        Args: { p_ip_address: string }
+        Returns: {
+          id: string
+          text: string
+          type: string
+          category: string
+        }[]
+      }
       has_role: {
         Args: { user_id: string; required_role: string }
         Returns: boolean
@@ -318,6 +433,10 @@ export type Database = {
       is_admin: {
         Args: Record<PropertyKey, never>
         Returns: boolean
+      }
+      record_question_interaction: {
+        Args: { p_ip_address: string; p_question_id: string }
+        Returns: string
       }
     }
     Enums: {
