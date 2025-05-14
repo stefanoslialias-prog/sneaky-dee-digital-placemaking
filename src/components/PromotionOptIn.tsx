@@ -39,6 +39,64 @@ const PromotionOptIn: React.FC<PromotionOptInProps> = ({ onSkip, onRegister, onS
     setIsLoading(true);
     
     try {
+      // Get the device ID from localStorage
+      const deviceId = localStorage.getItem('deviceId') || 
+        `device-${Math.random().toString(36).substring(2, 15)}`;
+      
+      // Update the pending user_emails record with the actual email address
+      const { data: emailsData, error: emailsFetchError } = await supabase
+        .from('user_emails')
+        .select('id')
+        .eq('device_id', deviceId)
+        .eq('email_address', 'pending-collection@example.com')
+        .eq('status', 'pending')
+        .order('sent_at', { ascending: false })
+        .limit(1);
+      
+      if (!emailsFetchError && emailsData && emailsData.length > 0) {
+        // Found a pending email entry, update it
+        const emailId = emailsData[0].id;
+        
+        // Generate personalized email content
+        const emailContent = await generateEmailContent(values.name, couponId);
+        
+        // Update the email record
+        const { error: updateError } = await supabase
+          .from('user_emails')
+          .update({ 
+            email_address: values.email,
+            email_content: emailContent,
+            subject: `${values.name}, here are your exclusive deals!`
+          })
+          .eq('id', emailId);
+        
+        if (updateError) {
+          console.error('Error updating email record:', updateError);
+        } else {
+          // Email will be sent by a background process
+          toast.success('We\'ll send your deals to your email shortly!');
+        }
+      } else {
+        // No pending email found, create a new one
+        const emailContent = await generateEmailContent(values.name, couponId);
+        
+        const { error: insertError } = await supabase
+          .from('user_emails')
+          .insert({
+            device_id: deviceId,
+            email_address: values.email,
+            subject: `${values.name}, here are your exclusive deals!`,
+            email_content: emailContent,
+            status: 'pending'
+          });
+          
+        if (insertError) {
+          console.error('Error creating email record:', insertError);
+        } else {
+          toast.success('We\'ll send your deals to your email shortly!');
+        }
+      }
+      
       // If we have a coupon ID, let's claim it
       if (couponId) {
         // Simple check to simulate device
@@ -92,6 +150,88 @@ const PromotionOptIn: React.FC<PromotionOptInProps> = ({ onSkip, onRegister, onS
       toast.error('Sign in failed. Please try again.');
       setIsLoading(false);
     }
+  };
+
+  // Function to generate personalized email content
+  const generateEmailContent = async (name: string, couponId?: string): Promise<string> => {
+    let couponInfo = '';
+    
+    // If we have a coupon ID, get its details
+    if (couponId) {
+      const { data, error } = await supabase
+        .from('coupons')
+        .select('title, description, discount, expires_at')
+        .eq('id', couponId)
+        .single();
+        
+      if (!error && data) {
+        const expiryDate = new Date(data.expires_at).toLocaleDateString();
+        couponInfo = `
+          <h3>Your Selected Deal:</h3>
+          <p><strong>${data.title}</strong> - ${data.description}</p>
+          <p>Discount: ${data.discount}</p>
+          <p>Valid until: ${expiryDate}</p>
+          <br>
+        `;
+      }
+    }
+    
+    // Get 3 other active coupons to show
+    const { data: otherCoupons, error: couponsError } = await supabase
+      .from('coupons')
+      .select('title, discount')
+      .eq('active', true)
+      .order('created_at', { ascending: false })
+      .limit(3);
+      
+    let otherDealsHtml = '';
+    
+    if (!couponsError && otherCoupons && otherCoupons.length > 0) {
+      otherDealsHtml = '<h3>Other Deals You Might Like:</h3><ul>';
+      
+      otherCoupons.forEach(coupon => {
+        otherDealsHtml += `<li><strong>${coupon.title}</strong> - ${coupon.discount}</li>`;
+      });
+      
+      otherDealsHtml += '</ul>';
+    }
+    
+    // Build the complete email HTML
+    return `
+      <html>
+        <head>
+          <style>
+            body { font-family: Arial, sans-serif; margin: 0; padding: 0; }
+            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+            .header { background-color: #1E3A8A; color: white; padding: 20px; text-align: center; }
+            .content { padding: 20px; }
+            .footer { background-color: #f4f4f4; padding: 15px; font-size: 12px; text-align: center; }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="header">
+              <h1>Your Exclusive Deals, ${name}!</h1>
+            </div>
+            <div class="content">
+              <p>Thank you for signing up to receive our exclusive deals and offers!</p>
+              
+              ${couponInfo}
+              
+              ${otherDealsHtml}
+              
+              <p>Visit our location to redeem these amazing offers.</p>
+              
+              <p>We'll keep you updated with more personalized offers in the future.</p>
+            </div>
+            <div class="footer">
+              <p>This email was sent to you because you opted in to receive promotional offers.</p>
+              <p>© ${new Date().getFullYear()} Shop Local Win Local. All rights reserved.</p>
+            </div>
+          </div>
+        </body>
+      </html>
+    `;
   };
 
   return (

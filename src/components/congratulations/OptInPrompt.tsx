@@ -2,6 +2,8 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 interface OptInPromptProps {
   onOptInYes: () => void;
@@ -9,6 +11,42 @@ interface OptInPromptProps {
 }
 
 export const OptInPrompt: React.FC<OptInPromptProps> = ({ onOptInYes, onOptInNo }) => {
+  const handleOptInYes = async () => {
+    try {
+      // Generate a unique device ID if not already stored
+      let deviceId = localStorage.getItem('deviceId');
+      if (!deviceId) {
+        deviceId = `device-${Math.random().toString(36).substring(2, 15)}`;
+        localStorage.setItem('deviceId', deviceId);
+      }
+
+      // Record this opt-in in the user_emails table
+      // This is a placeholder until we actually collect the email in the next step
+      const { error } = await supabase
+        .from('user_emails')
+        .insert({
+          device_id: deviceId,
+          email_address: 'pending-collection@example.com', // Will be updated in the PromotionOptIn component
+          subject: 'Your Exclusive Deals',
+          email_content: 'Thank you for opting in! We will send you exclusive deals soon.',
+          status: 'pending'
+        });
+
+      if (error) {
+        console.error("Error recording opt-in:", error);
+        toast.error("There was an issue with your opt-in. Please try again.");
+      }
+
+      // Continue to the email collection form
+      onOptInYes();
+    } catch (err) {
+      console.error("Unexpected error:", err);
+      toast.error("Something went wrong. Please try again later.");
+      // Still continue to next step even if there's an error
+      onOptInYes();
+    }
+  };
+
   return (
     <div className="p-4 border rounded-md bg-toronto-gray/50">
       <Label className="font-medium block mb-3 text-center">
@@ -19,7 +57,7 @@ export const OptInPrompt: React.FC<OptInPromptProps> = ({ onOptInYes, onOptInNo 
           variant="default"
           size="sm"
           className="bg-toronto-blue hover:bg-toronto-lightblue"
-          onClick={onOptInYes}
+          onClick={handleOptInYes}
         >
           Yes
         </Button>

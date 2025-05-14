@@ -22,34 +22,50 @@ const SentimentSurvey: React.FC<SentimentSurveyProps> = ({ onComplete }) => {
   const [question, setQuestion] = useState<{ id: string; text: string; } | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Fetch a random question
+  // Fetch a random question using the database function
   const fetchRandomQuestion = async () => {
     setLoading(true);
     try {
-      // Get all active questions
-      const { data, error } = await supabase
-        .from('survey_questions')
-        .select('id, text')
-        .eq('active', true);
+      // Get user's IP address (or a placeholder for testing)
+      const ipAddress = await fetch('https://api.ipify.org?format=json')
+        .then(res => res.json())
+        .then(data => data.ip)
+        .catch(() => 'unknown-ip-' + Math.random().toString(36).substring(7));
+      
+      // Call the database function to get a random question
+      const { data, error } = await supabase.rpc(
+        'get_random_question_for_ip',
+        { p_ip_address: ipAddress }
+      );
         
       if (error) {
-        console.error('Error fetching questions:', error);
-        toast.error('Failed to load questions');
+        console.error('Error fetching random question:', error);
+        toast.error('Failed to load survey question');
         setLoading(false);
         return;
       }
       
       if (data && data.length > 0) {
-        // Randomly select one question
-        const randomIndex = Math.floor(Math.random() * data.length);
-        setQuestion(data[randomIndex]);
+        // Set the random question
+        setQuestion(data[0]);
       } else {
-        // No questions available
-        setQuestion(null);
+        // Fallback - get any active question
+        const { data: fallbackData, error: fallbackError } = await supabase
+          .from('survey_questions')
+          .select('id, text')
+          .eq('active', true)
+          .limit(1);
+          
+        if (fallbackError || !fallbackData || fallbackData.length === 0) {
+          console.error('Error fetching fallback question:', fallbackError);
+          setQuestion(null);
+        } else {
+          setQuestion(fallbackData[0]);
+        }
       }
     } catch (error) {
       console.error('Failed to fetch questions:', error);
-      toast.error('Failed to load questions');
+      toast.error('Failed to load survey question');
     } finally {
       setLoading(false);
     }
@@ -104,6 +120,26 @@ const SentimentSurvey: React.FC<SentimentSurveyProps> = ({ onComplete }) => {
       if (!question) {
         toast.error('No question available');
         return;
+      }
+      
+      // Get user's IP address (or a placeholder for testing)
+      const ipAddress = await fetch('https://api.ipify.org?format=json')
+        .then(res => res.json())
+        .then(data => data.ip)
+        .catch(() => 'unknown-ip-' + Math.random().toString(36).substring(7));
+        
+      // Record the interaction in the database
+      const { data: interactionData, error: interactionError } = await supabase.rpc(
+        'record_question_interaction',
+        { 
+          p_ip_address: ipAddress,
+          p_question_id: question.id
+        }
+      );
+      
+      if (interactionError) {
+        console.error('Error recording interaction:', interactionError);
+        // Continue even if recording fails
       }
       
       // Generate a session ID
