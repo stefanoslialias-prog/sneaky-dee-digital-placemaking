@@ -13,42 +13,58 @@ interface OptInPromptProps {
 export const OptInPrompt: React.FC<OptInPromptProps> = ({ onOptInYes, onOptInNo }) => {
   const handleOptInYes = async () => {
     try {
-      // Generate a unique device ID if not already stored
+      // Generate a secure device ID
       let deviceId = localStorage.getItem('deviceId');
       if (!deviceId) {
-        deviceId = `device-${Math.random().toString(36).substring(2, 15)}`;
+        // Create a more secure device ID using crypto API
+        const array = new Uint8Array(16);
+        crypto.getRandomValues(array);
+        deviceId = Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('');
         localStorage.setItem('deviceId', deviceId);
       }
 
-      console.log("User opted in for more deals with device ID:", deviceId);
+      // Validate device ID format
+      if (!deviceId || deviceId.length < 10) {
+        throw new Error('Invalid device ID generated');
+      }
 
-      // Record this opt-in in the user_emails table
-      // This is a placeholder until we actually collect the email in the next step
+      console.log("User opted in for more deals with device ID:", deviceId.substring(0, 8) + '...');
+
+      // Record opt-in with proper data validation
+      const emailData = {
+        device_id: deviceId,
+        email_address: 'pending-collection@example.com',
+        subject: 'Your Exclusive Deals',
+        email_content: 'Thank you for opting in! We will send you exclusive deals soon.',
+        status: 'pending' as const,
+        retries: 0
+      };
+
       const { data, error } = await supabase
         .from('user_emails')
-        .insert({
-          device_id: deviceId,
-          email_address: 'pending-collection@example.com', // Will be updated in the PromotionOptIn component
-          subject: 'Your Exclusive Deals',
-          email_content: 'Thank you for opting in! We will send you exclusive deals soon.',
-          status: 'pending'
-        });
+        .insert(emailData)
+        .select()
+        .single();
 
       if (error) {
         console.error("Error recording opt-in:", error);
         toast.error("There was an issue with your opt-in. Please try again.");
-      } else {
-        console.log("Successfully created pending email record:", data);
+        return;
       }
 
-      // Continue to the email collection form
+      console.log("Successfully created pending email record:", data?.id);
       onOptInYes();
     } catch (err) {
-      console.error("Unexpected error:", err);
+      console.error("Unexpected error during opt-in:", err);
       toast.error("Something went wrong. Please try again later.");
-      // Still continue to next step even if there's an error
+      // Still continue to next step to not block user flow
       onOptInYes();
     }
+  };
+
+  const handleOptInNo = () => {
+    console.log("User declined additional offers");
+    onOptInNo();
   };
 
   return (
@@ -68,7 +84,7 @@ export const OptInPrompt: React.FC<OptInPromptProps> = ({ onOptInYes, onOptInNo 
         <Button 
           variant="outline"
           size="sm"
-          onClick={onOptInNo}
+          onClick={handleOptInNo}
         >
           No
         </Button>

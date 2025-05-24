@@ -18,6 +18,29 @@ export interface ClaimCouponResult {
 }
 
 /**
+ * Validate email format
+ */
+const isValidEmail = (email: string): boolean => {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email);
+};
+
+/**
+ * Validate UUID format
+ */
+const isValidUUID = (uuid: string): boolean => {
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+  return uuidRegex.test(uuid);
+};
+
+/**
+ * Sanitize text input
+ */
+const sanitizeText = (text: string): string => {
+  return text.trim().replace(/[<>]/g, '');
+};
+
+/**
  * Fetch all available coupons from Supabase
  */
 export const fetchCoupons = async (): Promise<Coupon[]> => {
@@ -26,6 +49,7 @@ export const fetchCoupons = async (): Promise<Coupon[]> => {
       .from('coupons')
       .select('*')
       .eq('active', true)
+      .gt('expires_at', new Date().toISOString()) // Only fetch non-expired coupons
       .order('created_at', { ascending: false });
 
     if (error) {
@@ -34,16 +58,22 @@ export const fetchCoupons = async (): Promise<Coupon[]> => {
       return [];
     }
 
-    // Transform Supabase data into our Coupon type
-    return data.map(coupon => ({
-      id: coupon.id,
-      title: coupon.title,
-      description: coupon.description,
-      code: coupon.code,
-      discount: coupon.discount,
-      expiresIn: formatExpiryDate(coupon.expires_at),
-      image: coupon.image_url || undefined
-    }));
+    if (!data) {
+      return [];
+    }
+
+    // Transform and validate Supabase data
+    return data
+      .filter(coupon => coupon.id && coupon.title && coupon.description) // Basic validation
+      .map(coupon => ({
+        id: coupon.id,
+        title: sanitizeText(coupon.title),
+        description: sanitizeText(coupon.description),
+        code: sanitizeText(coupon.code),
+        discount: coupon.discount ? sanitizeText(coupon.discount) : '',
+        expiresIn: formatExpiryDate(coupon.expires_at),
+        image: coupon.image_url || undefined
+      }));
   } catch (error) {
     console.error('Unexpected error fetching coupons:', error);
     toast.error('Failed to load available offers');
@@ -52,18 +82,55 @@ export const fetchCoupons = async (): Promise<Coupon[]> => {
 };
 
 /**
- * Claim a coupon for a user
+ * Claim a coupon for a user with proper validation
  */
 export const claimCoupon = async (params: ClaimCouponParams): Promise<ClaimCouponResult> => {
   try {
-    // Call our database function to claim the coupon
+    // Input validation
+    if (!params.couponId || !isValidUUID(params.couponId)) {
+      return {
+        success: false,
+        message: 'Invalid coupon ID'
+      };
+    }
+
+    if (params.email && !isValidEmail(params.email)) {
+      return {
+        success: false,
+        message: 'Invalid email format'
+      };
+    }
+
+    if (params.name && (params.name.length < 1 || params.name.length > 100)) {
+      return {
+        success: false,
+        message: 'Name must be between 1 and 100 characters'
+      };
+    }
+
+    if (params.deviceId && params.deviceId.length < 10) {
+      return {
+        success: false,
+        message: 'Invalid device ID'
+      };
+    }
+
+    // Sanitize inputs
+    const sanitizedParams = {
+      couponId: params.couponId,
+      email: params.email ? sanitizeText(params.email.toLowerCase()) : undefined,
+      name: params.name ? sanitizeText(params.name) : undefined,
+      deviceId: params.deviceId ? sanitizeText(params.deviceId) : undefined
+    };
+
+    // Call database function with validated inputs
     const { data, error } = await supabase.rpc(
       'claim_coupon',
       {
-        p_coupon_id: params.couponId,
-        p_device_id: params.deviceId || null,
-        p_email: params.email || null,
-        p_name: params.name || null
+        p_coupon_id: sanitizedParams.couponId,
+        p_device_id: sanitizedParams.deviceId || null,
+        p_email: sanitizedParams.email || null,
+        p_name: sanitizedParams.name || null
       }
     );
 
@@ -71,30 +138,43 @@ export const claimCoupon = async (params: ClaimCouponParams): Promise<ClaimCoupo
       console.error('Error claiming coupon:', error);
       return {
         success: false,
-        message: error.message || 'Failed to claim coupon'
+        message: 'Failed to claim coupon. Please try again.'
       };
     }
 
-    // Need to cast the data as our expected type since Supabase returns Json type
-    const result = data as unknown as ClaimCouponResult;
-    return result;
+    // Validate response data
+    if (!data || typeof data !== 'object') {
+      return {
+        success: false,
+        message: 'Invalid response from server'
+      };
+    }
+
+    return data as ClaimCouponResult;
   } catch (error: any) {
     console.error('Unexpected error claiming coupon:', error);
     return {
       success: false,
-      message: error.message || 'An unexpected error occurred'
+      message: 'An unexpected error occurred'
     };
   }
 };
 
 /**
- * Get all coupons claimed by the current user
+ * Get all coupons claimed by the current authenticated user
  */
 export const getUserCoupons = async (): Promise<Coupon[]> => {
   try {
-    // First check if user is authenticated
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) {
+    // Check authentication
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+    
+    if (sessionError) {
+      console.error('Session error:', sessionError);
+      return [];
+    }
+
+    if (!session?.user?.id) {
+      console.log('No authenticated user');
       return [];
     }
 
@@ -122,18 +202,24 @@ export const getUserCoupons = async (): Promise<Coupon[]> => {
       return [];
     }
 
-    // Transform to our Coupon type
-    return data.map(item => ({
-      id: item.coupons.id,
-      title: item.coupons.title,
-      description: item.coupons.description,
-      code: item.coupons.code,
-      discount: item.coupons.discount,
-      expiresIn: formatExpiryDate(item.coupons.expires_at),
-      image: item.coupons.image_url || undefined,
-      claimedAt: new Date(item.claimed_at),
-      redeemedAt: item.redeemed_at ? new Date(item.redeemed_at) : undefined
-    }));
+    if (!data) {
+      return [];
+    }
+
+    // Transform and validate data
+    return data
+      .filter(item => item.coupons && item.coupons.id) // Ensure coupon data exists
+      .map(item => ({
+        id: item.coupons.id,
+        title: sanitizeText(item.coupons.title),
+        description: sanitizeText(item.coupons.description),
+        code: sanitizeText(item.coupons.code),
+        discount: item.coupons.discount ? sanitizeText(item.coupons.discount) : '',
+        expiresIn: formatExpiryDate(item.coupons.expires_at),
+        image: item.coupons.image_url || undefined,
+        claimedAt: new Date(item.claimed_at),
+        redeemedAt: item.redeemed_at ? new Date(item.redeemed_at) : undefined
+      }));
   } catch (error) {
     console.error('Error fetching user coupons:', error);
     return [];
@@ -141,17 +227,28 @@ export const getUserCoupons = async (): Promise<Coupon[]> => {
 };
 
 /**
- * Format expiry date to human-readable string
+ * Format expiry date to human-readable string with validation
  */
 const formatExpiryDate = (expiresAt: string): string => {
-  const expiry = new Date(expiresAt);
-  const now = new Date();
-  const diffTime = expiry.getTime() - now.getTime();
-  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-  
-  if (diffDays <= 0) return 'Expired';
-  if (diffDays === 1) return '1 day';
-  if (diffDays < 7) return `${diffDays} days`;
-  if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks`;
-  return `${Math.floor(diffDays / 30)} months`;
+  try {
+    const expiry = new Date(expiresAt);
+    
+    // Validate date
+    if (isNaN(expiry.getTime())) {
+      return 'Invalid date';
+    }
+
+    const now = new Date();
+    const diffTime = expiry.getTime() - now.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    if (diffDays <= 0) return 'Expired';
+    if (diffDays === 1) return '1 day';
+    if (diffDays < 7) return `${diffDays} days`;
+    if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks`;
+    return `${Math.floor(diffDays / 30)} months`;
+  } catch (error) {
+    console.error('Error formatting expiry date:', error);
+    return 'Unknown';
+  }
 };

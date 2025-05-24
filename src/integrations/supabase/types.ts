@@ -352,6 +352,30 @@ export type Database = {
           },
         ]
       }
+      users: {
+        Row: {
+          email: string
+          id: string
+          name: string
+          preferences: string | null
+          signed_up_at: string | null
+        }
+        Insert: {
+          email: string
+          id?: string
+          name: string
+          preferences?: string | null
+          signed_up_at?: string | null
+        }
+        Update: {
+          email?: string
+          id?: string
+          name?: string
+          preferences?: string | null
+          signed_up_at?: string | null
+        }
+        Relationships: []
+      }
       wifi_locations: {
         Row: {
           active: boolean | null
