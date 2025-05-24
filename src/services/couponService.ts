@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import type { Coupon } from '@/components/CouponPicker';
@@ -142,15 +141,39 @@ export const claimCoupon = async (params: ClaimCouponParams): Promise<ClaimCoupo
       };
     }
 
-    // Validate response data
-    if (!data || typeof data !== 'object') {
+    // Validate and safely convert response data
+    if (!data || typeof data !== 'object' || Array.isArray(data)) {
       return {
         success: false,
         message: 'Invalid response from server'
       };
     }
 
-    return data as ClaimCouponResult;
+    // Type-safe conversion of JSON response
+    const result = data as Record<string, any>;
+    
+    // Validate required fields exist
+    if (typeof result.success !== 'boolean' || typeof result.message !== 'string') {
+      return {
+        success: false,
+        message: 'Invalid response format from server'
+      };
+    }
+
+    return {
+      success: result.success,
+      message: result.message,
+      coupon: result.coupon ? {
+        id: result.coupon.id,
+        title: sanitizeText(result.coupon.title || ''),
+        description: sanitizeText(result.coupon.description || ''),
+        code: sanitizeText(result.coupon.code || ''),
+        discount: result.coupon.discount ? sanitizeText(result.coupon.discount) : '',
+        expiresIn: formatExpiryDate(result.coupon.expires_at),
+        image: result.coupon.image_url || undefined
+      } : undefined,
+      claimedId: result.claimed_id || undefined
+    };
   } catch (error: any) {
     console.error('Unexpected error claiming coupon:', error);
     return {
