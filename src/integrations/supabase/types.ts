@@ -37,7 +37,11 @@ export type Database = {
           expires_at: string
           id: string
           image_url: string | null
+          issued_at: string | null
+          pass_payload: Json | null
+          pass_type: string | null
           title: string
+          user_id: string | null
           wallet_compatible: boolean | null
         }
         Insert: {
@@ -49,7 +53,11 @@ export type Database = {
           expires_at: string
           id?: string
           image_url?: string | null
+          issued_at?: string | null
+          pass_payload?: Json | null
+          pass_type?: string | null
           title: string
+          user_id?: string | null
           wallet_compatible?: boolean | null
         }
         Update: {
@@ -61,10 +69,22 @@ export type Database = {
           expires_at?: string
           id?: string
           image_url?: string | null
+          issued_at?: string | null
+          pass_payload?: Json | null
+          pass_type?: string | null
           title?: string
+          user_id?: string | null
           wallet_compatible?: boolean | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "coupons_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       devices: {
         Row: {
@@ -311,6 +331,21 @@ export type Database = {
           id?: string
           role?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      "user_tab;es": {
+        Row: {
+          created_at: string
+          id: number
+        }
+        Insert: {
+          created_at?: string
+          id?: number
+        }
+        Update: {
+          created_at?: string
+          id?: number
         }
         Relationships: []
       }
