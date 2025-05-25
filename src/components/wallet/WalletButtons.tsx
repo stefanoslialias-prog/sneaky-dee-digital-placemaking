@@ -22,7 +22,7 @@ export const WalletButtons: React.FC<WalletButtonsProps> = ({
   const walletSupport = isWalletSupported();
 
   const handleAddToWallet = async () => {
-    // Determine which platform to use based on device
+    // Determine which platform to use based on device, default to apple if neither detected
     const platform = walletSupport.apple ? 'apple' : 'google';
     
     setIsAdding(platform);
@@ -51,10 +51,7 @@ export const WalletButtons: React.FC<WalletButtonsProps> = ({
     }
   };
 
-  if (!walletSupport.apple && !walletSupport.google) {
-    return null;
-  }
-
+  // Always show the wallet button - let users try to add it regardless of device detection
   const walletName = walletSupport.apple ? 'Apple Wallet' : 'Google Pay';
 
   return (

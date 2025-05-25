@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Coupon } from '@/components/CouponPicker';
 import { Sentiment } from '@/services/mockData';
@@ -122,18 +121,8 @@ export const useSurveyFlow = () => {
   };
 
   const handleOptInNo = () => {
-    // Show toast notification about coupon being transferred to e-wallet
-    if (selectedCoupon) {
-      toast.success(`Your coupon for ${selectedCoupon.title} has been transferred to your e-wallet!`, {
-        duration: 5000,
-        position: 'top-center',
-      });
-    } else {
-      toast.success('Your coupon has been transferred to your e-wallet!', {
-        duration: 5000,
-        position: 'top-center',
-      });
-    }
+    // Remove the automatic wallet deposit message - just proceed to welcome
+    console.log('User opted out of promotions');
     
     setStep('welcome');
     setSelectedCoupon(null);
