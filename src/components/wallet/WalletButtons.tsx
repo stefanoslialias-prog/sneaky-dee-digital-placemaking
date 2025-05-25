@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { addToWallet, isWalletSupported, type WalletPassData } from '@/services/walletService';
 import { toast } from 'sonner';
-import { Smartphone, Wallet } from 'lucide-react';
+import { Wallet } from 'lucide-react';
 
 interface WalletButtonsProps {
   couponId: string;
@@ -21,7 +21,10 @@ export const WalletButtons: React.FC<WalletButtonsProps> = ({
   const [isAdding, setIsAdding] = useState<'apple' | 'google' | null>(null);
   const walletSupport = isWalletSupported();
 
-  const handleAddToWallet = async (platform: 'apple' | 'google') => {
+  const handleAddToWallet = async () => {
+    // Determine which platform to use based on device
+    const platform = walletSupport.apple ? 'apple' : 'google';
+    
     setIsAdding(platform);
     
     try {
@@ -52,39 +55,18 @@ export const WalletButtons: React.FC<WalletButtonsProps> = ({
     return null;
   }
 
+  const walletName = walletSupport.apple ? 'Apple Wallet' : 'Google Pay';
+
   return (
-    <div className="flex flex-col gap-2 mt-4">
-      <p className="text-sm text-gray-600 text-center mb-2">
-        Add to your mobile wallet:
-      </p>
-      
-      <div className="flex gap-2 justify-center">
-        {walletSupport.apple && (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => handleAddToWallet('apple')}
-            disabled={isAdding === 'apple'}
-            className="flex items-center gap-2"
-          >
-            <Wallet className="h-4 w-4" />
-            {isAdding === 'apple' ? 'Adding...' : 'Apple Wallet'}
-          </Button>
-        )}
-        
-        {walletSupport.google && (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => handleAddToWallet('google')}
-            disabled={isAdding === 'google'}
-            className="flex items-center gap-2"
-          >
-            <Smartphone className="h-4 w-4" />
-            {isAdding === 'google' ? 'Adding...' : 'Google Pay'}
-          </Button>
-        )}
-      </div>
-    </div>
+    <Button
+      variant="outline"
+      size="lg"
+      onClick={handleAddToWallet}
+      disabled={isAdding !== null}
+      className="w-full flex items-center gap-2"
+    >
+      <Wallet className="h-4 w-4" />
+      {isAdding ? 'Adding...' : `Add to ${walletName}`}
+    </Button>
   );
 };
