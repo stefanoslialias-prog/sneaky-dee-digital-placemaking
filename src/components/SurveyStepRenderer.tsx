@@ -93,6 +93,7 @@ const SurveyStepRenderer: React.FC<SurveyStepRendererProps> = ({
               coupon={selectedCoupon} 
               onOptInYes={onOptInYes}
               onOptInNo={onOptInNo}
+              userInfo={userInfo}
             />
           </div>
         ) : null;

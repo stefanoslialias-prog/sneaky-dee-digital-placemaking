@@ -40,6 +40,9 @@ export type Database = {
           issued_at: string | null
           pass_payload: Json | null
           pass_type: string | null
+          passkit_campaign_id: string | null
+          passkit_offer_id: string | null
+          passkit_template_id: string | null
           title: string
           user_id: string | null
           wallet_compatible: boolean | null
@@ -56,6 +59,9 @@ export type Database = {
           issued_at?: string | null
           pass_payload?: Json | null
           pass_type?: string | null
+          passkit_campaign_id?: string | null
+          passkit_offer_id?: string | null
+          passkit_template_id?: string | null
           title: string
           user_id?: string | null
           wallet_compatible?: boolean | null
@@ -72,6 +78,9 @@ export type Database = {
           issued_at?: string | null
           pass_payload?: Json | null
           pass_type?: string | null
+          passkit_campaign_id?: string | null
+          passkit_offer_id?: string | null
+          passkit_template_id?: string | null
           title?: string
           user_id?: string | null
           wallet_compatible?: boolean | null
@@ -355,6 +364,9 @@ export type Database = {
           coupon_id: string
           device_id: string | null
           id: string
+          pass_url: string | null
+          passkit_coupon_id: string | null
+          passkit_status: string | null
           platform: string | null
           redeemed_at: string | null
           user_id: string | null
@@ -364,6 +376,9 @@ export type Database = {
           coupon_id: string
           device_id?: string | null
           id?: string
+          pass_url?: string | null
+          passkit_coupon_id?: string | null
+          passkit_status?: string | null
           platform?: string | null
           redeemed_at?: string | null
           user_id?: string | null
@@ -373,6 +388,9 @@ export type Database = {
           coupon_id?: string
           device_id?: string | null
           id?: string
+          pass_url?: string | null
+          passkit_coupon_id?: string | null
+          passkit_status?: string | null
           platform?: string | null
           redeemed_at?: string | null
           user_id?: string | null

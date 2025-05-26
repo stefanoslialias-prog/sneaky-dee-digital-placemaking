@@ -12,13 +12,19 @@ interface CongratulationsScreenProps {
   coupon: Coupon;
   onOptInYes: () => void;
   onOptInNo: () => void;
-  onDone?: () => void; // Made optional with the '?' operator
+  onDone?: () => void;
+  userInfo?: {
+    email?: string;
+    name?: string;
+    provider?: string;
+  } | null;
 }
 
 const CongratulationsScreen: React.FC<CongratulationsScreenProps> = ({ 
   coupon, 
   onOptInYes,
-  onOptInNo
+  onOptInNo,
+  userInfo
 }) => {
   const [copied, setCopied] = useState(false);
   const [showConfetti, setShowConfetti] = useState(true);
@@ -53,7 +59,9 @@ const CongratulationsScreen: React.FC<CongratulationsScreenProps> = ({
       
       const result = await claimCoupon({
         couponId: coupon.id,
-        deviceId
+        deviceId,
+        email: userInfo?.email,
+        name: userInfo?.name
       });
       
       if (result.success) {
@@ -104,7 +112,9 @@ const CongratulationsScreen: React.FC<CongratulationsScreenProps> = ({
           <ActionButtons 
             coupon={coupon} 
             copied={copied} 
-            setCopied={setCopied} 
+            setCopied={setCopied}
+            userEmail={userInfo?.email}
+            userName={userInfo?.name}
           />
         </CardFooter>
       </Card>

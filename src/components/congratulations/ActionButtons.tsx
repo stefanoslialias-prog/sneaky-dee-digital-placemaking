@@ -10,12 +10,16 @@ interface ActionButtonsProps {
   coupon: Coupon;
   copied: boolean;
   setCopied: (copied: boolean) => void;
+  userEmail?: string;
+  userName?: string;
 }
 
 export const ActionButtons: React.FC<ActionButtonsProps> = ({ 
   coupon, 
   copied, 
-  setCopied 
+  setCopied,
+  userEmail,
+  userName
 }) => {
   const handleCopyCode = async () => {
     try {
@@ -89,6 +93,8 @@ Present this coupon at checkout to redeem your discount.
           <WalletButtons 
             couponId={coupon.id}
             deviceId={localStorage.getItem('deviceId') || undefined}
+            userEmail={userEmail}
+            userName={userName}
             onSuccess={() => {
               toast.success('Coupon added to your wallet!');
             }}
