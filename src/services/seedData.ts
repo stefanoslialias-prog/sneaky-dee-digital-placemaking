@@ -1,165 +1,147 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
 
 export const seedSampleCoupons = async () => {
   try {
-    // Check if we already have coupons
-    const { data: existingCoupons, error: checkError } = await supabase
+    // Check if coupons already exist
+    const { data: existingCoupons, error: fetchError } = await supabase
       .from('coupons')
       .select('id')
       .limit(1);
 
-    if (checkError) {
-      console.error('Error checking existing coupons:', checkError);
-      return false;
+    if (fetchError) {
+      console.error('Error checking existing coupons:', fetchError);
+      return;
     }
 
-    // If we already have coupons, don't seed again
+    // If coupons already exist, don't seed
     if (existingCoupons && existingCoupons.length > 0) {
-      console.log('Coupons already exist, skipping seed');
-      return true;
+      console.log('Coupons already exist, skipping seeding');
+      return;
     }
 
-    console.log('Seeding sample coupons...');
-
+    // Sample coupons data
     const sampleCoupons = [
       {
-        title: "Tim Hortons Double Double",
-        description: "Free medium double double coffee with any food purchase",
-        code: "TIMSFREE2024",
-        discount: "Free Coffee",
+        title: "Tim Hortons Coffee",
+        description: "Get a free medium coffee with any breakfast sandwich purchase",
+        code: "TIMFREE2024",
+        discount: "Free medium coffee",
         expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days from now
         active: true,
-        image_url: "/lovable-uploads/bd068280-e55a-4131-8a50-96bb2b06a92a.png"
+        image_url: "https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=300&h=200&fit=crop"
       },
       {
-        title: "Metro Grocery Deal",
-        description: "15% off your entire grocery purchase over $50",
+        title: "Metro Grocery Savings",
+        description: "Save 15% on your next grocery purchase of $50 or more",
         code: "METRO15OFF",
-        discount: "15% off",
+        discount: "15% off $50+",
         expires_at: new Date(Date.now() + 45 * 24 * 60 * 60 * 1000).toISOString(), // 45 days from now
         active: true,
-        image_url: "/lovable-uploads/bd068280-e55a-4131-8a50-96bb2b06a92a.png"
+        image_url: "https://images.unsplash.com/photo-1542838132-92c53300491e?w=300&h=200&fit=crop"
       },
       {
-        title: "Local Bookstore Special",
-        description: "Buy 2 books, get 1 free from our bestseller collection",
-        code: "BOOKS321",
-        discount: "Buy 2 Get 1 Free",
+        title: "Campus Bookstore Deal",
+        description: "20% off all textbooks and school supplies",
+        code: "BOOKS20",
+        discount: "20% off textbooks",
         expires_at: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString(), // 60 days from now
         active: true,
-        image_url: "/lovable-uploads/bd068280-e55a-4131-8a50-96bb2b06a92a.png"
+        image_url: "https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=300&h=200&fit=crop"
       }
     ];
 
-    const { data, error } = await supabase
+    // Insert sample coupons
+    const { error: insertError } = await supabase
       .from('coupons')
-      .insert(sampleCoupons)
-      .select();
+      .insert(sampleCoupons);
 
-    if (error) {
-      console.error('Error seeding coupons:', error);
-      toast.error('Failed to create sample coupons');
-      return false;
+    if (insertError) {
+      console.error('Error seeding coupons:', insertError);
+    } else {
+      console.log('Sample coupons seeded successfully');
     }
-
-    console.log('Successfully seeded sample coupons:', data);
-    toast.success('Sample coupons created successfully!');
-    return true;
-
   } catch (error) {
-    console.error('Unexpected error seeding coupons:', error);
-    toast.error('Failed to create sample coupons');
-    return false;
+    console.error('Error in seedSampleCoupons:', error);
   }
 };
 
-// Function to seed sample survey questions if needed
 export const seedSampleQuestions = async () => {
   try {
-    // Check if we already have questions
-    const { data: existingQuestions, error: checkError } = await supabase
+    // Check if questions already exist
+    const { data: existingQuestions, error: fetchError } = await supabase
       .from('survey_questions')
       .select('id')
       .limit(1);
 
-    if (checkError) {
-      console.error('Error checking existing questions:', checkError);
-      return false;
+    if (fetchError) {
+      console.error('Error checking existing questions:', fetchError);
+      return;
     }
 
-    // If we already have questions, don't seed again
+    // If questions already exist, don't seed
     if (existingQuestions && existingQuestions.length > 0) {
-      console.log('Questions already exist, skipping seed');
-      return true;
+      console.log('Questions already exist, skipping seeding');
+      return;
     }
 
-    console.log('Seeding sample questions...');
-
+    // Sample questions data
     const sampleQuestions = [
       {
-        text: "How do you feel about the cleanliness of this area?",
+        text: "How do you feel about the shopping experience in this mall?",
         type: "sentiment",
-        category: "environment",
+        category: "shopping",
         order: 1,
         active: true
       },
       {
-        text: "How satisfied are you with the WiFi connectivity here?",
-        type: "sentiment",
-        category: "technology",
+        text: "How satisfied are you with the cleanliness of this area?",
+        type: "sentiment", 
+        category: "cleanliness",
         order: 2,
         active: true
       },
       {
-        text: "How would you rate the safety of this location?",
+        text: "How would you rate the accessibility of this location?",
         type: "sentiment",
-        category: "safety",
+        category: "accessibility", 
         order: 3,
         active: true
       },
       {
-        text: "How do you feel about the available amenities in this area?",
+        text: "How do you feel about the variety of stores available?",
         type: "sentiment",
-        category: "amenities",
+        category: "variety",
         order: 4,
         active: true
       },
       {
-        text: "How satisfied are you with the overall experience here?",
+        text: "How satisfied are you with the parking situation?",
         type: "sentiment",
-        category: "general",
+        category: "parking",
         order: 5,
         active: true
       },
       {
-        text: "How likely are you to recommend this place to others?",
+        text: "How do you feel about the overall atmosphere of this place?",
         type: "sentiment",
-        category: "recommendation",
+        category: "atmosphere",
         order: 6,
         active: true
       }
     ];
 
-    const { data, error } = await supabase
+    // Insert sample questions
+    const { error: insertError } = await supabase
       .from('survey_questions')
-      .insert(sampleQuestions)
-      .select();
+      .insert(sampleQuestions);
 
-    if (error) {
-      console.error('Error seeding questions:', error);
-      toast.error('Failed to create sample questions');
-      return false;
+    if (insertError) {
+      console.error('Error seeding questions:', insertError);
+    } else {
+      console.log('Sample questions seeded successfully');
     }
-
-    console.log('Successfully seeded sample questions:', data);
-    toast.success('Sample questions created successfully!');
-    return true;
-
   } catch (error) {
-    console.error('Unexpected error seeding questions:', error);
-    toast.error('Failed to create sample questions');
-    return false;
+    console.error('Error in seedSampleQuestions:', error);
   }
 };

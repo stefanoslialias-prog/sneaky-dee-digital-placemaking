@@ -13,7 +13,7 @@ export function useDeviceTracking() {
         
         if (storedDeviceId && storedDeviceId.length >= 10) {
           // Validate existing device ID format
-          if (/^[a-f0-9]+$/i.test(storedDeviceId)) {
+          if (/^[a-f0-9-]+$/i.test(storedDeviceId)) {
             setDeviceId(storedDeviceId);
             return;
           } else {
@@ -51,17 +51,32 @@ export function useDeviceTracking() {
         throw new Error('Invalid device ID');
       }
 
-      const { error } = await supabase
+      // Check if device already exists
+      const { data: existingDevice, error: checkError } = await supabase
         .from('devices')
-        .insert({
-          mac_address: deviceId,
-          opt_in: false
-        });
-        
-      if (error) {
-        console.error('Error recording device:', error);
-      } else {
-        console.log('Device recorded successfully:', deviceId.substring(0, 8) + '...');
+        .select('id')
+        .eq('mac_address', deviceId)
+        .single();
+
+      if (checkError && checkError.code !== 'PGRST116') {
+        console.error('Error checking device:', checkError);
+        return;
+      }
+
+      // Only insert if device doesn't exist
+      if (!existingDevice) {
+        const { error } = await supabase
+          .from('devices')
+          .insert({
+            mac_address: deviceId,
+            opt_in: false
+          });
+          
+        if (error) {
+          console.error('Error recording device:', error);
+        } else {
+          console.log('Device recorded successfully:', deviceId.substring(0, 8) + '...');
+        }
       }
     } catch (err) {
       console.error('Failed to record device:', err);

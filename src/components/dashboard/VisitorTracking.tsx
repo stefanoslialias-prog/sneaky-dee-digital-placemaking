@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -45,8 +44,13 @@ const VisitorTracking: React.FC = () => {
         .order('last_seen_at', { ascending: false })
         .limit(50);
 
-      if (devicesError) throw devicesError;
-      setVisitors(devicesData || []);
+      if (devicesError) {
+        console.error('Error fetching devices:', devicesError);
+        // Don't throw error, just log it and continue with empty data
+        setVisitors([]);
+      } else {
+        setVisitors(devicesData || []);
+      }
 
       // Fetch locations
       const { data: locationsData, error: locationsError } = await supabase
@@ -54,8 +58,12 @@ const VisitorTracking: React.FC = () => {
         .select('*')
         .order('name');
 
-      if (locationsError) throw locationsError;
-      setLocations(locationsData || []);
+      if (locationsError) {
+        console.error('Error fetching locations:', locationsError);
+        setLocations([]);
+      } else {
+        setLocations(locationsData || []);
+      }
 
       // Calculate stats
       const totalVisitors = devicesData?.length || 0;
