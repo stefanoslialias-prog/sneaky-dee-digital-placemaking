@@ -4,12 +4,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
 import Logo from '@/components/Logo';
-import { DatabaseBackup, Users, FileText, LayoutGrid, Settings, Wifi, ArrowLeft } from 'lucide-react';
+import { DatabaseBackup, Users, FileText, LayoutGrid, Settings, Wifi, ArrowLeft, Gift, Eye } from 'lucide-react';
 import SentimentOverview from '@/components/dashboard/SentimentOverview';
 import LocationMap from '@/components/dashboard/LocationMap';
 import ResponseTable from '@/components/dashboard/ResponseTable';
 import QuestionDesigner from '@/components/dashboard/QuestionDesigner';
 import LiveTraffic from '@/components/dashboard/LiveTraffic';
+import CouponManager from '@/components/dashboard/CouponManager';
+import VisitorTracking from '@/components/dashboard/VisitorTracking';
 import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
 import { Link, useNavigate } from 'react-router-dom';
@@ -121,7 +123,7 @@ const AdminDashboard: React.FC = () => {
         
         <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col">
           <div className="bg-white rounded-lg p-2 mb-6">
-            <TabsList className="grid grid-cols-3 md:grid-cols-5">
+            <TabsList className="grid grid-cols-3 md:grid-cols-7">
               <TabsTrigger value="overview" className="flex items-center gap-2">
                 <DatabaseBackup size={16} /> Overview
               </TabsTrigger>
@@ -134,11 +136,17 @@ const AdminDashboard: React.FC = () => {
                   </Badge>
                 )}
               </TabsTrigger>
+              <TabsTrigger value="visitors" className="flex items-center gap-2">
+                <Eye size={16} /> Visitors
+              </TabsTrigger>
               <TabsTrigger value="locations" className="flex items-center gap-2">
                 <Users size={16} /> Locations
               </TabsTrigger>
               <TabsTrigger value="questions" className="flex items-center gap-2">
                 <Settings size={16} /> Questions
+              </TabsTrigger>
+              <TabsTrigger value="coupons" className="flex items-center gap-2">
+                <Gift size={16} /> Coupons
               </TabsTrigger>
               <TabsTrigger value="responses" className="flex items-center gap-2">
                 <FileText size={16} /> 
@@ -160,6 +168,10 @@ const AdminDashboard: React.FC = () => {
             <TabsContent value="traffic" className="flex-1">
               <LiveTraffic />
             </TabsContent>
+
+            <TabsContent value="visitors" className="flex-1">
+              <VisitorTracking />
+            </TabsContent>
             
             <TabsContent value="locations" className="flex-1">
               <LocationMap />
@@ -167,6 +179,10 @@ const AdminDashboard: React.FC = () => {
             
             <TabsContent value="questions" className="flex-1">
               <QuestionDesigner />
+            </TabsContent>
+
+            <TabsContent value="coupons" className="flex-1">
+              <CouponManager />
             </TabsContent>
             
             <TabsContent value="responses" className="flex-1">

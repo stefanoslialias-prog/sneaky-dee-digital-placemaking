@@ -7,12 +7,6 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-// PassKit credentials stored as Supabase secrets
-const PASSKIT_CERT = Deno.env.get('PASSKIT_CERTIFICATE')!
-const PASSKIT_KEY = Deno.env.get('PASSKIT_PRIVATE_KEY')!
-const PASSKIT_CA_CHAIN = Deno.env.get('PASSKIT_CA_CHAIN')!
-const PASSKIT_PASSPHRASE = Deno.env.get('PASSKIT_PASSPHRASE')!
-
 interface PassKitRequest {
   couponId: string
   userId?: string
@@ -61,7 +55,7 @@ serve(async (req) => {
       console.log('Creating PassKit campaign and offer for coupon:', couponId)
       
       // For now, we'll store placeholder PassKit IDs
-      // In a real implementation, you'd call PassKit gRPC APIs here
+      // In a real implementation, you'd call PassKit gRPC APIs here using the certificates
       campaignId = `campaign_${couponId}_${Date.now()}`
       offerId = `offer_${couponId}_${Date.now()}`
 
@@ -78,7 +72,9 @@ serve(async (req) => {
 
     // Create PassKit coupon pass
     const passkitCouponId = `pk_coupon_${couponId}_${userId || deviceId}_${Date.now()}`
-    const passUrl = `https://api.passkit.io/v1/passes/${passkitCouponId}`
+    const passUrl = platform === 'apple' 
+      ? `https://api.passkit.io/v1/passes/${passkitCouponId}`
+      : `https://pay.google.com/gp/v/save/${passkitCouponId}`
 
     console.log('Creating PassKit coupon:', passkitCouponId)
 

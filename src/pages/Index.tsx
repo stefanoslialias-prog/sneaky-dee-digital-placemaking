@@ -1,10 +1,11 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import AppLayout from '@/components/AppLayout';
 import { useDeviceTracking } from '@/hooks/useDeviceTracking';
 import { useAuthState } from '@/hooks/useAuthState';
 import useSurveyFlow from '@/hooks/useSurveyFlow';
 import SurveyStepRenderer from '@/components/SurveyStepRenderer';
+import { seedSampleCoupons, seedSampleQuestions } from '@/services/seedData';
 
 const Index = () => {
   const { deviceId } = useDeviceTracking();
@@ -23,6 +24,16 @@ const Index = () => {
     handleOptInNo,
     handleThankYouDone
   } = useSurveyFlow();
+
+  // Seed sample data on app load
+  useEffect(() => {
+    const initializeData = async () => {
+      await seedSampleCoupons();
+      await seedSampleQuestions();
+    };
+    
+    initializeData();
+  }, []);
 
   const handleRegister = async (email: string, name: string) => {
     // Store user info for future promotions

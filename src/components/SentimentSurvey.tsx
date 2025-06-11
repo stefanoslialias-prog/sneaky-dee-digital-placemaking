@@ -19,11 +19,11 @@ interface SentimentSurveyProps {
 
 const SentimentSurvey: React.FC<SentimentSurveyProps> = ({ onComplete }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [question, setQuestion] = useState<{ id: string; text: string; } | null>(null);
+  const [questions, setQuestions] = useState<{ id: string; text: string; }[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Fetch a random question from the survey_questions table
-  const fetchRandomQuestion = async () => {
+  // Fetch 2 random questions from the survey_questions table
+  const fetchRandomQuestions = async () => {
     setLoading(true);
     try {
       // Get user's IP address (or a placeholder for testing)
@@ -32,56 +32,38 @@ const SentimentSurvey: React.FC<SentimentSurveyProps> = ({ onComplete }) => {
         .then(data => data.ip)
         .catch(() => 'unknown-ip-' + Math.random().toString(36).substring(7));
       
-      console.log("Fetching question for IP:", ipAddress);
+      console.log("Fetching questions for IP:", ipAddress);
       
-      // Call the database function to get a random question
-      const { data, error } = await supabase.rpc(
-        'get_random_question_for_ip',
-        { p_ip_address: ipAddress }
-      );
+      // Get all active questions first
+      const { data: allQuestions, error } = await supabase
+        .from('survey_questions')
+        .select('id, text')
+        .eq('active', true);
         
       if (error) {
-        console.error('Error fetching random question:', error);
-        toast.error('Failed to load survey question');
-        
-        // Fallback - get any active question
-        const { data: fallbackData, error: fallbackError } = await supabase
-          .from('survey_questions')
-          .select('id, text')
-          .eq('active', true)
-          .limit(1);
-          
-        if (fallbackError || !fallbackData || fallbackData.length === 0) {
-          console.error('Error fetching fallback question:', fallbackError);
-          setQuestion(null);
-        } else {
-          console.log("Loaded fallback question:", fallbackData[0]);
-          setQuestion(fallbackData[0]);
-        }
-      } else if (data && data.length > 0) {
-        // Set the random question
-        console.log("Loaded question via function:", data[0]);
-        setQuestion(data[0]);
-      } else {
-        console.log("No questions returned from function, fetching fallback");
-        // Fallback - get any active question
-        const { data: fallbackData, error: fallbackError } = await supabase
-          .from('survey_questions')
-          .select('id, text')
-          .eq('active', true)
-          .limit(1);
-          
-        if (fallbackError || !fallbackData || fallbackData.length === 0) {
-          console.error('Error fetching fallback question:', fallbackError);
-          setQuestion(null);
-        } else {
-          console.log("Loaded fallback question:", fallbackData[0]);
-          setQuestion(fallbackData[0]);
-        }
+        console.error('Error fetching questions:', error);
+        toast.error('Failed to load survey questions');
+        setQuestions([]);
+        return;
       }
+
+      if (!allQuestions || allQuestions.length === 0) {
+        console.log("No active questions found");
+        setQuestions([]);
+        return;
+      }
+
+      // Randomly select 2 questions (or all if less than 2)
+      const shuffled = [...allQuestions].sort(() => 0.5 - Math.random());
+      const selectedQuestions = shuffled.slice(0, Math.min(2, shuffled.length));
+      
+      console.log("Selected questions:", selectedQuestions);
+      setQuestions(selectedQuestions);
+      
     } catch (error) {
       console.error('Failed to fetch questions:', error);
-      toast.error('Failed to load survey question');
+      toast.error('Failed to load survey questions');
+      setQuestions([]);
     } finally {
       setLoading(false);
     }
@@ -90,7 +72,7 @@ const SentimentSurvey: React.FC<SentimentSurveyProps> = ({ onComplete }) => {
   // Initialize survey and set up real-time subscription
   useEffect(() => {
     console.log("SentimentSurvey component mounted, fetching questions");
-    fetchRandomQuestion();
+    fetchRandomQuestions();
     
     // Set up real-time subscription to survey_questions table
     const channel = supabase
@@ -102,24 +84,17 @@ const SentimentSurvey: React.FC<SentimentSurveyProps> = ({ onComplete }) => {
           table: 'survey_questions'
         }, 
         (payload) => {
-          // When questions change, show a notification that new questions are available
+          // When questions change, refresh the questions
           if (payload.eventType === 'INSERT') {
             toast('New survey questions available!', {
               action: {
                 label: 'Refresh',
-                onClick: () => fetchRandomQuestion()
+                onClick: () => fetchRandomQuestions()
               }
             });
-          } else if (payload.eventType === 'UPDATE' && 
-                    question && 
-                    payload.new.id === question.id) {
-            // If the current question was updated, refresh
-            fetchRandomQuestion();
-          } else if (payload.eventType === 'DELETE' && 
-                    question && 
-                    payload.old.id === question.id) {
-            // If the current question was deleted, get a new one
-            fetchRandomQuestion();
+          } else {
+            // Refresh questions for any other change
+            fetchRandomQuestions();
           }
         }
       )
@@ -134,11 +109,13 @@ const SentimentSurvey: React.FC<SentimentSurveyProps> = ({ onComplete }) => {
   const handleSentimentSelect = async (sentiment: Sentiment) => {
     setIsSubmitting(true);
     try {
-      if (!question) {
-        toast.error('No question available');
+      if (questions.length === 0) {
+        toast.error('No questions available');
         return;
       }
       
+      // Use the first question for the response
+      const question = questions[0];
       console.log("Submitting answer for question:", question.id, "Answer:", sentiment);
       
       // Get user's IP address (or a placeholder for testing)
@@ -209,9 +186,9 @@ const SentimentSurvey: React.FC<SentimentSurveyProps> = ({ onComplete }) => {
       <div className="w-full max-w-md mx-auto">
         <Card>
           <CardHeader className="text-center">
-            <CardTitle className="text-2xl font-playfair">Loading Question...</CardTitle>
+            <CardTitle className="text-2xl font-playfair">Loading Questions...</CardTitle>
             <CardDescription>
-              Please wait while we prepare your survey question.
+              Please wait while we prepare your survey questions.
             </CardDescription>
           </CardHeader>
         </Card>
@@ -220,7 +197,7 @@ const SentimentSurvey: React.FC<SentimentSurveyProps> = ({ onComplete }) => {
   }
 
   // Show no questions available message
-  if (!question) {
+  if (questions.length === 0) {
     return (
       <div className="w-full max-w-md mx-auto">
         <Card>
@@ -236,31 +213,35 @@ const SentimentSurvey: React.FC<SentimentSurveyProps> = ({ onComplete }) => {
   }
 
   return (
-    <div className="w-full max-w-md mx-auto">
-      <Card>
-        <CardHeader className="text-center">
-          <CardTitle className="text-2xl font-playfair">Quick Poll</CardTitle>
-          <CardDescription>
-            {question.text}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-3 gap-4">
-            {sentimentOptions.map((option) => (
-              <Button
-                key={option.value}
-                variant="outline"
-                onClick={() => handleSentimentSelect(option.value)}
-                disabled={isSubmitting}
-                className={`h-24 flex flex-col items-center justify-center gap-2 border-2 hover:bg-toronto-gray`}
-              >
-                <span className="text-3xl">{option.emoji}</span>
-                <span>{option.label}</span>
-              </Button>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+    <div className="w-full max-w-md mx-auto space-y-4">
+      {questions.map((question, index) => (
+        <Card key={question.id}>
+          <CardHeader className="text-center">
+            <CardTitle className="text-2xl font-playfair">
+              Quick Poll {questions.length > 1 ? `${index + 1}/${questions.length}` : ''}
+            </CardTitle>
+            <CardDescription>
+              {question.text}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-3 gap-4">
+              {sentimentOptions.map((option) => (
+                <Button
+                  key={option.value}
+                  variant="outline"
+                  onClick={() => handleSentimentSelect(option.value)}
+                  disabled={isSubmitting}
+                  className={`h-24 flex flex-col items-center justify-center gap-2 border-2 hover:bg-toronto-gray`}
+                >
+                  <span className="text-3xl">{option.emoji}</span>
+                  <span>{option.label}</span>
+                </Button>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      ))}
     </div>
   );
 };
