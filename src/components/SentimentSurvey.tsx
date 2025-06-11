@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -19,6 +18,7 @@ interface SentimentSurveyProps {
 
 const SentimentSurvey: React.FC<SentimentSurveyProps> = ({ onComplete }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectedSentiment, setSelectedSentiment] = useState<Sentiment | null>(null);
   const [questions, setQuestions] = useState<{ id: string; text: string; }[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -106,7 +106,18 @@ const SentimentSurvey: React.FC<SentimentSurveyProps> = ({ onComplete }) => {
     };
   }, []);
 
-  const handleSentimentSelect = async (sentiment: Sentiment) => {
+  const handleSentimentSelect = (sentiment: Sentiment) => {
+    if (isSubmitting) return; // Prevent multiple clicks during submission
+    
+    setSelectedSentiment(sentiment);
+    
+    // Add a small delay to show the selection before proceeding
+    setTimeout(() => {
+      handleSentimentSubmit(sentiment);
+    }, 500);
+  };
+
+  const handleSentimentSubmit = async (sentiment: Sentiment) => {
     setIsSubmitting(true);
     try {
       if (questions.length === 0) {
@@ -177,6 +188,7 @@ const SentimentSurvey: React.FC<SentimentSurveyProps> = ({ onComplete }) => {
       toast.error('Something went wrong. Please try again.');
     } finally {
       setIsSubmitting(false);
+      setSelectedSentiment(null);
     }
   };
 
@@ -232,13 +244,22 @@ const SentimentSurvey: React.FC<SentimentSurveyProps> = ({ onComplete }) => {
                   variant="outline"
                   onClick={() => handleSentimentSelect(option.value)}
                   disabled={isSubmitting}
-                  className={`h-24 flex flex-col items-center justify-center gap-2 border-2 hover:bg-toronto-gray`}
+                  className={`h-24 flex flex-col items-center justify-center gap-2 border-2 transition-all ${
+                    selectedSentiment === option.value 
+                      ? 'bg-toronto-blue text-white border-toronto-blue' 
+                      : 'hover:bg-toronto-gray'
+                  } ${isSubmitting ? 'opacity-50 cursor-not-allowed' : ''}`}
                 >
                   <span className="text-3xl">{option.emoji}</span>
                   <span>{option.label}</span>
                 </Button>
               ))}
             </div>
+            {isSubmitting && (
+              <div className="text-center mt-4">
+                <p className="text-sm text-gray-600">Saving your response...</p>
+              </div>
+            )}
           </CardContent>
         </Card>
       ))}

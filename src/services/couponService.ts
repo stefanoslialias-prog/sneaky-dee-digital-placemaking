@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import type { Coupon } from '@/components/CouponPicker';
@@ -44,6 +45,8 @@ const sanitizeText = (text: string): string => {
  */
 export const fetchCoupons = async (): Promise<Coupon[]> => {
   try {
+    console.log('Fetching coupons from database...');
+    
     const { data, error } = await supabase
       .from('coupons')
       .select('*')
@@ -57,12 +60,15 @@ export const fetchCoupons = async (): Promise<Coupon[]> => {
       return [];
     }
 
-    if (!data) {
+    console.log('Raw coupon data from database:', data);
+
+    if (!data || data.length === 0) {
+      console.log('No coupons found in database');
       return [];
     }
 
     // Transform and validate Supabase data
-    return data
+    const transformedCoupons = data
       .filter(coupon => coupon.id && coupon.title && coupon.description) // Basic validation
       .map(coupon => ({
         id: coupon.id,
@@ -73,6 +79,9 @@ export const fetchCoupons = async (): Promise<Coupon[]> => {
         expiresIn: formatExpiryDate(coupon.expires_at),
         image: coupon.image_url || undefined
       }));
+
+    console.log('Transformed coupons:', transformedCoupons);
+    return transformedCoupons;
   } catch (error) {
     console.error('Unexpected error fetching coupons:', error);
     toast.error('Failed to load available offers');
