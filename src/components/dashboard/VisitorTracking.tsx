@@ -8,7 +8,7 @@ import { toast } from 'sonner';
 
 interface VisitorData {
   id: string;
-  device_id: string;
+  mac_address: string;
   first_seen_at: string;
   last_seen_at: string;
   opt_in: boolean;
@@ -218,7 +218,7 @@ const VisitorTracking: React.FC = () => {
                       isActive(visitor.last_seen_at) ? 'bg-green-500' : 'bg-gray-300'
                     }`} />
                     <div>
-                      <p className="font-medium">{visitor.device_id}</p>
+                      <p className="font-medium">{visitor.mac_address}</p>
                       <p className="text-sm text-gray-600">
                         First seen: {formatTime(visitor.first_seen_at)}
                       </p>
