@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from "react";
 import {
   Card,
@@ -36,7 +37,9 @@ const CouponPicker: React.FC<CouponPickerProps> = ({ onCouponSelected }) => {
     const loadCoupons = async () => {
       try {
         setLoading(true);
+        console.log('Loading coupons...');
         const availableCoupons = await fetchCoupons();
+        console.log('Fetched coupons:', availableCoupons);
         setCoupons(availableCoupons);
       } catch (error) {
         console.error("Error loading coupons:", error);
@@ -55,6 +58,25 @@ const CouponPicker: React.FC<CouponPickerProps> = ({ onCouponSelected }) => {
       onCouponSelected(coupon);
       toast.success(`Coupon for ${coupon.title} added to your wallet!`);
     }, 300);
+  };
+
+  const getCouponIcon = (title: string, discount?: string) => {
+    if (title.toLowerCase().includes('coffee') || title.toLowerCase().includes('tim')) {
+      return "☕";
+    }
+    if (title.toLowerCase().includes('grocery') || title.toLowerCase().includes('metro')) {
+      return "🛒";
+    }
+    if (title.toLowerCase().includes('book') || title.toLowerCase().includes('campus')) {
+      return "📚";
+    }
+    if (discount?.toLowerCase().includes("coffee")) {
+      return "☕";
+    }
+    if (discount?.toLowerCase().includes("dining")) {
+      return "🍽️";
+    }
+    return "🎁";
   };
 
   return (
@@ -88,11 +110,7 @@ const CouponPicker: React.FC<CouponPickerProps> = ({ onCouponSelected }) => {
                 {/* Icons for reward type */}
                 <div className="flex items-center gap-3 mb-2">
                   <span className="text-2xl">
-                    {coupon.discount?.includes("Coffee")
-                      ? "☕"
-                      : coupon.discount?.includes("Dining")
-                      ? "🍽️"
-                      : "📚"}
+                    {getCouponIcon(coupon.title, coupon.discount)}
                   </span>
 
                   <h3 className="font-bold text-lg flex-grow">{coupon.title}</h3>
@@ -108,7 +126,12 @@ const CouponPicker: React.FC<CouponPickerProps> = ({ onCouponSelected }) => {
                 <p className="text-sm text-gray-600 mb-2">{coupon.description}</p>
 
                 <div className="flex justify-between items-center">
-                  <p className="text-xs text-gray-500">Expires in {coupon.expiresIn}</p>
+                  <div className="flex flex-col text-xs text-gray-500">
+                    <span>Expires in {coupon.expiresIn}</span>
+                    {coupon.discount && (
+                      <span className="font-medium text-toronto-blue">{coupon.discount}</span>
+                    )}
+                  </div>
 
                   {/* Claim Now Button */}
                   <Button size="sm" variant="default" className="text-xs">
@@ -120,6 +143,9 @@ const CouponPicker: React.FC<CouponPickerProps> = ({ onCouponSelected }) => {
           ) : (
             <div className="text-center p-4">
               <p>No offers available at the moment.</p>
+              <p className="text-sm text-gray-500 mt-2">
+                Please check back later or contact support if this persists.
+              </p>
             </div>
           )}
         </CardContent>
