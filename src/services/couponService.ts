@@ -81,7 +81,12 @@ export const fetchCoupons = async (): Promise<Coupon[]> => {
       }));
 
     console.log('Transformed coupons:', transformedCoupons);
-    return transformedCoupons;
+
+    // Randomly pick three distinct coupons from the full list
+    const threeCoupons = transformedCoupons.sort(() => Math.random() - 0.5).slice(0, 3);
+    
+    console.log('Selected three random coupons:', threeCoupons);
+    return threeCoupons;
   } catch (error) {
     console.error('Unexpected error fetching coupons:', error);
     toast.error('Failed to load available offers');
