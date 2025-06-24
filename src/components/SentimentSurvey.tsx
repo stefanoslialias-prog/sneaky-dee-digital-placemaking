@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -19,11 +20,11 @@ interface SentimentSurveyProps {
 const SentimentSurvey: React.FC<SentimentSurveyProps> = ({ onComplete }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedSentiment, setSelectedSentiment] = useState<Sentiment | null>(null);
-  const [questions, setQuestions] = useState<{ id: string; text: string; }[]>([]);
+  const [question, setQuestion] = useState<{ id: string; text: string; } | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Fetch 2 random questions from the survey_questions table
-  const fetchRandomQuestions = async () => {
+  // Fetch 1 random question from the survey_questions table
+  const fetchRandomQuestion = async () => {
     setLoading(true);
     try {
       // Get user's IP address (or a placeholder for testing)
@@ -32,7 +33,7 @@ const SentimentSurvey: React.FC<SentimentSurveyProps> = ({ onComplete }) => {
         .then(data => data.ip)
         .catch(() => 'unknown-ip-' + Math.random().toString(36).substring(7));
       
-      console.log("Fetching questions for IP:", ipAddress);
+      console.log("Fetching question for IP:", ipAddress);
       
       // Get all active questions first
       const { data: allQuestions, error } = await supabase
@@ -42,28 +43,28 @@ const SentimentSurvey: React.FC<SentimentSurveyProps> = ({ onComplete }) => {
         
       if (error) {
         console.error('Error fetching questions:', error);
-        toast.error('Failed to load survey questions');
-        setQuestions([]);
+        toast.error('Failed to load survey question');
+        setQuestion(null);
         return;
       }
 
       if (!allQuestions || allQuestions.length === 0) {
         console.log("No active questions found");
-        setQuestions([]);
+        setQuestion(null);
         return;
       }
 
-      // Randomly select 2 questions (or all if less than 2)
-      const shuffled = [...allQuestions].sort(() => 0.5 - Math.random());
-      const selectedQuestions = shuffled.slice(0, Math.min(2, shuffled.length));
+      // Randomly select 1 question
+      const randomIndex = Math.floor(Math.random() * allQuestions.length);
+      const selectedQuestion = allQuestions[randomIndex];
       
-      console.log("Selected questions:", selectedQuestions);
-      setQuestions(selectedQuestions);
+      console.log("Selected question:", selectedQuestion);
+      setQuestion(selectedQuestion);
       
     } catch (error) {
-      console.error('Failed to fetch questions:', error);
-      toast.error('Failed to load survey questions');
-      setQuestions([]);
+      console.error('Failed to fetch question:', error);
+      toast.error('Failed to load survey question');
+      setQuestion(null);
     } finally {
       setLoading(false);
     }
@@ -71,8 +72,8 @@ const SentimentSurvey: React.FC<SentimentSurveyProps> = ({ onComplete }) => {
   
   // Initialize survey and set up real-time subscription
   useEffect(() => {
-    console.log("SentimentSurvey component mounted, fetching questions");
-    fetchRandomQuestions();
+    console.log("SentimentSurvey component mounted, fetching question");
+    fetchRandomQuestion();
     
     // Set up real-time subscription to survey_questions table
     const channel = supabase
@@ -84,17 +85,17 @@ const SentimentSurvey: React.FC<SentimentSurveyProps> = ({ onComplete }) => {
           table: 'survey_questions'
         }, 
         (payload) => {
-          // When questions change, refresh the questions
+          // When questions change, refresh the question
           if (payload.eventType === 'INSERT') {
-            toast('New survey questions available!', {
+            toast('New survey question available!', {
               action: {
                 label: 'Refresh',
-                onClick: () => fetchRandomQuestions()
+                onClick: () => fetchRandomQuestion()
               }
             });
           } else {
-            // Refresh questions for any other change
-            fetchRandomQuestions();
+            // Refresh question for any other change
+            fetchRandomQuestion();
           }
         }
       )
@@ -120,13 +121,11 @@ const SentimentSurvey: React.FC<SentimentSurveyProps> = ({ onComplete }) => {
   const handleSentimentSubmit = async (sentiment: Sentiment) => {
     setIsSubmitting(true);
     try {
-      if (questions.length === 0) {
-        toast.error('No questions available');
+      if (!question) {
+        toast.error('No question available');
         return;
       }
       
-      // Use the first question for the response
-      const question = questions[0];
       console.log("Submitting answer for question:", question.id, "Answer:", sentiment);
       
       // Get user's IP address (or a placeholder for testing)
@@ -198,9 +197,9 @@ const SentimentSurvey: React.FC<SentimentSurveyProps> = ({ onComplete }) => {
       <div className="w-full max-w-md mx-auto">
         <Card>
           <CardHeader className="text-center">
-            <CardTitle className="text-2xl font-playfair">Loading Questions...</CardTitle>
+            <CardTitle className="text-2xl font-playfair">Loading Question...</CardTitle>
             <CardDescription>
-              Please wait while we prepare your survey questions.
+              Please wait while we prepare your survey question.
             </CardDescription>
           </CardHeader>
         </Card>
@@ -208,15 +207,15 @@ const SentimentSurvey: React.FC<SentimentSurveyProps> = ({ onComplete }) => {
     );
   }
 
-  // Show no questions available message
-  if (questions.length === 0) {
+  // Show no question available message
+  if (!question) {
     return (
       <div className="w-full max-w-md mx-auto">
         <Card>
           <CardHeader className="text-center">
-            <CardTitle className="text-2xl font-playfair">No Questions Available</CardTitle>
+            <CardTitle className="text-2xl font-playfair">No Question Available</CardTitle>
             <CardDescription>
-              Sorry, no survey questions are currently available.
+              Sorry, no survey question is currently available.
             </CardDescription>
           </CardHeader>
         </Card>
@@ -225,44 +224,40 @@ const SentimentSurvey: React.FC<SentimentSurveyProps> = ({ onComplete }) => {
   }
 
   return (
-    <div className="w-full max-w-md mx-auto space-y-4">
-      {questions.map((question, index) => (
-        <Card key={question.id}>
-          <CardHeader className="text-center">
-            <CardTitle className="text-2xl font-playfair">
-              Quick Poll {questions.length > 1 ? `${index + 1}/${questions.length}` : ''}
-            </CardTitle>
-            <CardDescription>
-              {question.text}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-3 gap-4">
-              {sentimentOptions.map((option) => (
-                <Button
-                  key={option.value}
-                  variant="outline"
-                  onClick={() => handleSentimentSelect(option.value)}
-                  disabled={isSubmitting}
-                  className={`h-24 flex flex-col items-center justify-center gap-2 border-2 transition-all ${
-                    selectedSentiment === option.value 
-                      ? 'bg-toronto-blue text-white border-toronto-blue' 
-                      : 'hover:bg-toronto-gray'
-                  } ${isSubmitting ? 'opacity-50 cursor-not-allowed' : ''}`}
-                >
-                  <span className="text-3xl">{option.emoji}</span>
-                  <span>{option.label}</span>
-                </Button>
-              ))}
+    <div className="w-full max-w-md mx-auto">
+      <Card>
+        <CardHeader className="text-center">
+          <CardTitle className="text-2xl font-playfair">Quick Poll</CardTitle>
+          <CardDescription>
+            {question.text}
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-3 gap-4">
+            {sentimentOptions.map((option) => (
+              <Button
+                key={option.value}
+                variant="outline"
+                onClick={() => handleSentimentSelect(option.value)}
+                disabled={isSubmitting}
+                className={`h-24 flex flex-col items-center justify-center gap-2 border-2 transition-all ${
+                  selectedSentiment === option.value 
+                    ? 'bg-toronto-blue text-white border-toronto-blue' 
+                    : 'hover:bg-toronto-gray'
+                } ${isSubmitting ? 'opacity-50 cursor-not-allowed' : ''}`}
+              >
+                <span className="text-3xl">{option.emoji}</span>
+                <span>{option.label}</span>
+              </Button>
+            ))}
+          </div>
+          {isSubmitting && (
+            <div className="text-center mt-4">
+              <p className="text-sm text-gray-600">Saving your response...</p>
             </div>
-            {isSubmitting && (
-              <div className="text-center mt-4">
-                <p className="text-sm text-gray-600">Saving your response...</p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      ))}
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 };
