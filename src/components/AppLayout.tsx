@@ -2,23 +2,34 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import Logo from '@/components/Logo';
 import { ArrowUpRightFromCircle } from 'lucide-react';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface AppLayoutProps {
   children: React.ReactNode;
 }
 
 const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
+  const isMobile = useIsMobile();
+
   return (
     <div className="min-h-screen flex flex-col">
       <header className="py-4 px-6 flex justify-between items-center border-b">
         <div className="flex items-center gap-4">
-          <Logo />
+          <Link to="/" className="flex items-center gap-2">
+            <img
+              src="/lovable-uploads/afdaf7ef-d926-4544-bb2d-7bbd3e0fc07a.png"
+              alt="KinesisIQ"
+              className="h-8"
+            />
+            {!isMobile && (
+              <span className="text-lg font-semibold">KinesisIQ</span>
+            )}
+          </Link>
           <img 
             src="/lovable-uploads/68284ad5-d0ad-4d79-9dcb-65d03682dbcd.png" 
             alt="Digital Placemaking" 
-            className="h-8 ml-auto" 
+            className="h-8" 
             onError={(e) => {
               e.currentTarget.style.display = 'none';
             }}
@@ -37,7 +48,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
       </main>
       
       <footer className="py-3 px-6 text-center text-sm text-gray-500 border-t">
-        <p>&copy; {new Date().getFullYear()} City of Toronto Community Pulse Project</p>
+        <p>&copy; {new Date().getFullYear()} KinesisIQ Community Pulse Project</p>
       </footer>
     </div>
   );
