@@ -22,9 +22,6 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
               alt="KinesisIQ"
               className="h-8"
             />
-            {!isMobile && (
-              <span className="text-lg font-semibold">KinesisIQ</span>
-            )}
           </Link>
           <img 
             src="/lovable-uploads/68284ad5-d0ad-4d79-9dcb-65d03682dbcd.png" 
