@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { fetchCoupons } from "@/services/couponService";
+import { supabase } from "@/integrations/supabase/client";
 
 export interface Coupon {
   id: string;
@@ -33,26 +34,49 @@ const CouponPicker: React.FC<CouponPickerProps> = ({ onCouponSelected }) => {
   const [loading, setLoading] = useState(true);
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
-  useEffect(() => {
-    const loadCoupons = async () => {
-      try {
-        setLoading(true);
-        console.log('Loading coupons for picker...');
-        const availableCoupons = await fetchCoupons();
-        console.log('Fetched coupons for picker:', availableCoupons);
-        
-        // Ensure we show at least the available coupons, even if less than 3
-        setCoupons(availableCoupons);
-      } catch (error) {
-        console.error("Error loading coupons for picker:", error);
-        toast.error("Failed to load offers");
-        setCoupons([]);
-      } finally {
-        setLoading(false);
-      }
-    };
+  const loadCoupons = async () => {
+    try {
+      setLoading(true);
+      console.log('Loading coupons for picker...');
+      const availableCoupons = await fetchCoupons();
+      console.log('Fetched coupons for picker:', availableCoupons);
+      
+      // Ensure we show at least the available coupons, even if less than 3
+      setCoupons(availableCoupons);
+    } catch (error) {
+      console.error("Error loading coupons for picker:", error);
+      toast.error("Failed to load offers");
+      setCoupons([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
     loadCoupons();
+
+    // Set up real-time subscription to listen for coupon changes
+    const channel = supabase
+      .channel('coupon-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*', // Listen to all events (INSERT, UPDATE, DELETE)
+          schema: 'public',
+          table: 'coupons'
+        },
+        (payload) => {
+          console.log('Real-time coupon change detected:', payload);
+          // Refresh coupons when admin makes changes
+          loadCoupons();
+        }
+      )
+      .subscribe();
+
+    // Cleanup subscription on unmount
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const handleCouponSelect = (coupon: Coupon) => {
