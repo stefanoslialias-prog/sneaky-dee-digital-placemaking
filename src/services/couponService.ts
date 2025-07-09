@@ -41,7 +41,7 @@ const sanitizeText = (text: string): string => {
 };
 
 /**
- * Fetch all available coupons from Supabase
+ * Fetch available coupons from Supabase - returns up to 3 random coupons
  */
 export const fetchCoupons = async (): Promise<Coupon[]> => {
   try {
@@ -82,11 +82,19 @@ export const fetchCoupons = async (): Promise<Coupon[]> => {
 
     console.log('Transformed coupons:', transformedCoupons);
 
-    // Randomly pick three distinct coupons from the full list
-    const threeCoupons = transformedCoupons.sort(() => Math.random() - 0.5).slice(0, 3);
+    // If we have multiple coupons, randomly select up to 3
+    // If we have fewer than 3, return all available
+    let selectedCoupons;
+    if (transformedCoupons.length <= 3) {
+      selectedCoupons = transformedCoupons;
+    } else {
+      // Shuffle array and take first 3
+      const shuffled = [...transformedCoupons].sort(() => Math.random() - 0.5);
+      selectedCoupons = shuffled.slice(0, 3);
+    }
     
-    console.log('Selected three random coupons:', threeCoupons);
-    return threeCoupons;
+    console.log('Selected coupons for display:', selectedCoupons);
+    return selectedCoupons;
   } catch (error) {
     console.error('Unexpected error fetching coupons:', error);
     toast.error('Failed to load available offers');

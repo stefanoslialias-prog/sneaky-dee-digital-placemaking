@@ -37,13 +37,16 @@ const CouponPicker: React.FC<CouponPickerProps> = ({ onCouponSelected }) => {
     const loadCoupons = async () => {
       try {
         setLoading(true);
-        console.log('Loading coupons...');
+        console.log('Loading coupons for picker...');
         const availableCoupons = await fetchCoupons();
-        console.log('Fetched coupons:', availableCoupons);
+        console.log('Fetched coupons for picker:', availableCoupons);
+        
+        // Ensure we show at least the available coupons, even if less than 3
         setCoupons(availableCoupons);
       } catch (error) {
-        console.error("Error loading coupons:", error);
+        console.error("Error loading coupons for picker:", error);
         toast.error("Failed to load offers");
+        setCoupons([]);
       } finally {
         setLoading(false);
       }
@@ -61,14 +64,18 @@ const CouponPicker: React.FC<CouponPickerProps> = ({ onCouponSelected }) => {
   };
 
   const getCouponIcon = (title: string, discount?: string) => {
-    if (title.toLowerCase().includes('coffee') || title.toLowerCase().includes('tim')) {
+    const titleLower = title.toLowerCase();
+    if (titleLower.includes('coffee') || titleLower.includes('tim')) {
       return "☕";
     }
-    if (title.toLowerCase().includes('grocery') || title.toLowerCase().includes('metro')) {
+    if (titleLower.includes('grocery') || titleLower.includes('metro') || titleLower.includes('food')) {
       return "🛒";
     }
-    if (title.toLowerCase().includes('book') || title.toLowerCase().includes('campus')) {
+    if (titleLower.includes('book') || titleLower.includes('campus')) {
       return "📚";
+    }
+    if (titleLower.includes('restaurant') || titleLower.includes('dining') || titleLower.includes('mcdonald')) {
+      return "🍽️";
     }
     if (discount?.toLowerCase().includes("coffee")) {
       return "☕";
@@ -87,7 +94,7 @@ const CouponPicker: React.FC<CouponPickerProps> = ({ onCouponSelected }) => {
             Pick Your Free Reward!
           </CardTitle>
           <CardDescription className="text-gray-600 mb-4">
-            Get your deal instantly — just answer 1 quick question
+            Choose from our available offers — just answer 1 quick question
           </CardDescription>
         </CardHeader>
 
