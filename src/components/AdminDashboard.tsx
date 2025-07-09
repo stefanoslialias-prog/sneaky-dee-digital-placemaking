@@ -3,7 +3,6 @@ import React, { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
-import Logo from '@/components/Logo';
 import { DatabaseBackup, Users, FileText, LayoutGrid, Settings, Wifi, ArrowLeft, Gift, Eye } from 'lucide-react';
 import SentimentOverview from '@/components/dashboard/SentimentOverview';
 import LocationMap from '@/components/dashboard/LocationMap';
@@ -83,7 +82,11 @@ const AdminDashboard: React.FC = () => {
       <header className="py-2 px-6 flex justify-between items-center border-b bg-white">
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2">
-            <Logo />
+            <img
+              src="/lovable-uploads/44ecadf7-cd63-4fc4-82e4-41c3fc93b390.png"
+              alt="KinesisIQ"
+              className="h-8"
+            />
             <Badge variant="outline" className="bg-green-50 text-green-700 animate-pulse">
               <Wifi className="h-3 w-3 mr-1" />
               Live
