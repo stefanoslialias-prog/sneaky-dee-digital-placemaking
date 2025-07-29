@@ -55,14 +55,10 @@ export const useSentimentData = () => {
         return;
       }
       
-      // If user is admin, fetch the data from the sentiment_summary view
+      // If user is admin, fetch the data using the sentiment summary function
       if (userData?.role === 'admin') {
         const { data: summaryData, error: summaryError } = await supabase
-          .from('sentiment_summary')
-          .select('*')
-          .order('survey_date', { ascending: false })
-          .limit(1)
-          .single();
+          .rpc('get_sentiment_summary');
             
         if (summaryError) {
           console.log('Error fetching sentiment summary:', summaryError);
@@ -74,12 +70,14 @@ export const useSentimentData = () => {
             concerned_count: 96,
             total_count: 600
           });
-        } else if (summaryData) {
+        } else if (summaryData && summaryData.length > 0) {
+          // Get the most recent data
+          const latestData = summaryData[0];
           setSentimentData({
-            happy_count: summaryData.happy_count || 0,
-            neutral_count: summaryData.neutral_count || 0,
-            concerned_count: summaryData.concerned_count || 0,
-            total_count: summaryData.total_count || 0
+            happy_count: latestData.happy_count || 0,
+            neutral_count: latestData.neutral_count || 0,
+            concerned_count: latestData.concerned_count || 0,
+            total_count: latestData.total_count || 0
           });
         }
       } else {

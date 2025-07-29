@@ -40,16 +40,16 @@ const ThankYou: React.FC<ThankYouProps> = ({ onDone, userInfo }) => {
           {/* Confirmation Message */}
           {userInfo?.name ? (
             <p className="text-gray-600 mb-4">
-              Thanks, {userInfo.name}! You’re now signed up for exclusive offers and updates.
+              Thanks, {userInfo.name}! You're now signed up for exclusive offers and updates.
             </p>
           ) : userInfo?.provider ? (
             <p className="text-gray-600 mb-4">
               Thanks for signing in with {userInfo.provider.charAt(0).toUpperCase() + userInfo.provider.slice(1)}!
-              You’ll receive exclusive offers soon.
+              Get ready to unlock exclusive offers and updates wherever you are.
             </p>
           ) : (
             <p className="text-gray-600 mb-4">
-              You’re now signed up for exclusive offers and updates.
+              You're now signed up for exclusive offers and updates.
             </p>
           )}
 
@@ -72,7 +72,7 @@ const ThankYou: React.FC<ThankYouProps> = ({ onDone, userInfo }) => {
             <div>
               <p className="font-medium">Look out for exclusive offers!</p>
               <p className="text-sm text-gray-600">
-                First deal arrives this week. Expect up to 20% off coffee, dining & more.
+                Keep an eye out for exclusive offers wherever you are delivered straight to your inbox.
               </p>
             </div>
           </div>

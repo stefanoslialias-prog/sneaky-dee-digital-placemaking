@@ -240,7 +240,7 @@ const PromotionOptIn: React.FC<PromotionOptInProps> = ({ onSkip, onRegister, onS
         <CardHeader className="text-center">
           <CardTitle className="text-2xl font-playfair mb-2">Unlock Future Perks</CardTitle>
           <CardDescription>
-            Register now or sign in to save your spot for even more exclusive deals.
+            Register now or sign-in to save your spot for even more exclusive deals wherever you are.
           </CardDescription>
         </CardHeader>
         
