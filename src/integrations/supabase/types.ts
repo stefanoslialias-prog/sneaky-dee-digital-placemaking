@@ -348,21 +348,6 @@ export type Database = {
         }
         Relationships: []
       }
-      "user_tab;es": {
-        Row: {
-          created_at: string
-          id: number
-        }
-        Insert: {
-          created_at?: string
-          id?: number
-        }
-        Update: {
-          created_at?: string
-          id?: number
-        }
-        Relationships: []
-      }
       user_wallets: {
         Row: {
           claimed_at: string
@@ -478,16 +463,6 @@ export type Database = {
         }
         Relationships: []
       }
-      sentiment_summary: {
-        Row: {
-          concerned_count: number | null
-          happy_count: number | null
-          neutral_count: number | null
-          survey_date: number | null
-          total_count: number | null
-        }
-        Relationships: []
-      }
     }
     Functions: {
       assign_admin_role: {
@@ -510,6 +485,16 @@ export type Database = {
           text: string
           type: string
           category: string
+        }[]
+      }
+      get_sentiment_summary: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          survey_date: number
+          happy_count: number
+          neutral_count: number
+          concerned_count: number
+          total_count: number
         }[]
       }
       has_role: {
