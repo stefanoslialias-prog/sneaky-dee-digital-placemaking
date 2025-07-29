@@ -11,8 +11,8 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AlertTriangle, Shield } from 'lucide-react';
 
 const AdminLogin: React.FC = () => {
-  const [email, setEmail] = useState('admin@digitalplacemaking.ca');
-  const [password, setPassword] = useState('123456');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const { user, login } = useAuth();
@@ -112,8 +112,8 @@ const AdminLogin: React.FC = () => {
             </Button>
             
             <div className="text-center text-sm text-gray-500">
-              <p>Default login: admin@digitalplacemaking.ca / 123456</p>
-              <p className="mt-1 text-xs text-orange-500">Note: This account must exist in your Supabase Auth system</p>
+              <p>Enter your admin credentials to access the dashboard</p>
+              <p className="mt-1 text-xs text-orange-500">Secure admin access only</p>
             </div>
           </CardFooter>
         </form>

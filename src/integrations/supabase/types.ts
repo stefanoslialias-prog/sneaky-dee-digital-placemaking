@@ -490,6 +490,10 @@ export type Database = {
       }
     }
     Functions: {
+      assign_admin_role: {
+        Args: { target_user_id: string }
+        Returns: boolean
+      }
       claim_coupon: {
         Args: {
           p_coupon_id: string

@@ -20,22 +20,8 @@ export const handleUserSession = async (session: Session): Promise<AuthUserType 
 
     console.log('Processing user session for user:', userId);
     
-    // Special case for our default admin account with enhanced validation
-    if (userEmail === 'admin@digitalplacemaking.ca') {
-      // Verify this is actually the admin user by checking additional metadata
-      if (session.user.app_metadata?.provider === 'email' || session.user.aud === 'authenticated') {
-        console.log('Verified admin account detected');
-        return {
-          id: userId,
-          email: userEmail,
-          role: 'admin',
-          name: 'Admin User'
-        };
-      } else {
-        console.error('Admin account verification failed');
-        return null;
-      }
-    }
+    // Check for admin role in database - no hardcoded email exceptions
+    console.log('Checking user role for:', userEmail);
     
     // Try to get user role from user_roles table with proper error handling
     const { data: roleData, error: roleError } = await supabase
