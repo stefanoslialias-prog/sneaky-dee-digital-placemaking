@@ -15,9 +15,14 @@ export interface WalletPassData {
  */
 export const addToWallet = async (walletData: WalletPassData): Promise<{ success: boolean; message: string; passUrl?: string }> => {
   try {
-    console.log('Adding coupon to wallet via PassKit:', walletData);
+    // SECURITY NOTE: Device ID is handled securely - it's sent to the Edge Function 
+    // but never stored in client-accessible records due to RLS policies
+    console.log('Adding coupon to wallet via PassKit (device ID protected):', { 
+      ...walletData, 
+      deviceId: walletData.deviceId ? '[PROTECTED]' : undefined 
+    });
 
-    // Call the PassKit Edge Function
+    // Call the PassKit Edge Function (uses service role key to insert records)
     const { data, error } = await supabase.functions.invoke('passkit-wallet', {
       body: walletData
     });
@@ -73,10 +78,17 @@ export const isWalletSupported = (): { apple: boolean; google: boolean } => {
  */
 export const getUserWalletPasses = async (userId: string) => {
   try {
+    // SECURITY: This query now only works for authenticated users viewing their own data
+    // The RLS policies ensure device_id is never exposed to client-side code
     const { data, error } = await supabase
       .from('user_wallets')
       .select(`
-        *,
+        id,
+        claimed_at,
+        redeemed_at,
+        platform,
+        pass_url,
+        passkit_status,
         coupons (
           id,
           title,

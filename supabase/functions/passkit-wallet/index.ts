@@ -23,9 +23,11 @@ serve(async (req) => {
   }
 
   try {
+    // Create Supabase client with service role key for server-side operations
+    // This bypasses RLS policies to allow wallet record creation
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
     )
 
     const { couponId, userId, deviceId, platform, userEmail, userName }: PassKitRequest = await req.json()
