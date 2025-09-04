@@ -522,18 +522,6 @@ export type Database = {
         }
         Returns: Json
       }
-      get_available_coupons: {
-        Args: Record<PropertyKey, never>
-        Returns: {
-          created_at: string
-          description: string
-          discount: string
-          expires_at: string
-          id: string
-          image_url: string
-          title: string
-        }[]
-      }
       get_random_question_for_ip: {
         Args: { p_ip_address: string }
         Returns: {
