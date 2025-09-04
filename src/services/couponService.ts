@@ -2,6 +2,7 @@
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import type { Coupon } from '@/components/CouponPicker';
+import { sanitizeTextInput, sanitizeEmail } from '@/utils/xssProtection';
 
 export interface ClaimCouponParams {
   couponId: string;
@@ -72,10 +73,10 @@ export const fetchCoupons = async (): Promise<Coupon[]> => {
       .filter(coupon => coupon.id && coupon.title && coupon.description) // Basic validation
       .map(coupon => ({
         id: coupon.id,
-        title: sanitizeText(coupon.title),
-        description: sanitizeText(coupon.description),
-        code: sanitizeText(coupon.code),
-        discount: coupon.discount ? sanitizeText(coupon.discount) : '',
+        title: sanitizeTextInput(coupon.title),
+        description: sanitizeTextInput(coupon.description),
+        code: sanitizeTextInput(coupon.code),
+        discount: coupon.discount ? sanitizeTextInput(coupon.discount) : '',
         expiresIn: formatExpiryDate(coupon.expires_at),
         image: coupon.image_url || undefined
       }));
@@ -136,12 +137,12 @@ export const claimCoupon = async (params: ClaimCouponParams): Promise<ClaimCoupo
       };
     }
 
-    // Sanitize inputs
+    // Sanitize inputs using enhanced XSS protection
     const sanitizedParams = {
       couponId: params.couponId,
-      email: params.email ? sanitizeText(params.email.toLowerCase()) : undefined,
-      name: params.name ? sanitizeText(params.name) : undefined,
-      deviceId: params.deviceId ? sanitizeText(params.deviceId) : undefined
+      email: params.email ? sanitizeEmail(params.email) : undefined,
+      name: params.name ? sanitizeTextInput(params.name, 100) : undefined,
+      deviceId: params.deviceId ? sanitizeTextInput(params.deviceId, 50) : undefined
     };
 
     // Call database function with validated inputs
@@ -187,10 +188,10 @@ export const claimCoupon = async (params: ClaimCouponParams): Promise<ClaimCoupo
       message: result.message,
       coupon: result.coupon ? {
         id: result.coupon.id,
-        title: sanitizeText(result.coupon.title || ''),
-        description: sanitizeText(result.coupon.description || ''),
-        code: sanitizeText(result.coupon.code || ''),
-        discount: result.coupon.discount ? sanitizeText(result.coupon.discount) : '',
+        title: sanitizeTextInput(result.coupon.title || ''),
+        description: sanitizeTextInput(result.coupon.description || ''),
+        code: sanitizeTextInput(result.coupon.code || ''),
+        discount: result.coupon.discount ? sanitizeTextInput(result.coupon.discount) : '',
         expiresIn: formatExpiryDate(result.coupon.expires_at),
         image: result.coupon.image_url || undefined
       } : undefined,
@@ -251,15 +252,15 @@ export const getUserCoupons = async (): Promise<Coupon[]> => {
       return [];
     }
 
-    // Transform and validate data
+    // Transform and validate data with enhanced XSS protection
     return data
       .filter(item => item.coupons && item.coupons.id) // Ensure coupon data exists
       .map(item => ({
         id: item.coupons.id,
-        title: sanitizeText(item.coupons.title),
-        description: sanitizeText(item.coupons.description),
-        code: sanitizeText(item.coupons.code),
-        discount: item.coupons.discount ? sanitizeText(item.coupons.discount) : '',
+        title: sanitizeTextInput(item.coupons.title),
+        description: sanitizeTextInput(item.coupons.description),
+        code: sanitizeTextInput(item.coupons.code),
+        discount: item.coupons.discount ? sanitizeTextInput(item.coupons.discount) : '',
         expiresIn: formatExpiryDate(item.coupons.expires_at),
         image: item.coupons.image_url || undefined,
         claimedAt: new Date(item.claimed_at),

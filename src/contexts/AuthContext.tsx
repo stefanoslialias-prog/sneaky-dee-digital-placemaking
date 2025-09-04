@@ -103,9 +103,9 @@ export const AuthProvider: React.FC<{children: React.ReactNode}> = ({ children }
     try {
       const result = await loginUser(email, password);
       
-      // If using default admin and login failed, provide more helpful error
-      if (result?.error && email === 'admin@digitalplacemaking.ca') {
-        console.warn('Default admin login failed. This account must exist in Supabase Auth.');
+      // Log login attempts for security monitoring
+      if (result?.error) {
+        console.warn('Login failed for user:', email);
       }
       
       // Authentication state will be updated through the auth state listener

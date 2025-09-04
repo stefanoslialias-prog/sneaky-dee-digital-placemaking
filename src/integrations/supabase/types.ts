@@ -7,7 +7,7 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instanciate createClient with right options
+  // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "12.2.3 (519615d)"
@@ -481,24 +481,24 @@ export type Database = {
       get_random_question_for_ip: {
         Args: { p_ip_address: string }
         Returns: {
+          category: string
           id: string
           text: string
           type: string
-          category: string
         }[]
       }
       get_sentiment_summary: {
         Args: Record<PropertyKey, never>
         Returns: {
-          survey_date: number
+          concerned_count: number
           happy_count: number
           neutral_count: number
-          concerned_count: number
+          survey_date: number
           total_count: number
         }[]
       }
       has_role: {
-        Args: { user_id: string; required_role: string }
+        Args: { required_role: string; user_id: string }
         Returns: boolean
       }
       is_admin: {

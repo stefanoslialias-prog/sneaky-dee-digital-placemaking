@@ -85,7 +85,7 @@ const AdminLogin: React.FC = () => {
               <Input 
                 id="email"
                 type="email" 
-                placeholder="admin@digitalplacemaking.ca" 
+                placeholder="Enter your admin email" 
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}

@@ -23,11 +23,8 @@ export const useSentimentSubmission = (question: Question | null, onComplete: (s
       
       console.log("Submitting answer for question:", question.id, "Answer:", sentiment);
       
-      // Get user's IP address (or a placeholder for testing)
-      const ipAddress = await fetch('https://api.ipify.org?format=json')
-        .then(res => res.json())
-        .then(data => data.ip)
-        .catch(() => 'unknown-ip-' + Math.random().toString(36).substring(7));
+      // Use anonymous session tracking instead of IP collection for privacy
+      const ipAddress = 'anonymous-session-' + crypto.getRandomValues(new Uint32Array(1))[0].toString(36);
         
       // Record the interaction in the database
       const { data: interactionData, error: interactionError } = await supabase.rpc(
@@ -45,8 +42,8 @@ export const useSentimentSubmission = (question: Question | null, onComplete: (s
         console.log("Recorded interaction:", interactionData);
       }
       
-      // Generate a session ID
-      const sessionId = `${Math.floor(Math.random() * 6) + 1}-${Date.now()}`;
+      // Generate a cryptographically secure session ID
+      const sessionId = `session-${crypto.getRandomValues(new Uint32Array(2)).join('-')}-${Date.now()}`;
       
       // Get location ID from local storage
       const locationId = localStorage.getItem('currentHotspotId');
