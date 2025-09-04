@@ -260,13 +260,6 @@ export type Database = {
             foreignKeyName: "user_coupons_coupon_id_fkey"
             columns: ["coupon_id"]
             isOneToOne: false
-            referencedRelation: "available_coupons"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "user_coupons_coupon_id_fkey"
-            columns: ["coupon_id"]
-            isOneToOne: false
             referencedRelation: "coupons"
             referencedColumns: ["id"]
           },
@@ -397,13 +390,6 @@ export type Database = {
             foreignKeyName: "user_wallets_coupon_id_fkey"
             columns: ["coupon_id"]
             isOneToOne: false
-            referencedRelation: "available_coupons"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "user_wallets_coupon_id_fkey"
-            columns: ["coupon_id"]
-            isOneToOne: false
             referencedRelation: "coupons"
             referencedColumns: ["id"]
           },
@@ -465,36 +451,6 @@ export type Database = {
       }
     }
     Views: {
-      available_coupons: {
-        Row: {
-          created_at: string | null
-          description: string | null
-          discount: string | null
-          expires_at: string | null
-          id: string | null
-          image_url: string | null
-          title: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          description?: string | null
-          discount?: string | null
-          expires_at?: string | null
-          id?: string | null
-          image_url?: string | null
-          title?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          description?: string | null
-          discount?: string | null
-          expires_at?: string | null
-          id?: string | null
-          image_url?: string | null
-          title?: string | null
-        }
-        Relationships: []
-      }
       location_analytics: {
         Row: {
           concerned_count: number | null
