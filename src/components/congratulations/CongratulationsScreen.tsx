@@ -70,6 +70,7 @@ const CongratulationsScreen: React.FC<CongratulationsScreenProps> = ({
         // Update the coupon with the actual claimed coupon data that includes the real code
         setCoupon(result.coupon);
         console.log('Coupon claimed successfully with code:', result.coupon.code);
+        console.log('Full coupon object:', result.coupon);
       } else {
         console.error('Failed to claim coupon:', result.message);
       }
