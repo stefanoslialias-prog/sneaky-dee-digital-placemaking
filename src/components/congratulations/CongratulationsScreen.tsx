@@ -21,7 +21,7 @@ interface CongratulationsScreenProps {
 }
 
 const CongratulationsScreen: React.FC<CongratulationsScreenProps> = ({ 
-  coupon, 
+  coupon: initialCoupon, 
   onOptInYes,
   onOptInNo,
   userInfo
@@ -30,6 +30,7 @@ const CongratulationsScreen: React.FC<CongratulationsScreenProps> = ({
   const [showConfetti, setShowConfetti] = useState(true);
   const [isClaiming, setIsClaiming] = useState(false);
   const [claimed, setClaimed] = useState(false);
+  const [coupon, setCoupon] = useState(initialCoupon);
 
   useEffect(() => {
     // Hide confetti after 5 seconds
@@ -64,8 +65,11 @@ const CongratulationsScreen: React.FC<CongratulationsScreenProps> = ({
         name: userInfo?.name
       });
       
-      if (result.success) {
+      if (result.success && result.coupon) {
         setClaimed(true);
+        // Update the coupon with the actual claimed coupon data that includes the real code
+        setCoupon(result.coupon);
+        console.log('Coupon claimed successfully with code:', result.coupon.code);
       } else {
         console.error('Failed to claim coupon:', result.message);
       }
