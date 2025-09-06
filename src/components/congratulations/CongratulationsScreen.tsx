@@ -7,6 +7,7 @@ import { ClaimStatus } from './ClaimStatus';
 import { OptInPrompt } from './OptInPrompt';
 import { ActionButtons } from './ActionButtons';
 import { claimCoupon } from '@/services/couponService';
+import { useSessionTracking } from '@/hooks/useSessionTracking';
 
 interface CongratulationsScreenProps {
   coupon: Coupon;
@@ -31,12 +32,16 @@ const CongratulationsScreen: React.FC<CongratulationsScreenProps> = ({
   const [isClaiming, setIsClaiming] = useState(false);
   const [claimed, setClaimed] = useState(false);
   const [coupon, setCoupon] = useState(initialCoupon);
+  const { trackSessionEvent } = useSessionTracking();
 
   useEffect(() => {
     // Hide confetti after 5 seconds
     const timer = setTimeout(() => {
       setShowConfetti(false);
     }, 5000);
+
+    // Track congratulations view
+    trackSessionEvent('view_congratulations', initialCoupon.id);
 
     // Automatically claim the coupon when component mounts
     const claimSelectedCoupon = async () => {

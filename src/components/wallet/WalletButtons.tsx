@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { addToWallet, isWalletSupported, type WalletPassData } from '@/services/walletService';
 import { toast } from 'sonner';
 import { Wallet } from 'lucide-react';
+import { useSessionTracking } from '@/hooks/useSessionTracking';
 
 interface WalletButtonsProps {
   couponId: string;
@@ -24,6 +25,7 @@ export const WalletButtons: React.FC<WalletButtonsProps> = ({
 }) => {
   const [isAdding, setIsAdding] = useState<'apple' | 'google' | null>(null);
   const walletSupport = isWalletSupported();
+  const { trackSessionEvent } = useSessionTracking();
 
   const handleAddToWallet = async () => {
     // Determine which platform to use based on device, default to apple if neither detected
@@ -48,6 +50,9 @@ export const WalletButtons: React.FC<WalletButtonsProps> = ({
       if (result.success) {
         toast.success(result.message);
         onSuccess?.();
+        
+        // Track wallet add event
+        trackSessionEvent('add_to_wallet', couponId);
         
         // If we have a pass URL, try to open it
         if (result.passUrl && platform === 'apple') {

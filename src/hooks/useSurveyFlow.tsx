@@ -4,6 +4,7 @@ import { Sentiment } from '@/services/mockData';
 import { toast } from 'sonner';
 import mockDatabase from '@/services/mockData';
 import { supabase } from '@/integrations/supabase/client';
+import { useSessionTracking } from '@/hooks/useSessionTracking';
 
 export type AppStep = 
   | 'welcome'
@@ -29,6 +30,7 @@ export const useSurveyFlow = () => {
   const [selectedCoupon, setSelectedCoupon] = useState<Coupon | null>(null);
   const [sentiment, setSentiment] = useState<Sentiment | null>(null);
   const [selectedPartner, setSelectedPartner] = useState<Partner | null>(null);
+  const { startNewSession } = useSessionTracking();
 
   const handleStartSurvey = () => {
     setStep('partnerPicker');
@@ -36,6 +38,8 @@ export const useSurveyFlow = () => {
 
   const handlePartnerSelected = (partner: Partner) => {
     setSelectedPartner(partner);
+    // Start new session and track visit
+    startNewSession(partner.id);
     setStep('couponPicker');
   };
 

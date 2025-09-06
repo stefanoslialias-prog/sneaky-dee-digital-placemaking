@@ -5,6 +5,7 @@ import { Copy, Check, Download } from 'lucide-react';
 import { toast } from 'sonner';
 import { Coupon } from '../CouponPicker';
 import { WalletButtons } from '../wallet/WalletButtons';
+import { useSessionTracking } from '@/hooks/useSessionTracking';
 
 interface ActionButtonsProps {
   coupon: Coupon;
@@ -21,12 +22,16 @@ export const ActionButtons: React.FC<ActionButtonsProps> = ({
   userEmail,
   userName
 }) => {
+  const { trackSessionEvent } = useSessionTracking();
   const handleCopyCode = async () => {
     try {
       await navigator.clipboard.writeText(coupon.code);
       setCopied(true);
       toast.success('Coupon code copied to clipboard!');
       setTimeout(() => setCopied(false), 3000);
+      
+      // Track copy event
+      trackSessionEvent('copy_code', coupon.id);
     } catch (err) {
       toast.error('Failed to copy code');
     }
@@ -56,6 +61,9 @@ Present this coupon at checkout to redeem your discount.
     URL.revokeObjectURL(url);
     
     toast.success('Coupon downloaded to your device!');
+    
+    // Track download event
+    trackSessionEvent('download_coupon', coupon.id);
   };
 
   return (

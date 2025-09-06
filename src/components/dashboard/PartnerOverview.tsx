@@ -33,19 +33,64 @@ const PartnerOverview: React.FC<PartnerOverviewProps> = ({ selectedPartner }) =>
     try {
       setLoading(true);
       
-      let query = supabase.from('partner_overview').select('*');
-      
       if (selectedPartner) {
-        query = query.eq('partner_id', selectedPartner);
+        // Fetch specific partner data
+        const { data, error } = await supabase
+          .from('partner_overview')
+          .select('*')
+          .eq('partner_id', selectedPartner)
+          .single();
+        
+        if (error && error.code !== 'PGRST116') { // Not found is ok
+          throw error;
+        }
+        
+        setPartnerData(data || null);
+      } else {
+        // Aggregate all partners data for "All Partners" view
+        const { data, error } = await supabase
+          .from('partner_overview')
+          .select('*');
+        
+        if (error) {
+          throw error;
+        }
+        
+        if (data && data.length > 0) {
+          // Aggregate the data
+          const aggregated = data.reduce((acc, partner) => ({
+            partner_id: 'all',
+            name: 'All Partners',
+            slug: 'all',
+            total_responses: acc.total_responses + (partner.total_responses || 0),
+            happy_count: acc.happy_count + (partner.happy_count || 0),
+            neutral_count: acc.neutral_count + (partner.neutral_count || 0),
+            concerned_count: acc.concerned_count + (partner.concerned_count || 0),
+            respondent_sessions: acc.respondent_sessions + (partner.respondent_sessions || 0),
+            visits: acc.visits + (partner.visits || 0),
+            copy_clicks: acc.copy_clicks + (partner.copy_clicks || 0),
+            download_clicks: acc.download_clicks + (partner.download_clicks || 0),
+            wallet_adds: acc.wallet_adds + (partner.wallet_adds || 0),
+          }), {
+            partner_id: 'all',
+            name: 'All Partners',
+            slug: 'all',
+            total_responses: 0,
+            happy_count: 0,
+            neutral_count: 0,
+            concerned_count: 0,
+            respondent_sessions: 0,
+            visits: 0,
+            copy_clicks: 0,
+            download_clicks: 0,
+            wallet_adds: 0,
+          });
+          
+          setPartnerData(aggregated);
+        } else {
+          setPartnerData(null);
+        }
       }
-      
-      const { data, error } = await query.single();
-      
-      if (error && error.code !== 'PGRST116') { // Not found is ok
-        throw error;
-      }
-      
-      setPartnerData(data || null);
     } catch (error) {
       console.error('Error fetching partner data:', error);
       toast.error('Failed to load partner data');

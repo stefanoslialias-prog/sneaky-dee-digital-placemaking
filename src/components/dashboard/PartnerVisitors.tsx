@@ -30,35 +30,51 @@ const PartnerVisitors: React.FC<PartnerVisitorsProps> = ({ selectedPartner }) =>
     try {
       setLoading(true);
       
-      let query = supabase.from('partner_engagement_summary').select('*');
-      
+      // Fetch engagement events directly to count them
+      let query = supabase
+        .from('engagement_events')
+        .select('event_type, partner_id');
+        
       if (selectedPartner) {
         query = query.eq('partner_id', selectedPartner);
       }
       
-      const { data, error } = await query.single();
+      const { data, error } = await query;
       
-      if (error && error.code !== 'PGRST116') { // Not found is ok
+      if (error) {
         throw error;
       }
       
-      if (data) {
-        setEngagementData({
-          visits: data.visits || 0,
-          copy_clicks: data.copy_clicks || 0,
-          download_clicks: data.download_clicks || 0,
-          wallet_adds: data.wallet_adds || 0,
-          congrats_views: data.congrats_views || 0
-        });
-      } else {
-        setEngagementData({
-          visits: 0,
-          copy_clicks: 0,
-          download_clicks: 0,
-          wallet_adds: 0,
-          congrats_views: 0
-        });
-      }
+      // Count events by type
+      const eventCounts = (data || []).reduce((acc, event) => {
+        switch (event.event_type) {
+          case 'visit_partner_page':
+            acc.visits++;
+            break;
+          case 'copy_code':
+            acc.copy_clicks++;
+            break;
+          case 'download_coupon':
+            acc.download_clicks++;
+            break;
+          case 'add_to_wallet':
+            acc.wallet_adds++;
+            break;
+          case 'view_congratulations':
+            acc.congrats_views++;
+            break;
+        }
+        return acc;
+      }, {
+        visits: 0,
+        copy_clicks: 0,
+        download_clicks: 0,
+        wallet_adds: 0,
+        congrats_views: 0
+      });
+      
+      setEngagementData(eventCounts);
+      
     } catch (error) {
       console.error('Error fetching engagement data:', error);
       toast.error('Failed to load engagement data');

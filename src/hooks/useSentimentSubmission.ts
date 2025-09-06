@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Sentiment } from '@/components/sentiment/SentimentOptions';
+import { useSessionTracking } from './useSessionTracking';
 
 interface Question {
   id: string;
@@ -12,6 +13,7 @@ interface Question {
 export const useSentimentSubmission = (question: Question | null, onComplete: (sentiment: Sentiment) => void, partnerId?: string) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedSentiment, setSelectedSentiment] = useState<Sentiment | null>(null);
+  const { sessionId } = useSessionTracking();
 
   const handleSentimentSubmit = async (sentiment: Sentiment) => {
     setIsSubmitting(true);
@@ -42,8 +44,8 @@ export const useSentimentSubmission = (question: Question | null, onComplete: (s
         console.log("Recorded interaction:", interactionData);
       }
       
-      // Generate a cryptographically secure session ID
-      const sessionId = `session-${crypto.getRandomValues(new Uint32Array(2)).join('-')}-${Date.now()}`;
+      // Use the persistent session ID
+      const currentSessionId = sessionId || `session-${crypto.getRandomValues(new Uint32Array(2)).join('-')}-${Date.now()}`;
       
       // Get location ID from local storage
       const locationId = localStorage.getItem('currentHotspotId');
@@ -53,7 +55,7 @@ export const useSentimentSubmission = (question: Question | null, onComplete: (s
         question_id: question.id,
         answer: sentiment,
         comment: null,
-        session_id: sessionId,
+        session_id: currentSessionId,
         location_id: locationId || null,
         partner_id: partnerId || null
       };
