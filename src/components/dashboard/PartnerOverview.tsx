@@ -46,52 +46,61 @@ const PartnerOverview: React.FC<PartnerOverviewProps> = ({ selectedPartner }) =>
 
   const fetchEngagementData = async () => {
     try {
-      // Fetch engagement events with coupon info for partner attribution
-      let query = supabase
-        .from('engagement_events')
-        .select(`
-          event_type, 
-          partner_id,
-          coupon_id,
-          coupons!inner(partner_id)
-        `);
-        
+      let allEvents = [];
+      
       if (selectedPartner) {
-        // For specific partner, match by partner_id OR by coupon's partner_id
-        query = query.or(`partner_id.eq.${selectedPartner},coupons.partner_id.eq.${selectedPartner}`);
-      }
-      
-      const { data, error } = await query;
-      
-      if (error) {
-        throw error;
-      }
-      
-      // Count events by type, using coupon's partner_id as fallback
-      const eventCounts = (data || []).reduce((acc, event) => {
-        // Determine if this event should be counted for the selected partner
-        const eventPartnerId = event.partner_id || event.coupons?.partner_id;
+        // Query 1: Events where partner_id matches
+        const { data: directEvents, error: directError } = await supabase
+          .from('engagement_events')
+          .select('event_type, partner_id, coupon_id')
+          .eq('partner_id', selectedPartner);
         
-        // For "All Partners" view (selectedPartner is undefined), count all events
-        // For specific partner view, only count events that belong to this partner
-        if (!selectedPartner || eventPartnerId === selectedPartner) {
-          switch (event.event_type) {
-            case 'visit_partner_page':
-              acc.visits++;
-              break;
-            case 'copy_code':
-              acc.copy_clicks++;
-              break;
-            case 'download_coupon':
-              acc.download_clicks++;
-              break;
-            case 'add_to_wallet':
-              acc.wallet_adds++;
-              break;
-            case 'view_congratulations':
-              acc.congrats_views++;
-              break;
-          }
+        if (directError) throw directError;
+        
+        // Query 2: Events where partner_id is null but coupon belongs to partner
+        const { data: couponEvents, error: couponError } = await supabase
+          .from('engagement_events')
+          .select(`
+            event_type, 
+            partner_id,
+            coupon_id,
+            coupons!inner(partner_id)
+          `)
+          .is('partner_id', null)
+          .eq('coupons.partner_id', selectedPartner);
+        
+        if (couponError) throw couponError;
+        
+        // Merge both datasets
+        allEvents = [...(directEvents || []), ...(couponEvents || [])];
+      } else {
+        // For "All Partners", get all events
+        const { data, error } = await supabase
+          .from('engagement_events')
+          .select('event_type, partner_id, coupon_id');
+        
+        if (error) throw error;
+        allEvents = data || [];
+      }
+      
+      // Count events by type
+      const eventCounts = allEvents.reduce((acc, event) => {
+        switch (event.event_type) {
+          case 'visit_partner_page':
+            acc.visits++;
+            break;
+          case 'copy_code':
+            acc.copy_clicks++;
+            break;
+          case 'download_coupon':
+            acc.download_clicks++;
+            break;
+          case 'add_to_wallet':
+            acc.wallet_adds++;
+            break;
+          case 'view_congratulations':
+            acc.congrats_views++;
+            break;
         }
         return acc;
       }, {
