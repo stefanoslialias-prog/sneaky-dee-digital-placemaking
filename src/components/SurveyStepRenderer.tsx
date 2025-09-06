@@ -11,12 +11,24 @@ import PromotionOptIn from '@/components/PromotionOptIn';
 import ThankYou from '@/components/ThankYou';
 import { Sentiment } from '@/services/mockData';
 import BrandImage from '@/components/BrandImage';
+import PartnerPicker from '@/components/PartnerPicker';
+
+interface Partner {
+  id: string;
+  name: string;
+  slug: string;
+  description?: string;
+  logo_url?: string;
+  active: boolean;
+}
 
 interface SurveyStepRendererProps {
   step: AppStep;
   selectedCoupon: Coupon | null;
+  selectedPartner: Partner | null;
   userInfo: any;
   onStartSurvey: () => void;
+  onPartnerSelected: (partner: Partner) => void;
   onSkipRegistration: () => void;
   onRegister: (email: string, name: string) => void;
   onSocialSignIn: (provider: 'google' | 'apple') => void;
@@ -31,8 +43,10 @@ interface SurveyStepRendererProps {
 const SurveyStepRenderer: React.FC<SurveyStepRendererProps> = ({
   step,
   selectedCoupon,
+  selectedPartner,
   userInfo,
   onStartSurvey,
+  onPartnerSelected,
   onSkipRegistration,
   onRegister,
   onSocialSignIn,
@@ -49,6 +63,13 @@ const SurveyStepRenderer: React.FC<SurveyStepRendererProps> = ({
       case 'welcome':
         return <WelcomeScreen onStartSurvey={onStartSurvey} />;
         
+      case 'partnerPicker':
+        return (
+          <div className="animate-fade-in">
+            <PartnerPicker onPartnerSelected={onPartnerSelected} />
+          </div>
+        );
+        
       case 'promotionOptIn':
         return (
           <div className="animate-scale-in">
@@ -64,7 +85,10 @@ const SurveyStepRenderer: React.FC<SurveyStepRendererProps> = ({
       case 'couponPicker':
         return (
           <div className="animate-slide-in-right">
-            <CouponPicker onCouponSelected={onCouponSelected} />
+            <CouponPicker 
+              onCouponSelected={onCouponSelected} 
+              partnerId={selectedPartner?.id}
+            />
           </div>
         );
         
@@ -73,6 +97,7 @@ const SurveyStepRenderer: React.FC<SurveyStepRendererProps> = ({
           <div className="animate-fade-in">
             <SentimentSurvey 
               onComplete={onSentimentComplete}
+              partnerId={selectedPartner?.id}
             />
           </div>
         );

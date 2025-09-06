@@ -28,9 +28,10 @@ export interface Coupon {
 
 interface CouponPickerProps {
   onCouponSelected: (coupon: Coupon) => void;
+  partnerId?: string;
 }
 
-const CouponPicker: React.FC<CouponPickerProps> = ({ onCouponSelected }) => {
+const CouponPicker: React.FC<CouponPickerProps> = ({ onCouponSelected, partnerId }) => {
   const [coupons, setCoupons] = useState<Coupon[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -38,11 +39,39 @@ const CouponPicker: React.FC<CouponPickerProps> = ({ onCouponSelected }) => {
   const loadCoupons = async () => {
     try {
       setLoading(true);
-      console.log('Loading coupons for picker...');
-      const availableCoupons = await fetchCoupons();
-      console.log('Fetched coupons for picker:', availableCoupons);
+      console.log('Loading coupons for picker with partnerId:', partnerId);
       
-      // Ensure we show at least the available coupons, even if less than 3
+      let query = supabase
+        .from('coupons')
+        .select('*')
+        .eq('active', true)
+        .gt('expires_at', new Date().toISOString())
+        .order('created_at', { ascending: false });
+
+      if (partnerId) {
+        query = query.eq('partner_id', partnerId);
+      }
+
+      const { data, error } = await query;
+
+      if (error) {
+        console.error('Error loading coupons:', error);
+        toast.error('Failed to load offers');
+        setCoupons([]);
+        return;
+      }
+
+      const availableCoupons = (data || []).map(coupon => ({
+        id: coupon.id,
+        title: coupon.title,
+        description: coupon.description,
+        code: coupon.code,
+        expiresIn: 'Soon', // We'll calculate this based on expires_at
+        expires_at: coupon.expires_at,
+        discount: coupon.discount,
+      }));
+
+      console.log('Fetched coupons for picker:', availableCoupons);
       setCoupons(availableCoupons);
     } catch (error) {
       console.error("Error loading coupons for picker:", error);
@@ -78,7 +107,7 @@ const CouponPicker: React.FC<CouponPickerProps> = ({ onCouponSelected }) => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, []);
+  }, [partnerId]); // Re-load when partnerId changes
 
   const handleCouponSelect = (coupon: Coupon) => {
     setSelectedId(coupon.id);

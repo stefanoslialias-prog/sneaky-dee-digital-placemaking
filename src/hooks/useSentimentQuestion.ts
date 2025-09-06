@@ -8,7 +8,7 @@ interface Question {
   text: string;
 }
 
-export const useSentimentQuestion = () => {
+export const useSentimentQuestion = (partnerId?: string) => {
   const [question, setQuestion] = useState<Question | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -23,11 +23,17 @@ export const useSentimentQuestion = () => {
       
       console.log("Fetching question for IP:", ipAddress);
       
-      // Get all active questions first
-      const { data: allQuestions, error } = await supabase
+      // Get all active questions first, optionally filtered by partner
+      let query = supabase
         .from('survey_questions')
         .select('id, text')
         .eq('active', true);
+
+      if (partnerId) {
+        query = query.eq('partner_id', partnerId);
+      }
+
+      const { data: allQuestions, error } = await query;
         
       if (error) {
         console.error('Error fetching questions:', error);
@@ -92,7 +98,7 @@ export const useSentimentQuestion = () => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, []);
+  }, [partnerId]); // Re-fetch when partnerId changes
 
   return {
     question,

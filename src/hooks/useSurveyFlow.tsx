@@ -6,20 +6,36 @@ import mockDatabase from '@/services/mockData';
 import { supabase } from '@/integrations/supabase/client';
 
 export type AppStep = 
-  | 'welcome' 
-  | 'promotionOptIn' 
-  | 'couponPicker' 
-  | 'sentiment' 
-  | 'comment' 
-  | 'congratulations' 
+  | 'welcome'
+  | 'partnerPicker'
+  | 'promotionOptIn'
+  | 'couponPicker'
+  | 'sentiment'
+  | 'comment'
+  | 'congratulations'
   | 'thankYou';
+
+interface Partner {
+  id: string;
+  name: string;
+  slug: string;
+  description?: string;
+  logo_url?: string;
+  active: boolean;
+}
 
 export const useSurveyFlow = () => {
   const [step, setStep] = useState<AppStep>('welcome');
   const [selectedCoupon, setSelectedCoupon] = useState<Coupon | null>(null);
   const [sentiment, setSentiment] = useState<Sentiment | null>(null);
+  const [selectedPartner, setSelectedPartner] = useState<Partner | null>(null);
 
   const handleStartSurvey = () => {
+    setStep('partnerPicker');
+  };
+
+  const handlePartnerSelected = (partner: Partner) => {
+    setSelectedPartner(partner);
     setStep('couponPicker');
   };
 
@@ -160,8 +176,10 @@ export const useSurveyFlow = () => {
     step,
     setStep,
     selectedCoupon,
+    selectedPartner,
     sentiment,
     handleStartSurvey,
+    handlePartnerSelected,
     handleSkipRegistration,
     handleRegister,
     handleSocialSignIn,

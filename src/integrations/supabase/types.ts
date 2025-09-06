@@ -43,6 +43,7 @@ export type Database = {
           id: string
           image_url: string | null
           issued_at: string | null
+          partner_id: string | null
           pass_payload: Json | null
           pass_type: string | null
           passkit_campaign_id: string | null
@@ -62,6 +63,7 @@ export type Database = {
           id?: string
           image_url?: string | null
           issued_at?: string | null
+          partner_id?: string | null
           pass_payload?: Json | null
           pass_type?: string | null
           passkit_campaign_id?: string | null
@@ -81,6 +83,7 @@ export type Database = {
           id?: string
           image_url?: string | null
           issued_at?: string | null
+          partner_id?: string | null
           pass_payload?: Json | null
           pass_type?: string | null
           passkit_campaign_id?: string | null
@@ -91,6 +94,13 @@ export type Database = {
           wallet_compatible?: boolean | null
         }
         Relationships: [
+          {
+            foreignKeyName: "coupons_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "coupons_user_id_fkey"
             columns: ["user_id"]
@@ -156,6 +166,39 @@ export type Database = {
           },
         ]
       }
+      partners: {
+        Row: {
+          active: boolean
+          created_at: string
+          description: string | null
+          id: string
+          logo_url: string | null
+          name: string
+          slug: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          description?: string | null
+          id?: string
+          logo_url?: string | null
+          name: string
+          slug: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          description?: string | null
+          id?: string
+          logo_url?: string | null
+          name?: string
+          slug?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
@@ -187,6 +230,7 @@ export type Database = {
           created_at: string
           id: string
           order: number
+          partner_id: string | null
           text: string
           type: string
         }
@@ -196,6 +240,7 @@ export type Database = {
           created_at?: string
           id?: string
           order: number
+          partner_id?: string | null
           text: string
           type?: string
         }
@@ -205,10 +250,19 @@ export type Database = {
           created_at?: string
           id?: string
           order?: number
+          partner_id?: string | null
           text?: string
           type?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "survey_questions_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       survey_responses: {
         Row: {
@@ -217,6 +271,7 @@ export type Database = {
           created_at: string
           id: string
           location_id: string | null
+          partner_id: string | null
           question_id: string
           session_id: string
         }
@@ -226,6 +281,7 @@ export type Database = {
           created_at?: string
           id?: string
           location_id?: string | null
+          partner_id?: string | null
           question_id: string
           session_id: string
         }
@@ -235,10 +291,18 @@ export type Database = {
           created_at?: string
           id?: string
           location_id?: string | null
+          partner_id?: string | null
           question_id?: string
           session_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "survey_responses_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "survey_responses_question_id_fkey"
             columns: ["question_id"]

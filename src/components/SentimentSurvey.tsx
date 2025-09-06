@@ -9,10 +9,11 @@ import SurveyNoQuestionState from '@/components/sentiment/SurveyNoQuestionState'
 
 interface SentimentSurveyProps {
   onComplete: (sentiment: Sentiment) => void;
+  partnerId?: string;
 }
 
-const SentimentSurvey: React.FC<SentimentSurveyProps> = ({ onComplete }) => {
-  const { question, loading } = useSentimentQuestion();
+const SentimentSurvey: React.FC<SentimentSurveyProps> = ({ onComplete, partnerId }) => {
+  const { question, loading } = useSentimentQuestion(partnerId);
   const { isSubmitting, selectedSentiment, handleSentimentSelect } = useSentimentSubmission(question, onComplete);
 
   // Show loading state

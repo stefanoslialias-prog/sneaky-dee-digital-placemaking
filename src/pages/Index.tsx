@@ -15,7 +15,9 @@ const Index = () => {
     step,
     setStep,
     selectedCoupon,
+    selectedPartner,
     handleStartSurvey,
+    handlePartnerSelected,
     handleSkipRegistration,
     handleCouponSelected,
     handleSentimentComplete,
@@ -58,8 +60,10 @@ const Index = () => {
       <SurveyStepRenderer
         step={step}
         selectedCoupon={selectedCoupon}
+        selectedPartner={selectedPartner}
         userInfo={userInfo}
         onStartSurvey={handleStartSurvey}
+        onPartnerSelected={handlePartnerSelected}
         onSkipRegistration={handleSkipRegistration}
         onRegister={handleRegister}
         onSocialSignIn={handleSocialSignIn}
