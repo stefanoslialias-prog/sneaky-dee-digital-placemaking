@@ -27,10 +27,10 @@ export const CouponDisplay: React.FC<CouponDisplayProps> = ({ coupon }) => {
       </div>
       
       <div className="mt-6">
-        <div className="p-3 bg-white border-2 border-dashed border-toronto-blue rounded-md text-center">
-          <p className="text-sm text-gray-500">Your code:</p>
-          <p className="font-mono font-bold text-xl">{coupon.code}</p>
-          <p className="text-sm text-gray-500 mt-2">Expires in {coupon.expiresIn}</p>
+        <div className="p-4 bg-white border-2 border-dashed border-toronto-blue rounded-md text-center">
+          <p className="text-sm text-gray-500 mb-1">Your coupon code:</p>
+          <p className="font-mono font-bold text-3xl text-toronto-blue mb-3 tracking-wider">{coupon.code}</p>
+          <p className="text-xs text-gray-400">Expires in {coupon.expiresIn}</p>
         </div>
       </div>
     </div>
