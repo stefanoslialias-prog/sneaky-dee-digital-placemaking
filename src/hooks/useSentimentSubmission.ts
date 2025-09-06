@@ -10,7 +10,7 @@ interface Question {
   text: string;
 }
 
-export const useSentimentSubmission = (question: Question | null, onComplete: (sentiment: Sentiment) => void, partnerId?: string) => {
+export const useSentimentSubmission = (question: Question | null, onComplete: (sentiment: Sentiment, responseId?: string) => void, partnerId?: string) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedSentiment, setSelectedSentiment] = useState<Sentiment | null>(null);
   const { sessionId } = useSessionTracking();
@@ -62,10 +62,12 @@ export const useSentimentSubmission = (question: Question | null, onComplete: (s
       
       console.log("Inserting response:", responseData);
       
-      // Insert response into Supabase
-      const { error: insertError } = await supabase
+      // Insert response into Supabase and get the ID
+      const { data: responseResult, error: insertError } = await supabase
         .from('survey_responses')
-        .insert(responseData);
+        .insert(responseData)
+        .select('id')
+        .single();
         
       if (insertError) {
         console.error('Error saving response:', insertError);
@@ -74,7 +76,7 @@ export const useSentimentSubmission = (question: Question | null, onComplete: (s
       }
       
       // Call onComplete to proceed to comment step
-      onComplete(sentiment);
+      onComplete(sentiment, responseResult?.id);
       toast.success('Thanks for sharing how you feel!');
       
     } catch (error) {

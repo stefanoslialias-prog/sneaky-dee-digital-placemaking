@@ -31,6 +31,10 @@ interface EngagementData {
   download_clicks: number;
   wallet_adds: number;
   congrats_views: number;
+  opt_in_prompt_shown: number;
+  opt_in_yes: number;
+  opt_in_no: number;
+  opt_in_email_submitted: number;
 }
 
 const PartnerOverview: React.FC<PartnerOverviewProps> = ({ selectedPartner }) => {
@@ -40,7 +44,11 @@ const PartnerOverview: React.FC<PartnerOverviewProps> = ({ selectedPartner }) =>
     copy_clicks: 0,
     download_clicks: 0,
     wallet_adds: 0,
-    congrats_views: 0
+    congrats_views: 0,
+    opt_in_prompt_shown: 0,
+    opt_in_yes: 0,
+    opt_in_no: 0,
+    opt_in_email_submitted: 0
   });
   const [loading, setLoading] = useState(true);
 

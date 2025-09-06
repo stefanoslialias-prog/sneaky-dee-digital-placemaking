@@ -749,6 +749,10 @@ export type Database = {
         Args: { p_ip_address: string; p_question_id: string }
         Returns: string
       }
+      update_response_comment: {
+        Args: { p_comment: string; p_response_id: string; p_session_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
       [_ in never]: never

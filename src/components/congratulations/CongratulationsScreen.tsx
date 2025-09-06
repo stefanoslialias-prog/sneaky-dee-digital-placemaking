@@ -5,6 +5,7 @@ import { Coupon } from '../CouponPicker';
 import { CouponDisplay } from './CouponDisplay';
 import { ClaimStatus } from './ClaimStatus';
 import { OptInPrompt } from './OptInPrompt';
+import { EmailOptIn } from './EmailOptIn';
 import { ActionButtons } from './ActionButtons';
 import { claimCoupon } from '@/services/couponService';
 import { useSessionTracking } from '@/hooks/useSessionTracking';
@@ -14,6 +15,9 @@ interface CongratulationsScreenProps {
   onOptInYes: () => void;
   onOptInNo: () => void;
   onDone?: () => void;
+  showEmailOptIn?: boolean;
+  onEmailOptInComplete?: (email?: string) => void;
+  onEmailOptInSkip?: () => void;
   userInfo?: {
     email?: string;
     name?: string;
@@ -25,6 +29,9 @@ const CongratulationsScreen: React.FC<CongratulationsScreenProps> = ({
   coupon: initialCoupon, 
   onOptInYes,
   onOptInNo,
+  showEmailOptIn,
+  onEmailOptInComplete,
+  onEmailOptInSkip,
   userInfo
 }) => {
   const [copied, setCopied] = useState(false);
@@ -33,6 +40,11 @@ const CongratulationsScreen: React.FC<CongratulationsScreenProps> = ({
   const [claimed, setClaimed] = useState(false);
   const [coupon, setCoupon] = useState(initialCoupon);
   const { trackSessionEvent } = useSessionTracking();
+
+  // Track when opt-in prompt is shown
+  useEffect(() => {
+    trackSessionEvent('opt_in_prompt_shown');
+  }, [trackSessionEvent]);
 
   useEffect(() => {
     // Hide confetti after 5 seconds
@@ -115,7 +127,14 @@ const CongratulationsScreen: React.FC<CongratulationsScreenProps> = ({
         <CardContent className="space-y-4">
           <CouponDisplay coupon={coupon} />
           <ClaimStatus isClaiming={isClaiming} claimed={claimed} coupon={coupon} />
-          <OptInPrompt onOptInYes={onOptInYes} onOptInNo={onOptInNo} />
+          {showEmailOptIn ? (
+            <EmailOptIn 
+              onComplete={onEmailOptInComplete || (() => {})} 
+              onSkip={onEmailOptInSkip || (() => {})}
+            />
+          ) : (
+            <OptInPrompt onOptInYes={onOptInYes} onOptInNo={onOptInNo} />
+          )}
         </CardContent>
         
         <CardFooter className="flex flex-col space-y-3">

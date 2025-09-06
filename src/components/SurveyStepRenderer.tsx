@@ -27,16 +27,20 @@ interface SurveyStepRendererProps {
   selectedCoupon: Coupon | null;
   selectedPartner: Partner | null;
   userInfo: any;
+  lastResponseId?: string | null;
+  showEmailOptIn?: boolean;
   onStartSurvey: () => void;
   onPartnerSelected: (partner: Partner) => void;
   onSkipRegistration: () => void;
   onRegister: (email: string, name: string) => void;
   onSocialSignIn: (provider: 'google' | 'apple') => void;
   onCouponSelected: (coupon: Coupon) => void;
-  onSentimentComplete: (sentiment: Sentiment) => void;
+  onSentimentComplete: (sentiment: Sentiment, responseId?: string) => void;
   onCommentComplete: (comment?: string) => void;
   onOptInYes: () => void;
   onOptInNo: () => void;
+  onEmailOptInComplete?: (email?: string) => void;
+  onEmailOptInSkip?: () => void;
   onThankYouDone: () => void;
 }
 
@@ -45,6 +49,8 @@ const SurveyStepRenderer: React.FC<SurveyStepRendererProps> = ({
   selectedCoupon,
   selectedPartner,
   userInfo,
+  lastResponseId,
+  showEmailOptIn,
   onStartSurvey,
   onPartnerSelected,
   onSkipRegistration,
@@ -55,6 +61,8 @@ const SurveyStepRenderer: React.FC<SurveyStepRendererProps> = ({
   onCommentComplete,
   onOptInYes,
   onOptInNo,
+  onEmailOptInComplete,
+  onEmailOptInSkip,
   onThankYouDone,
 }) => {
 
@@ -107,6 +115,7 @@ const SurveyStepRenderer: React.FC<SurveyStepRendererProps> = ({
           <div className="animate-fade-in">
             <CommentStep 
               onComplete={onCommentComplete}
+              responseId={lastResponseId || undefined}
             />
           </div>
         );
@@ -118,6 +127,9 @@ const SurveyStepRenderer: React.FC<SurveyStepRendererProps> = ({
               coupon={selectedCoupon} 
               onOptInYes={onOptInYes}
               onOptInNo={onOptInNo}
+              showEmailOptIn={showEmailOptIn}
+              onEmailOptInComplete={onEmailOptInComplete}
+              onEmailOptInSkip={onEmailOptInSkip}
               userInfo={userInfo}
             />
           </div>

@@ -5,48 +5,70 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import { useSessionTracking } from '@/hooks/useSessionTracking';
 
 interface CommentStepProps {
   onComplete: (comment?: string) => void;
+  responseId?: string;
 }
 
-const CommentStep: React.FC<CommentStepProps> = ({ onComplete }) => {
+const CommentStep: React.FC<CommentStepProps> = ({ onComplete, responseId }) => {
   const [comment, setComment] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { sessionId } = useSessionTracking();
 
   const handleSubmit = async () => {
+    if (!comment.trim()) {
+      toast.error("Please enter a comment before submitting.");
+      return;
+    }
+
+    if (!responseId || !sessionId) {
+      toast.error("Unable to save comment. Please try again.");
+      return;
+    }
+
     setIsSubmitting(true);
     
     try {
-      // Get the latest survey response for this session
-      const sessionId = localStorage.getItem('currentSessionId');
+      // Sanitize the comment before storing
+      const sanitizedComment = comment.trim()
+        .replace(/[<>'"&]/g, '') // Remove common XSS characters
+        .replace(/javascript:/gi, '') // Remove javascript: URLs
+        .replace(/on\w+=/gi, '') // Remove event handlers like onclick=
+        .substring(0, 500); // Enforce length limit
       
-      if (comment.trim() && sessionId) {
-        // Sanitize comment to prevent XSS attacks
-        const sanitizedComment = comment.trim()
-          .replace(/[<>]/g, '') // Remove potential HTML tags
-          .substring(0, 500); // Enforce length limit
-        
-        // If we have a comment and a session ID, update the response
-        const { error } = await supabase
-          .from('survey_responses')
-          .update({ comment: sanitizedComment })
-          .eq('session_id', sessionId)
-          .order('created_at', { ascending: false })
-          .limit(1);
-          
-        if (error) {
-          console.error('Error saving comment:', error);
-          toast.error('Failed to save comment');
-        }
+      if (!sanitizedComment) {
+        toast.error("Invalid comment. Please try again.");
+        setIsSubmitting(false);
+        return;
       }
-      
-      // Call onComplete callback regardless if we updated or not
-      onComplete(comment);
-      
+
+      // Use the secure RPC function to update the comment
+      const { data, error } = await supabase.rpc('update_response_comment', {
+        p_response_id: responseId,
+        p_comment: sanitizedComment,
+        p_session_id: sessionId
+      });
+
+      if (error) {
+        console.error('Error saving comment:', error);
+        toast.error("Failed to save comment. Please try again.");
+        setIsSubmitting(false);
+        return;
+      }
+
+      if (!data) {
+        toast.error("Unable to link comment to response. Please try again.");
+        setIsSubmitting(false);
+        return;
+      }
+
+      toast.success("Thank you for your feedback!");
+      onComplete(sanitizedComment);
     } catch (error) {
-      console.error('Comment submission error:', error);
-      toast.error('Something went wrong. Please try again.');
+      console.error('Error saving comment:', error);
+      toast.error("Something went wrong. Please try again.");
     } finally {
       setIsSubmitting(false);
     }

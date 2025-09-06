@@ -30,6 +30,8 @@ export const useSurveyFlow = () => {
   const [selectedCoupon, setSelectedCoupon] = useState<Coupon | null>(null);
   const [sentiment, setSentiment] = useState<Sentiment | null>(null);
   const [selectedPartner, setSelectedPartner] = useState<Partner | null>(null);
+  const [lastResponseId, setLastResponseId] = useState<string | null>(null);
+  const [showEmailOptIn, setShowEmailOptIn] = useState(false);
   const { startNewSession } = useSessionTracking();
 
   const handleStartSurvey = () => {
@@ -88,8 +90,9 @@ export const useSurveyFlow = () => {
     setStep('sentiment');
   };
   
-  const handleSentimentComplete = (selectedSentiment: Sentiment) => {
+  const handleSentimentComplete = (selectedSentiment: Sentiment, responseId?: string) => {
     setSentiment(selectedSentiment);
+    setLastResponseId(responseId || null);
     
     // Add to mock database
     if (selectedSentiment) {
@@ -136,17 +139,25 @@ export const useSurveyFlow = () => {
   };
 
   const handleOptInYes = () => {
-    console.log('User opted in for more offers');
-    setStep('promotionOptIn');
+    console.log('User opted in for more deals');
+    setShowEmailOptIn(true);
   };
 
   const handleOptInNo = () => {
-    // Remove the automatic wallet deposit message - just proceed to welcome
-    console.log('User opted out of promotions');
-    
-    setStep('welcome');
-    setSelectedCoupon(null);
-    setSentiment(null);
+    console.log('User declined additional offers');
+    setStep('thankYou');
+  };
+
+  const handleEmailOptInComplete = (email?: string) => {
+    console.log('Email opt-in completed:', email ? 'with email' : 'skipped');
+    setShowEmailOptIn(false);
+    setStep('thankYou');
+  };
+
+  const handleEmailOptInSkip = () => {
+    console.log('Email opt-in skipped');
+    setShowEmailOptIn(false);
+    setStep('thankYou');
   };
 
   const handleThankYouDone = async () => {
@@ -182,6 +193,8 @@ export const useSurveyFlow = () => {
     selectedCoupon,
     selectedPartner,
     sentiment,
+    lastResponseId,
+    showEmailOptIn,
     handleStartSurvey,
     handlePartnerSelected,
     handleSkipRegistration,
@@ -193,6 +206,8 @@ export const useSurveyFlow = () => {
     handleDone,
     handleOptInYes,
     handleOptInNo,
+    handleEmailOptInComplete,
+    handleEmailOptInSkip,
     handleThankYouDone
   };
 };
