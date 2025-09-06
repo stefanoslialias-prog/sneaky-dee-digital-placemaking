@@ -25,9 +25,76 @@ interface PartnerData {
   wallet_adds: number;
 }
 
+interface EngagementData {
+  visits: number;
+  copy_clicks: number;
+  download_clicks: number;
+  wallet_adds: number;
+  congrats_views: number;
+}
+
 const PartnerOverview: React.FC<PartnerOverviewProps> = ({ selectedPartner }) => {
   const [partnerData, setPartnerData] = useState<PartnerData | null>(null);
+  const [engagementData, setEngagementData] = useState<EngagementData>({
+    visits: 0,
+    copy_clicks: 0,
+    download_clicks: 0,
+    wallet_adds: 0,
+    congrats_views: 0
+  });
   const [loading, setLoading] = useState(true);
+
+  const fetchEngagementData = async () => {
+    try {
+      // Fetch engagement events directly to count them
+      let query = supabase
+        .from('engagement_events')
+        .select('event_type, partner_id');
+        
+      if (selectedPartner) {
+        query = query.eq('partner_id', selectedPartner);
+      }
+      
+      const { data, error } = await query;
+      
+      if (error) {
+        throw error;
+      }
+      
+      // Count events by type
+      const eventCounts = (data || []).reduce((acc, event) => {
+        switch (event.event_type) {
+          case 'visit_partner_page':
+            acc.visits++;
+            break;
+          case 'copy_code':
+            acc.copy_clicks++;
+            break;
+          case 'download_coupon':
+            acc.download_clicks++;
+            break;
+          case 'add_to_wallet':
+            acc.wallet_adds++;
+            break;
+          case 'view_congratulations':
+            acc.congrats_views++;
+            break;
+        }
+        return acc;
+      }, {
+        visits: 0,
+        copy_clicks: 0,
+        download_clicks: 0,
+        wallet_adds: 0,
+        congrats_views: 0
+      });
+      
+      setEngagementData(eventCounts);
+      
+    } catch (error) {
+      console.error('Error fetching engagement data:', error);
+    }
+  };
 
   const fetchPartnerData = async () => {
     try {
@@ -67,10 +134,10 @@ const PartnerOverview: React.FC<PartnerOverviewProps> = ({ selectedPartner }) =>
             neutral_count: acc.neutral_count + (partner.neutral_count || 0),
             concerned_count: acc.concerned_count + (partner.concerned_count || 0),
             respondent_sessions: acc.respondent_sessions + (partner.respondent_sessions || 0),
-            visits: acc.visits + (partner.visits || 0),
-            copy_clicks: acc.copy_clicks + (partner.copy_clicks || 0),
-            download_clicks: acc.download_clicks + (partner.download_clicks || 0),
-            wallet_adds: acc.wallet_adds + (partner.wallet_adds || 0),
+            visits: 0, // Will be populated from engagement data
+            copy_clicks: 0, // Will be populated from engagement data
+            download_clicks: 0, // Will be populated from engagement data
+            wallet_adds: 0, // Will be populated from engagement data
           }), {
             partner_id: 'all',
             name: 'All Partners',
@@ -91,6 +158,10 @@ const PartnerOverview: React.FC<PartnerOverviewProps> = ({ selectedPartner }) =>
           setPartnerData(null);
         }
       }
+      
+      // Fetch engagement data
+      await fetchEngagementData();
+      
     } catch (error) {
       console.error('Error fetching partner data:', error);
       toast.error('Failed to load partner data');
@@ -187,9 +258,9 @@ const PartnerOverview: React.FC<PartnerOverviewProps> = ({ selectedPartner }) =>
           <ChartBar className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">{partnerData.visits}</div>
+          <div className="text-2xl font-bold">{engagementData.visits}</div>
           <p className="text-xs text-muted-foreground">
-            {conversionRate}% conversion rate
+            {partnerData && engagementData.visits > 0 ? ((partnerData.total_responses / engagementData.visits) * 100).toFixed(1) : "0"}% conversion rate
           </p>
         </CardContent>
       </Card>
@@ -200,7 +271,7 @@ const PartnerOverview: React.FC<PartnerOverviewProps> = ({ selectedPartner }) =>
           <ChartPie className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">{partnerData.copy_clicks + partnerData.download_clicks}</div>
+          <div className="text-2xl font-bold">{engagementData.copy_clicks + engagementData.download_clicks}</div>
           <p className="text-xs text-muted-foreground">
             Copy/download actions
           </p>
@@ -236,7 +307,7 @@ const PartnerOverview: React.FC<PartnerOverviewProps> = ({ selectedPartner }) =>
           <div className="space-y-4 mt-4">
             <div className="flex items-center justify-between">
               <span className="text-sm font-medium">Page Visits</span>
-              <span className="text-sm font-bold">{partnerData.visits}</span>
+              <span className="text-sm font-bold">{engagementData.visits}</span>
             </div>
             <div className="w-full bg-gray-200 rounded-full h-2">
               <div className="bg-blue-500 h-2 rounded-full" style={{ width: '100%' }}></div>
@@ -249,29 +320,29 @@ const PartnerOverview: React.FC<PartnerOverviewProps> = ({ selectedPartner }) =>
             <div className="w-full bg-gray-200 rounded-full h-2">
               <div 
                 className="bg-green-500 h-2 rounded-full" 
-                style={{ width: `${partnerData.visits > 0 ? (partnerData.total_responses / partnerData.visits) * 100 : 0}%` }}
+                style={{ width: `${engagementData.visits > 0 ? (partnerData.total_responses / engagementData.visits) * 100 : 0}%` }}
               ></div>
             </div>
             
             <div className="flex items-center justify-between">
               <span className="text-sm font-medium">Copy Code Clicks</span>
-              <span className="text-sm font-bold">{partnerData.copy_clicks}</span>
+              <span className="text-sm font-bold">{engagementData.copy_clicks}</span>
             </div>
             <div className="w-full bg-gray-200 rounded-full h-2">
               <div 
                 className="bg-yellow-500 h-2 rounded-full" 
-                style={{ width: `${partnerData.visits > 0 ? (partnerData.copy_clicks / partnerData.visits) * 100 : 0}%` }}
+                style={{ width: `${engagementData.visits > 0 ? (engagementData.copy_clicks / engagementData.visits) * 100 : 0}%` }}
               ></div>
             </div>
             
             <div className="flex items-center justify-between">
               <span className="text-sm font-medium">Download/Wallet</span>
-              <span className="text-sm font-bold">{partnerData.download_clicks + partnerData.wallet_adds}</span>
+              <span className="text-sm font-bold">{engagementData.download_clicks + engagementData.wallet_adds}</span>
             </div>
             <div className="w-full bg-gray-200 rounded-full h-2">
               <div 
                 className="bg-purple-500 h-2 rounded-full" 
-                style={{ width: `${partnerData.visits > 0 ? ((partnerData.download_clicks + partnerData.wallet_adds) / partnerData.visits) * 100 : 0}%` }}
+                style={{ width: `${engagementData.visits > 0 ? ((engagementData.download_clicks + engagementData.wallet_adds) / engagementData.visits) * 100 : 0}%` }}
               ></div>
             </div>
           </div>
