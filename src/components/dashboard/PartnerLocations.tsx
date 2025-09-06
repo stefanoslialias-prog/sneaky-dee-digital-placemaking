@@ -98,6 +98,13 @@ const PartnerLocations: React.FC<PartnerLocationsProps> = ({ selectedPartner, on
     }
   };
 
+
+  const handlePartnerClick = (partnerId: string) => {
+    if (onPartnerSelect) {
+      onPartnerSelect(partnerId);
+    }
+  };
+
   useEffect(() => {
     fetchPartnerData();
   }, [selectedPartner]);
