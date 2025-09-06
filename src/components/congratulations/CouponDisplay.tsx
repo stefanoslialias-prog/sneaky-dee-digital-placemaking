@@ -31,7 +31,9 @@ export const CouponDisplay: React.FC<CouponDisplayProps> = ({ coupon }) => {
         <div className="p-6 bg-white border-4 border-dashed border-toronto-blue rounded-lg text-center shadow-lg">
           <p className="text-sm font-semibold text-gray-600 mb-2">YOUR COUPON CODE</p>
           <div className="bg-white p-4 rounded-md border-2 border-toronto-blue shadow-inner">
-            <p className="font-mono font-bold text-4xl text-toronto-blue mb-2 tracking-widest">{coupon.code}</p>
+            <p className="font-mono font-bold text-4xl text-toronto-blue mb-2 tracking-widest">
+              {coupon.code || 'CODE NOT AVAILABLE'}
+            </p>
           </div>
           <p className="text-xs text-gray-500 mt-2">Present this code at checkout</p>
         </div>
