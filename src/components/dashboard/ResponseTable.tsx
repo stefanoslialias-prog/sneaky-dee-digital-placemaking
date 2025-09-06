@@ -22,7 +22,11 @@ interface SurveyResponse {
   comment?: string | null;
 }
 
-const ResponseTable: React.FC = () => {
+interface ResponseTableProps {
+  selectedPartner?: string;
+}
+
+const ResponseTable: React.FC<ResponseTableProps> = ({ selectedPartner }) => {
   const [responses, setResponses] = useState<SurveyResponse[]>([]);
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
@@ -62,7 +66,7 @@ const ResponseTable: React.FC = () => {
     
     // Set up logging to debug any issues
     console.log('Setting up ResponseTable with locationMap:', locationMap);
-  }, [page, locationMap]);
+  }, [page, locationMap, selectedPartner]);
   
   const fetchResponses = async () => {
     try {
@@ -72,17 +76,25 @@ const ResponseTable: React.FC = () => {
       const startIndex = (page - 1) * pageSize;
       
       // Fetch responses from Supabase
-      const { data, error } = await supabase
+      let query = supabase
         .from('survey_responses')
         .select(`
           id, 
           created_at, 
           answer, 
           comment, 
-          location_id
+          location_id,
+          partner_id
         `)
         .order('created_at', { ascending: false })
         .range(startIndex, startIndex + pageSize - 1);
+      
+      // Filter by partner if one is selected
+      if (selectedPartner && selectedPartner !== 'all') {
+        query = query.eq('partner_id', selectedPartner);
+      }
+      
+      const { data, error } = await query;
       
       console.log('Fetched survey_responses data:', data);
         
@@ -166,9 +178,16 @@ const ResponseTable: React.FC = () => {
   useEffect(() => {
     const getTotal = async () => {
       try {
-        const { count, error } = await supabase
+        let query = supabase
           .from('survey_responses')
           .select('*', { count: 'exact', head: true });
+        
+        // Filter by partner if one is selected
+        if (selectedPartner && selectedPartner !== 'all') {
+          query = query.eq('partner_id', selectedPartner);
+        }
+          
+        const { count, error } = await query;
           
         if (error) throw error;
         
@@ -181,23 +200,31 @@ const ResponseTable: React.FC = () => {
     };
     
     getTotal();
-  }, [newResponses]);
+  }, [newResponses, selectedPartner]);
   
   const totalPages = Math.ceil(totalResponses / pageSize);
   
   const exportToCsv = async () => {
     try {
       // Fetch all responses for export
-      const { data, error } = await supabase
+      let query = supabase
         .from('survey_responses')
         .select(`
           id, 
           created_at, 
           answer, 
           comment, 
-          location_id
+          location_id,
+          partner_id
         `)
         .order('created_at', { ascending: false });
+      
+      // Filter by partner if one is selected
+      if (selectedPartner && selectedPartner !== 'all') {
+        query = query.eq('partner_id', selectedPartner);
+      }
+      
+      const { data, error } = await query;
         
       if (error) throw error;
       

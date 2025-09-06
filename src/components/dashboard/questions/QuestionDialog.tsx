@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,6 +8,14 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Save, Trash, X } from 'lucide-react';
 import { Question } from '@/hooks/useQuestionManager';
+import { supabase } from '@/integrations/supabase/client';
+
+interface Partner {
+  id: string;
+  name: string;
+  slug: string;
+  active: boolean;
+}
 
 interface QuestionDialogProps {
   isOpen: boolean;
@@ -36,6 +44,27 @@ const QuestionDialog: React.FC<QuestionDialogProps> = ({
   isSaving,
   isDeleting
 }) => {
+  const [partners, setPartners] = useState<Partner[]>([]);
+
+  // Fetch partners for dropdown
+  useEffect(() => {
+    const fetchPartners = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('partners')
+          .select('id, name, slug, active')
+          .eq('active', true)
+          .order('name');
+        
+        if (error) throw error;
+        setPartners(data || []);
+      } catch (error) {
+        console.error('Error fetching partners:', error);
+      }
+    };
+    
+    fetchPartners();
+  }, []);
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[550px]">
@@ -98,6 +127,30 @@ const QuestionDialog: React.FC<QuestionDialogProps> = ({
               )}
               min={1}
             />
+          </div>
+          
+          <div className="grid gap-2">
+            <Label htmlFor="partner">Partner (Optional)</Label>
+            <Select
+              value={currentQuestion?.partner_id || 'none'}
+              onValueChange={value => setCurrentQuestion(prev => 
+                prev ? { ...prev, partner_id: value === 'none' ? undefined : value } : null
+              )}
+            >
+              <SelectTrigger id="partner">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectGroup>
+                  <SelectItem value="none">No Partner (Global)</SelectItem>
+                  {partners.map(partner => (
+                    <SelectItem key={partner.id} value={partner.id}>
+                      {partner.name}
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
+              </SelectContent>
+            </Select>
           </div>
         </div>
         

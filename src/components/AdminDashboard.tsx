@@ -12,8 +12,16 @@ import LiveTraffic from '@/components/dashboard/LiveTraffic';
 import CouponManager from '@/components/dashboard/CouponManager';
 import VisitorTracking from '@/components/dashboard/VisitorTracking';
 import { Badge } from '@/components/ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { supabase } from '@/integrations/supabase/client';
 import { Link, useNavigate } from 'react-router-dom';
+
+interface Partner {
+  id: string;
+  name: string;
+  slug: string;
+  active: boolean;
+}
 
 const AdminDashboard: React.FC = () => {
   const { user, logout } = useAuth();
@@ -22,6 +30,8 @@ const AdminDashboard: React.FC = () => {
     newResponses: 0,
     newTraffic: 0
   });
+  const [partners, setPartners] = useState<Partner[]>([]);
+  const [selectedPartner, setSelectedPartner] = useState<string>('all');
   
   const navigate = useNavigate();
 
@@ -29,6 +39,26 @@ const AdminDashboard: React.FC = () => {
     await logout();
     navigate('/'); // Redirect directly to the survey page
   };
+
+  // Fetch partners for filter
+  useEffect(() => {
+    const fetchPartners = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('partners')
+          .select('id, name, slug, active')
+          .eq('active', true)
+          .order('name');
+        
+        if (error) throw error;
+        setPartners(data || []);
+      } catch (error) {
+        console.error('Error fetching partners:', error);
+      }
+    };
+    
+    fetchPartners();
+  }, []);
   
   // Subscribe to real-time events
   useEffect(() => {
@@ -101,6 +131,22 @@ const AdminDashboard: React.FC = () => {
               e.currentTarget.style.display = 'none';
             }}
           />
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-gray-600">Partner:</span>
+            <Select value={selectedPartner} onValueChange={setSelectedPartner}>
+              <SelectTrigger className="w-48">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Partners</SelectItem>
+                {partners.map((partner) => (
+                  <SelectItem key={partner.id} value={partner.id}>
+                    {partner.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
         <div className="flex items-center gap-4">
           <Link to="/">
@@ -181,15 +227,15 @@ const AdminDashboard: React.FC = () => {
             </TabsContent>
             
             <TabsContent value="questions" className="flex-1">
-              <QuestionDesigner />
+              <QuestionDesigner selectedPartner={selectedPartner} />
             </TabsContent>
 
             <TabsContent value="coupons" className="flex-1">
-              <CouponManager />
+              <CouponManager selectedPartner={selectedPartner} />
             </TabsContent>
             
             <TabsContent value="responses" className="flex-1">
-              <ResponseTable />
+              <ResponseTable selectedPartner={selectedPartner} />
             </TabsContent>
           </div>
         </Tabs>

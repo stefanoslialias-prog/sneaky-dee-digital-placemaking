@@ -8,7 +8,11 @@ import { useQuestionManager } from '@/hooks/useQuestionManager';
 import QuestionDialog from '@/components/dashboard/questions/QuestionDialog';
 import QuestionList from '@/components/dashboard/questions/QuestionList';
 
-const QuestionDesigner: React.FC = () => {
+interface QuestionDesignerProps {
+  selectedPartner?: string;
+}
+
+const QuestionDesigner: React.FC<QuestionDesignerProps> = ({ selectedPartner }) => {
   const {
     questions,
     loading,
@@ -25,7 +29,7 @@ const QuestionDesigner: React.FC = () => {
     handleDeleteQuestion,
     handleMoveQuestion,
     toggleQuestionActive
-  } = useQuestionManager();
+  } = useQuestionManager(selectedPartner);
   
   // Initial data fetch and real-time setup
   useEffect(() => {
@@ -45,7 +49,12 @@ const QuestionDesigner: React.FC = () => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, []);
+  }, [selectedPartner]);
+  
+  // Re-fetch when partner filter changes
+  useEffect(() => {
+    fetchQuestions();
+  }, [selectedPartner]);
   
   return (
     <>

@@ -9,7 +9,7 @@ interface Question {
   text: string;
 }
 
-export const useSentimentSubmission = (question: Question | null, onComplete: (sentiment: Sentiment) => void) => {
+export const useSentimentSubmission = (question: Question | null, onComplete: (sentiment: Sentiment) => void, partnerId?: string) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedSentiment, setSelectedSentiment] = useState<Sentiment | null>(null);
 
@@ -54,7 +54,8 @@ export const useSentimentSubmission = (question: Question | null, onComplete: (s
         answer: sentiment,
         comment: null,
         session_id: sessionId,
-        location_id: locationId || null
+        location_id: locationId || null,
+        partner_id: partnerId || null
       };
       
       console.log("Inserting response:", responseData);

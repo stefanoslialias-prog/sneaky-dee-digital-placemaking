@@ -14,7 +14,7 @@ interface SentimentSurveyProps {
 
 const SentimentSurvey: React.FC<SentimentSurveyProps> = ({ onComplete, partnerId }) => {
   const { question, loading } = useSentimentQuestion(partnerId);
-  const { isSubmitting, selectedSentiment, handleSentimentSelect } = useSentimentSubmission(question, onComplete);
+  const { isSubmitting, selectedSentiment, handleSentimentSelect } = useSentimentSubmission(question, onComplete, partnerId);
 
   // Show loading state
   if (loading) {

@@ -10,6 +10,7 @@ import { Plus, Edit, Trash2, Save, X } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface Coupon {
   id: string;
@@ -21,10 +22,23 @@ interface Coupon {
   active: boolean;
   image_url?: string;
   created_at: string;
+  partner_id?: string;
 }
 
-const CouponManager: React.FC = () => {
+interface Partner {
+  id: string;
+  name: string;
+  slug: string;
+  active: boolean;
+}
+
+interface CouponManagerProps {
+  selectedPartner?: string;
+}
+
+const CouponManager: React.FC<CouponManagerProps> = ({ selectedPartner }) => {
   const [coupons, setCoupons] = useState<Coupon[]>([]);
+  const [partners, setPartners] = useState<Partner[]>([]);
   const [loading, setLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingCoupon, setEditingCoupon] = useState<Coupon | null>(null);
@@ -35,15 +49,23 @@ const CouponManager: React.FC = () => {
     discount: '',
     expires_at: '',
     active: true,
-    image_url: ''
+    image_url: '',
+    partner_id: ''
   });
 
   const fetchCoupons = async () => {
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from('coupons')
         .select('*')
         .order('created_at', { ascending: false });
+      
+      // Filter by partner if one is selected
+      if (selectedPartner && selectedPartner !== 'all') {
+        query = query.eq('partner_id', selectedPartner);
+      }
+
+      const { data, error } = await query;
 
       if (error) throw error;
       setCoupons(data || []);
@@ -54,10 +76,32 @@ const CouponManager: React.FC = () => {
       setLoading(false);
     }
   };
+  
+  // Fetch partners for dropdown
+  const fetchPartners = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('partners')
+        .select('id, name, slug, active')
+        .eq('active', true)
+        .order('name');
+      
+      if (error) throw error;
+      setPartners(data || []);
+    } catch (error) {
+      console.error('Error fetching partners:', error);
+    }
+  };
 
   useEffect(() => {
     fetchCoupons();
+    fetchPartners();
   }, []);
+  
+  // Re-fetch when partner filter changes
+  useEffect(() => {
+    fetchCoupons();
+  }, [selectedPartner]);
 
   const resetForm = () => {
     setFormData({
@@ -67,7 +111,8 @@ const CouponManager: React.FC = () => {
       discount: '',
       expires_at: '',
       active: true,
-      image_url: ''
+      image_url: '',
+      partner_id: selectedPartner === 'all' ? '' : selectedPartner || ''
     });
     setEditingCoupon(null);
   };
@@ -86,7 +131,8 @@ const CouponManager: React.FC = () => {
       discount: coupon.discount,
       expires_at: coupon.expires_at.split('T')[0], // Format for date input
       active: coupon.active,
-      image_url: coupon.image_url || ''
+      image_url: coupon.image_url || '',
+      partner_id: coupon.partner_id || ''
     });
     setIsDialogOpen(true);
   };
@@ -334,6 +380,26 @@ const CouponManager: React.FC = () => {
                 onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
                 placeholder="Enter image URL"
               />
+            </div>
+            
+            <div>
+              <Label htmlFor="partner_id">Partner (Optional)</Label>
+              <Select
+                value={formData.partner_id || 'none'}
+                onValueChange={(value) => setFormData({ ...formData, partner_id: value === 'none' ? '' : value })}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">No Partner (Global)</SelectItem>
+                  {partners.map(partner => (
+                    <SelectItem key={partner.id} value={partner.id}>
+                      {partner.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
 

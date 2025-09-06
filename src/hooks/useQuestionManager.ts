@@ -9,9 +9,10 @@ export interface Question {
   type: string;
   order: number;
   active: boolean;
+  partner_id?: string;
 }
 
-export const useQuestionManager = () => {
+export const useQuestionManager = (selectedPartner?: string) => {
   const [questions, setQuestions] = useState<Question[]>([]);
   const [loading, setLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -23,10 +24,17 @@ export const useQuestionManager = () => {
     try {
       setLoading(true);
       
-      const { data, error } = await supabase
+      let query = supabase
         .from('survey_questions')
         .select('*')
         .order('order', { ascending: true });
+      
+      // Filter by partner if one is selected
+      if (selectedPartner && selectedPartner !== 'all') {
+        query = query.eq('partner_id', selectedPartner);
+      }
+        
+      const { data, error } = await query;
         
       if (error) throw error;
       
@@ -49,7 +57,8 @@ export const useQuestionManager = () => {
       text: '',
       type: 'sentiment',
       order: newOrder,
-      active: true
+      active: true,
+      partner_id: selectedPartner === 'all' ? undefined : selectedPartner
     });
     setIsDialogOpen(true);
   };
@@ -77,7 +86,8 @@ export const useQuestionManager = () => {
             text: currentQuestion.text,
             type: currentQuestion.type,
             order: currentQuestion.order,
-            active: currentQuestion.active
+            active: currentQuestion.active,
+            partner_id: currentQuestion.partner_id
           })
           .eq('id', currentQuestion.id);
           
@@ -90,7 +100,8 @@ export const useQuestionManager = () => {
             text: currentQuestion.text,
             type: currentQuestion.type,
             order: currentQuestion.order,
-            active: true
+            active: true,
+            partner_id: currentQuestion.partner_id
           });
           
         if (error) throw error;
