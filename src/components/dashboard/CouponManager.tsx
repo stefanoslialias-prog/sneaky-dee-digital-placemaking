@@ -128,17 +128,39 @@ const CouponManager: React.FC = () => {
     if (!confirm('Are you sure you want to delete this coupon?')) return;
 
     try {
+      // First check if user has admin role
+      const { data: userRoles, error: roleError } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', (await supabase.auth.getUser()).data.user?.id);
+
+      if (roleError) {
+        console.error('Error checking user role:', roleError);
+        toast.error('Permission check failed');
+        return;
+      }
+
+      const isAdmin = userRoles?.some(role => role.role === 'admin');
+      if (!isAdmin) {
+        toast.error('Admin access required to delete coupons');
+        return;
+      }
+
       const { error } = await supabase
         .from('coupons')
         .delete()
         .eq('id', id);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Delete error details:', error);
+        throw error;
+      }
+      
       toast.success('Coupon deleted successfully');
       fetchCoupons();
     } catch (error) {
       console.error('Error deleting coupon:', error);
-      toast.error('Failed to delete coupon');
+      toast.error(`Failed to delete coupon: ${error.message || 'Unknown error'}`);
     }
   };
 
