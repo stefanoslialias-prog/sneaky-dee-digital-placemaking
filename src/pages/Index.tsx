@@ -16,6 +16,8 @@ const Index = () => {
     setStep,
     selectedCoupon,
     selectedPartner,
+    lastResponseId,
+    showEmailOptIn,
     handleStartSurvey,
     handlePartnerSelected,
     handleSkipRegistration,
@@ -24,6 +26,8 @@ const Index = () => {
     handleCommentComplete,
     handleOptInYes,
     handleOptInNo,
+    handleEmailOptInComplete,
+    handleEmailOptInSkip,
     handleThankYouDone
   } = useSurveyFlow();
 
@@ -62,6 +66,8 @@ const Index = () => {
         selectedCoupon={selectedCoupon}
         selectedPartner={selectedPartner}
         userInfo={userInfo}
+        lastResponseId={lastResponseId}
+        showEmailOptIn={showEmailOptIn}
         onStartSurvey={handleStartSurvey}
         onPartnerSelected={handlePartnerSelected}
         onSkipRegistration={handleSkipRegistration}
@@ -72,6 +78,8 @@ const Index = () => {
         onCommentComplete={handleCommentComplete}
         onOptInYes={handleOptInYes}
         onOptInNo={handleOptInNo}
+        onEmailOptInComplete={handleEmailOptInComplete}
+        onEmailOptInSkip={handleEmailOptInSkip}
         onThankYouDone={handleThankYouDone}
       />
     </AppLayout>
