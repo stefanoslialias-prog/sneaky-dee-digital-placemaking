@@ -78,29 +78,14 @@ Present this coupon at checkout to redeem your discount.
         )}
       </Button>
 
-      <div className="flex gap-2">
-        <Button 
-          onClick={handleDownloadCoupon}
-          variant="outline"
-          className="flex-1"
-          size="lg"
-        >
-          <Download className="mr-2 h-4 w-4" />
-          Download Coupon
-        </Button>
-        
-        <div className="flex-1">
-          <WalletButtons 
-            couponId={coupon.id}
-            deviceId={localStorage.getItem('deviceId') || undefined}
-            userEmail={userEmail}
-            userName={userName}
-            onSuccess={() => {
-              toast.success('Coupon added to your wallet!');
-            }}
-          />
-        </div>
-      </div>
+      <Button 
+        onClick={handleDownloadCoupon}
+        className="w-full bg-toronto-blue hover:bg-toronto-lightblue"
+        size="lg"
+      >
+        <Download className="mr-2 h-4 w-4" />
+        Download Coupon
+      </Button>
     </div>
   );
 };
