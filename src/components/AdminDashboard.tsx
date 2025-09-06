@@ -32,6 +32,10 @@ const AdminDashboard: React.FC = () => {
   });
   const [partners, setPartners] = useState<Partner[]>([]);
   const [selectedPartner, setSelectedPartner] = useState<string>('all');
+
+  const handlePartnerSelect = (partnerId: string | undefined) => {
+    setSelectedPartner(partnerId || 'all');
+  };
   
   const navigate = useNavigate();
 
@@ -210,7 +214,10 @@ const AdminDashboard: React.FC = () => {
             </TabsContent>
             
             <TabsContent value="locations" className="flex-1">
-              <LocationMap selectedPartner={selectedPartner === 'all' ? undefined : selectedPartner} />
+              <LocationMap 
+                selectedPartner={selectedPartner === 'all' ? undefined : selectedPartner} 
+                onPartnerSelect={handlePartnerSelect}
+              />
             </TabsContent>
             
             <TabsContent value="questions" className="flex-1">

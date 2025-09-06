@@ -1,11 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Plus } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
 interface PartnerLocationsProps {
   selectedPartner?: string;
+  onPartnerSelect?: (partnerId: string | undefined) => void;
 }
 
 interface Partner {
@@ -23,10 +30,13 @@ interface Partner {
   wallet_adds: number;
 }
 
-const PartnerLocations: React.FC<PartnerLocationsProps> = ({ selectedPartner }) => {
+const PartnerLocations: React.FC<PartnerLocationsProps> = ({ selectedPartner, onPartnerSelect }) => {
   const [partners, setPartners] = useState<Partner[]>([]);
   const [selectedPartnerData, setSelectedPartnerData] = useState<Partner | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [newPartner, setNewPartner] = useState({ name: '', slug: '', description: '' });
+  const [isCreating, setIsCreating] = useState(false);
 
   const fetchPartnerData = async () => {
     try {
@@ -54,6 +64,37 @@ const PartnerLocations: React.FC<PartnerLocationsProps> = ({ selectedPartner }) 
       toast.error('Failed to load partner data');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleCreatePartner = async () => {
+    if (!newPartner.name.trim() || !newPartner.slug.trim()) {
+      toast.error('Name and slug are required');
+      return;
+    }
+
+    try {
+      setIsCreating(true);
+      const { error } = await supabase
+        .from('partners')
+        .insert({
+          name: newPartner.name.trim(),
+          slug: newPartner.slug.trim(),
+          description: newPartner.description.trim() || null,
+          active: true
+        });
+
+      if (error) throw error;
+
+      toast.success('Partner created successfully');
+      setIsDialogOpen(false);
+      setNewPartner({ name: '', slug: '', description: '' });
+      await fetchPartnerData();
+    } catch (error: any) {
+      console.error('Error creating partner:', error);
+      toast.error(error.message || 'Failed to create partner');
+    } finally {
+      setIsCreating(false);
     }
   };
 
@@ -127,10 +168,66 @@ const PartnerLocations: React.FC<PartnerLocationsProps> = ({ selectedPartner }) 
     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
       <Card className="md:col-span-1">
         <CardHeader>
-          <CardTitle>Partners</CardTitle>
-          <CardDescription>
-            Active business partners
-          </CardDescription>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle>Partners</CardTitle>
+              <CardDescription>
+                Active business partners
+              </CardDescription>
+            </div>
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+              <DialogTrigger asChild>
+                <Button variant="outline" size="sm">
+                  <Plus className="mr-2 h-4 w-4" />
+                  Add Partner
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Add New Partner</DialogTitle>
+                  <DialogDescription>
+                    Create a new business partner for the platform.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="name">Partner Name</Label>
+                    <Input
+                      id="name"
+                      value={newPartner.name}
+                      onChange={(e) => setNewPartner({ ...newPartner, name: e.target.value })}
+                      placeholder="Enter partner name"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="slug">Slug</Label>
+                    <Input
+                      id="slug"
+                      value={newPartner.slug}
+                      onChange={(e) => setNewPartner({ ...newPartner, slug: e.target.value })}
+                      placeholder="partner-slug"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="description">Description (Optional)</Label>
+                    <Textarea
+                      id="description"
+                      value={newPartner.description}
+                      onChange={(e) => setNewPartner({ ...newPartner, description: e.target.value })}
+                      placeholder="Partner description"
+                    />
+                  </div>
+                  <Button 
+                    onClick={handleCreatePartner} 
+                    disabled={isCreating}
+                    className="w-full"
+                  >
+                    {isCreating ? 'Creating...' : 'Create Partner'}
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
+          </div>
         </CardHeader>
         <CardContent>
           <ul className="space-y-2">
@@ -139,6 +236,7 @@ const PartnerLocations: React.FC<PartnerLocationsProps> = ({ selectedPartner }) 
                 className={`w-full text-left px-4 py-2 rounded-md cursor-pointer hover:bg-gray-100 ${
                   !selectedPartner ? 'bg-blue-500 text-white hover:bg-blue-600' : ''
                 }`}
+                onClick={() => onPartnerSelect?.(undefined)}
               >
                 All Partners
               </div>
@@ -146,9 +244,10 @@ const PartnerLocations: React.FC<PartnerLocationsProps> = ({ selectedPartner }) 
             {partners.map((partner) => (
               <li key={partner.partner_id}>
                 <div
-                  className={`w-full text-left px-4 py-2 rounded-md hover:bg-gray-100 ${
+                  className={`w-full text-left px-4 py-2 rounded-md cursor-pointer hover:bg-gray-100 ${
                     selectedPartner === partner.partner_id ? 'bg-blue-500 text-white hover:bg-blue-600' : ''
                   }`}
+                  onClick={() => onPartnerSelect?.(partner.partner_id)}
                 >
                   <div className="flex items-center justify-between">
                     <span>{partner.name}</span>
