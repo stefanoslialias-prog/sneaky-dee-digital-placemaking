@@ -46,13 +46,19 @@ const PartnerOverview: React.FC<PartnerOverviewProps> = ({ selectedPartner }) =>
 
   const fetchEngagementData = async () => {
     try {
-      // Fetch engagement events directly to count them
+      // Fetch engagement events with coupon info for partner attribution
       let query = supabase
         .from('engagement_events')
-        .select('event_type, partner_id');
+        .select(`
+          event_type, 
+          partner_id,
+          coupon_id,
+          coupons!inner(partner_id)
+        `);
         
       if (selectedPartner) {
-        query = query.eq('partner_id', selectedPartner);
+        // For specific partner, match by partner_id OR by coupon's partner_id
+        query = query.or(`partner_id.eq.${selectedPartner},coupons.partner_id.eq.${selectedPartner}`);
       }
       
       const { data, error } = await query;
@@ -61,24 +67,31 @@ const PartnerOverview: React.FC<PartnerOverviewProps> = ({ selectedPartner }) =>
         throw error;
       }
       
-      // Count events by type
+      // Count events by type, using coupon's partner_id as fallback
       const eventCounts = (data || []).reduce((acc, event) => {
-        switch (event.event_type) {
-          case 'visit_partner_page':
-            acc.visits++;
-            break;
-          case 'copy_code':
-            acc.copy_clicks++;
-            break;
-          case 'download_coupon':
-            acc.download_clicks++;
-            break;
-          case 'add_to_wallet':
-            acc.wallet_adds++;
-            break;
-          case 'view_congratulations':
-            acc.congrats_views++;
-            break;
+        // Determine if this event should be counted for the selected partner
+        const eventPartnerId = event.partner_id || event.coupons?.partner_id;
+        
+        // For "All Partners" view (selectedPartner is undefined), count all events
+        // For specific partner view, only count events that belong to this partner
+        if (!selectedPartner || eventPartnerId === selectedPartner) {
+          switch (event.event_type) {
+            case 'visit_partner_page':
+              acc.visits++;
+              break;
+            case 'copy_code':
+              acc.copy_clicks++;
+              break;
+            case 'download_coupon':
+              acc.download_clicks++;
+              break;
+            case 'add_to_wallet':
+              acc.wallet_adds++;
+              break;
+            case 'view_congratulations':
+              acc.congrats_views++;
+              break;
+          }
         }
         return acc;
       }, {
@@ -172,6 +185,21 @@ const PartnerOverview: React.FC<PartnerOverviewProps> = ({ selectedPartner }) =>
 
   useEffect(() => {
     fetchPartnerData();
+    
+    // Set up real-time subscription for engagement events
+    const channel = supabase
+      .channel('engagement_events_overview')
+      .on('postgres_changes', 
+        { event: 'INSERT', schema: 'public', table: 'engagement_events' }, 
+        () => {
+          fetchEngagementData();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [selectedPartner]);
 
   if (loading) {

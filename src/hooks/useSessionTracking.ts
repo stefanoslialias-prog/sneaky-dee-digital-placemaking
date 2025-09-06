@@ -9,6 +9,7 @@ export const useSessionTracking = () => {
   // Initialize session on first load
   useEffect(() => {
     let storedSessionId = localStorage.getItem('currentSessionId');
+    let storedPartnerId = localStorage.getItem('currentPartnerId');
     
     if (!storedSessionId) {
       // Generate a new session ID
@@ -17,6 +18,9 @@ export const useSessionTracking = () => {
     }
     
     setSessionId(storedSessionId);
+    if (storedPartnerId) {
+      setPartnerId(storedPartnerId);
+    }
   }, []);
 
   const startNewSession = (newPartnerId?: string) => {
@@ -24,6 +28,13 @@ export const useSessionTracking = () => {
     localStorage.setItem('currentSessionId', newSessionId);
     setSessionId(newSessionId);
     setPartnerId(newPartnerId);
+    
+    // Persist partnerId to localStorage for future events
+    if (newPartnerId) {
+      localStorage.setItem('currentPartnerId', newPartnerId);
+    } else {
+      localStorage.removeItem('currentPartnerId');
+    }
     
     // Track visit event
     trackEvent('visit_partner_page', newSessionId, newPartnerId);
