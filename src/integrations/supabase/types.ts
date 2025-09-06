@@ -98,6 +98,13 @@ export type Database = {
             foreignKeyName: "coupons_partner_id_fkey"
             columns: ["partner_id"]
             isOneToOne: false
+            referencedRelation: "partner_overview"
+            referencedColumns: ["partner_id"]
+          },
+          {
+            foreignKeyName: "coupons_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
             referencedRelation: "partners"
             referencedColumns: ["id"]
           },
@@ -136,6 +143,68 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: []
+      }
+      engagement_events: {
+        Row: {
+          coupon_id: string | null
+          created_at: string
+          event_type: string
+          id: string
+          metadata: Json
+          partner_id: string | null
+          question_id: string | null
+          session_id: string
+        }
+        Insert: {
+          coupon_id?: string | null
+          created_at?: string
+          event_type: string
+          id?: string
+          metadata?: Json
+          partner_id?: string | null
+          question_id?: string | null
+          session_id: string
+        }
+        Update: {
+          coupon_id?: string | null
+          created_at?: string
+          event_type?: string
+          id?: string
+          metadata?: Json
+          partner_id?: string | null
+          question_id?: string | null
+          session_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "engagement_events_coupon_id_fkey"
+            columns: ["coupon_id"]
+            isOneToOne: false
+            referencedRelation: "coupons"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "engagement_events_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partner_overview"
+            referencedColumns: ["partner_id"]
+          },
+          {
+            foreignKeyName: "engagement_events_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "engagement_events_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "survey_questions"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       location_traffic: {
         Row: {
@@ -259,6 +328,13 @@ export type Database = {
             foreignKeyName: "survey_questions_partner_id_fkey"
             columns: ["partner_id"]
             isOneToOne: false
+            referencedRelation: "partner_overview"
+            referencedColumns: ["partner_id"]
+          },
+          {
+            foreignKeyName: "survey_questions_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
             referencedRelation: "partners"
             referencedColumns: ["id"]
           },
@@ -296,6 +372,13 @@ export type Database = {
           session_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "survey_responses_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partner_overview"
+            referencedColumns: ["partner_id"]
+          },
           {
             foreignKeyName: "survey_responses_partner_id_fkey"
             columns: ["partner_id"]
@@ -550,6 +633,75 @@ export type Database = {
           total_responses: number | null
         }
         Relationships: []
+      }
+      partner_engagement_summary: {
+        Row: {
+          congrats_views: number | null
+          copy_clicks: number | null
+          download_clicks: number | null
+          partner_id: string | null
+          visits: number | null
+          wallet_adds: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "engagement_events_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partner_overview"
+            referencedColumns: ["partner_id"]
+          },
+          {
+            foreignKeyName: "engagement_events_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      partner_overview: {
+        Row: {
+          concerned_count: number | null
+          copy_clicks: number | null
+          download_clicks: number | null
+          happy_count: number | null
+          name: string | null
+          neutral_count: number | null
+          partner_id: string | null
+          respondent_sessions: number | null
+          slug: string | null
+          total_responses: number | null
+          visits: number | null
+          wallet_adds: number | null
+        }
+        Relationships: []
+      }
+      partner_sentiment_summary: {
+        Row: {
+          concerned_count: number | null
+          happy_count: number | null
+          neutral_count: number | null
+          partner_id: string | null
+          total_count: number | null
+          unique_sessions: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "survey_responses_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partner_overview"
+            referencedColumns: ["partner_id"]
+          },
+          {
+            foreignKeyName: "survey_responses_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Functions: {

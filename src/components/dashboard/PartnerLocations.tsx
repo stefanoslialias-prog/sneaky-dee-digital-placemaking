@@ -1,0 +1,258 @@
+import React, { useState, useEffect } from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
+
+interface PartnerLocationsProps {
+  selectedPartner?: string;
+}
+
+interface Partner {
+  partner_id: string;
+  name: string;
+  slug: string;
+  total_responses: number;
+  happy_count: number;
+  neutral_count: number;
+  concerned_count: number;
+  respondent_sessions: number;
+  visits: number;
+  copy_clicks: number;
+  download_clicks: number;
+  wallet_adds: number;
+}
+
+const PartnerLocations: React.FC<PartnerLocationsProps> = ({ selectedPartner }) => {
+  const [partners, setPartners] = useState<Partner[]>([]);
+  const [selectedPartnerData, setSelectedPartnerData] = useState<Partner | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  const fetchPartnerData = async () => {
+    try {
+      setLoading(true);
+      
+      // Fetch all partners with their data
+      const { data: partnersData, error } = await supabase
+        .from('partner_overview')
+        .select('*')
+        .order('name');
+      
+      if (error) throw error;
+      
+      setPartners(partnersData || []);
+      
+      // Set selected partner data
+      if (selectedPartner && partnersData) {
+        const selected = partnersData.find(p => p.partner_id === selectedPartner);
+        setSelectedPartnerData(selected || null);
+      } else {
+        setSelectedPartnerData(null);
+      }
+    } catch (error) {
+      console.error('Error fetching partner data:', error);
+      toast.error('Failed to load partner data');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchPartnerData();
+  }, [selectedPartner]);
+
+  if (loading) {
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <Card className="md:col-span-1">
+          <CardContent className="p-6">
+            <div className="animate-pulse space-y-4">
+              {[1, 2, 3].map(i => (
+                <div key={i} className="h-12 bg-gray-200 rounded"></div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="md:col-span-2">
+          <CardContent className="p-6">
+            <div className="animate-pulse space-y-4">
+              <div className="h-8 bg-gray-200 rounded w-1/3"></div>
+              <div className="grid grid-cols-2 gap-4">
+                {[1, 2, 3, 4].map(i => (
+                  <div key={i} className="h-16 bg-gray-200 rounded"></div>
+                ))}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  const calculateTotalStats = () => {
+    return partners.reduce((totals, partner) => ({
+      total_responses: totals.total_responses + partner.total_responses,
+      happy_count: totals.happy_count + partner.happy_count,
+      neutral_count: totals.neutral_count + partner.neutral_count,
+      concerned_count: totals.concerned_count + partner.concerned_count,
+      respondent_sessions: totals.respondent_sessions + partner.respondent_sessions,
+      visits: totals.visits + partner.visits,
+      copy_clicks: totals.copy_clicks + partner.copy_clicks,
+      download_clicks: totals.download_clicks + partner.download_clicks,
+      wallet_adds: totals.wallet_adds + partner.wallet_adds,
+    }), {
+      total_responses: 0,
+      happy_count: 0,
+      neutral_count: 0,
+      concerned_count: 0,
+      respondent_sessions: 0,
+      visits: 0,
+      copy_clicks: 0,
+      download_clicks: 0,
+      wallet_adds: 0,
+    });
+  };
+
+  const displayData = selectedPartnerData || calculateTotalStats();
+  const displayName = selectedPartnerData?.name || "All Partners";
+
+  const totalSentiment = displayData.happy_count + displayData.neutral_count + displayData.concerned_count;
+  const happyPercent = totalSentiment > 0 ? ((displayData.happy_count / totalSentiment) * 100).toFixed(1) : "0";
+  const neutralPercent = totalSentiment > 0 ? ((displayData.neutral_count / totalSentiment) * 100).toFixed(1) : "0";
+  const concernedPercent = totalSentiment > 0 ? ((displayData.concerned_count / totalSentiment) * 100).toFixed(1) : "0";
+  
+  const conversionRate = displayData.visits > 0 ? ((displayData.total_responses / displayData.visits) * 100).toFixed(1) : "0";
+
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <Card className="md:col-span-1">
+        <CardHeader>
+          <CardTitle>Partners</CardTitle>
+          <CardDescription>
+            Active business partners
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <ul className="space-y-2">
+            <li>
+              <div 
+                className={`w-full text-left px-4 py-2 rounded-md cursor-pointer hover:bg-gray-100 ${
+                  !selectedPartner ? 'bg-blue-500 text-white hover:bg-blue-600' : ''
+                }`}
+              >
+                All Partners
+              </div>
+            </li>
+            {partners.map((partner) => (
+              <li key={partner.partner_id}>
+                <div
+                  className={`w-full text-left px-4 py-2 rounded-md hover:bg-gray-100 ${
+                    selectedPartner === partner.partner_id ? 'bg-blue-500 text-white hover:bg-blue-600' : ''
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <span>{partner.name}</span>
+                    <Badge variant="secondary" className="text-xs">
+                      {partner.total_responses}
+                    </Badge>
+                  </div>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </CardContent>
+      </Card>
+      
+      <Card className="md:col-span-2">
+        <CardHeader>
+          <CardTitle>{displayName}</CardTitle>
+          <CardDescription>
+            Performance metrics and analytics
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-2 gap-4 mb-6">
+            <div className="bg-gray-50 p-4 rounded-lg">
+              <div className="text-sm text-gray-500">Total Responses</div>
+              <div className="text-2xl font-bold">{displayData.total_responses.toLocaleString()}</div>
+            </div>
+            <div className="bg-gray-50 p-4 rounded-lg">
+              <div className="text-sm text-gray-500">Page Visits</div>
+              <div className="text-2xl font-bold">{displayData.visits.toLocaleString()}</div>
+            </div>
+            <div className="bg-gray-50 p-4 rounded-lg">
+              <div className="text-sm text-gray-500">Conversion Rate</div>
+              <div className="text-2xl font-bold">{conversionRate}%</div>
+            </div>
+            <div className="bg-gray-50 p-4 rounded-lg">
+              <div className="text-sm text-gray-500">Unique Sessions</div>
+              <div className="text-2xl font-bold">{displayData.respondent_sessions.toLocaleString()}</div>
+            </div>
+          </div>
+          
+          <div className="mb-6">
+            <h3 className="text-lg font-medium mb-4">Sentiment Distribution</h3>
+            <div className="space-y-4">
+              <div>
+                <div className="flex justify-between mb-1">
+                  <span className="text-sm font-medium">Happy</span>
+                  <span className="text-sm font-medium">{happyPercent}% ({displayData.happy_count})</span>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-2">
+                  <div 
+                    className="bg-green-500 h-2 rounded-full" 
+                    style={{ width: `${happyPercent}%` }}
+                  ></div>
+                </div>
+              </div>
+              <div>
+                <div className="flex justify-between mb-1">
+                  <span className="text-sm font-medium">Neutral</span>
+                  <span className="text-sm font-medium">{neutralPercent}% ({displayData.neutral_count})</span>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-2">
+                  <div 
+                    className="bg-blue-500 h-2 rounded-full" 
+                    style={{ width: `${neutralPercent}%` }}
+                  ></div>
+                </div>
+              </div>
+              <div>
+                <div className="flex justify-between mb-1">
+                  <span className="text-sm font-medium">Concerned</span>
+                  <span className="text-sm font-medium">{concernedPercent}% ({displayData.concerned_count})</span>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-2">
+                  <div 
+                    className="bg-red-500 h-2 rounded-full" 
+                    style={{ width: `${concernedPercent}%` }}
+                  ></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div>
+            <h3 className="text-lg font-medium mb-4">Engagement Actions</h3>
+            <div className="grid grid-cols-3 gap-4">
+              <div className="text-center p-3 bg-purple-50 rounded-lg">
+                <div className="text-2xl font-bold text-purple-600">{displayData.copy_clicks}</div>
+                <div className="text-sm text-purple-600">Copy Code</div>
+              </div>
+              <div className="text-center p-3 bg-orange-50 rounded-lg">
+                <div className="text-2xl font-bold text-orange-600">{displayData.download_clicks}</div>
+                <div className="text-sm text-orange-600">Downloads</div>
+              </div>
+              <div className="text-center p-3 bg-blue-50 rounded-lg">
+                <div className="text-2xl font-bold text-blue-600">{displayData.wallet_adds}</div>
+                <div className="text-sm text-blue-600">Wallet Adds</div>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+};
+
+export default PartnerLocations;

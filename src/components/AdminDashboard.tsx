@@ -172,18 +172,9 @@ const AdminDashboard: React.FC = () => {
         
         <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col">
           <div className="bg-white rounded-lg p-2 mb-6">
-            <TabsList className="grid grid-cols-3 md:grid-cols-7">
+            <TabsList className="grid grid-cols-3 md:grid-cols-6">
               <TabsTrigger value="overview" className="flex items-center gap-2">
                 <DatabaseBackup size={16} /> Overview
-              </TabsTrigger>
-              <TabsTrigger value="traffic" className="flex items-center gap-2">
-                <LayoutGrid size={16} /> 
-                Live Traffic
-                {liveStatus.newTraffic > 0 && (
-                  <Badge variant="outline" className="h-5 w-5 p-0 flex items-center justify-center bg-blue-500 text-white">
-                    {liveStatus.newTraffic}
-                  </Badge>
-                )}
               </TabsTrigger>
               <TabsTrigger value="visitors" className="flex items-center gap-2">
                 <Eye size={16} /> Visitors
@@ -211,31 +202,27 @@ const AdminDashboard: React.FC = () => {
           
           <div className="flex-1 flex flex-col">
             <TabsContent value="overview" className="flex-1 flex flex-col">
-              <SentimentOverview />
-            </TabsContent>
-
-            <TabsContent value="traffic" className="flex-1">
-              <LiveTraffic />
+              <SentimentOverview selectedPartner={selectedPartner === 'all' ? undefined : selectedPartner} />
             </TabsContent>
 
             <TabsContent value="visitors" className="flex-1">
-              <VisitorTracking />
+              <VisitorTracking selectedPartner={selectedPartner === 'all' ? undefined : selectedPartner} />
             </TabsContent>
             
             <TabsContent value="locations" className="flex-1">
-              <LocationMap />
+              <LocationMap selectedPartner={selectedPartner === 'all' ? undefined : selectedPartner} />
             </TabsContent>
             
             <TabsContent value="questions" className="flex-1">
-              <QuestionDesigner selectedPartner={selectedPartner} />
+              <QuestionDesigner selectedPartner={selectedPartner === 'all' ? undefined : selectedPartner} />
             </TabsContent>
 
             <TabsContent value="coupons" className="flex-1">
-              <CouponManager selectedPartner={selectedPartner} />
+              <CouponManager selectedPartner={selectedPartner === 'all' ? undefined : selectedPartner} />
             </TabsContent>
             
             <TabsContent value="responses" className="flex-1">
-              <ResponseTable selectedPartner={selectedPartner} />
+              <ResponseTable selectedPartner={selectedPartner === 'all' ? undefined : selectedPartner} />
             </TabsContent>
           </div>
         </Tabs>
