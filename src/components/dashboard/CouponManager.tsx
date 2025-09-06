@@ -146,6 +146,18 @@ const CouponManager: React.FC = () => {
         return;
       }
 
+      // First delete related user_coupons records
+      const { error: userCouponsError } = await supabase
+        .from('user_coupons')
+        .delete()
+        .eq('coupon_id', id);
+
+      if (userCouponsError) {
+        console.error('Error deleting user coupons:', userCouponsError);
+        throw userCouponsError;
+      }
+
+      // Then delete the coupon
       const { error } = await supabase
         .from('coupons')
         .delete()
