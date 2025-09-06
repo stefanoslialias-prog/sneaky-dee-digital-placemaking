@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
-import { DatabaseBackup, Users, FileText, LayoutGrid, Settings, Wifi, ArrowLeft, Gift, Eye } from 'lucide-react';
+import { DatabaseBackup, Users, FileText, LayoutGrid, Settings, Wifi, ArrowLeft, Gift, Eye, Mail, MessageSquare } from 'lucide-react';
 import SentimentOverview from '@/components/dashboard/SentimentOverview';
 import LocationMap from '@/components/dashboard/LocationMap';
 import ResponseTable from '@/components/dashboard/ResponseTable';
@@ -11,6 +11,8 @@ import QuestionDesigner from '@/components/dashboard/QuestionDesigner';
 import LiveTraffic from '@/components/dashboard/LiveTraffic';
 import CouponManager from '@/components/dashboard/CouponManager';
 import VisitorTracking from '@/components/dashboard/VisitorTracking';
+import EmailCollection from '@/components/dashboard/EmailCollection';
+import LocationComments from '@/components/dashboard/LocationComments';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { supabase } from '@/integrations/supabase/client';
@@ -176,7 +178,7 @@ const AdminDashboard: React.FC = () => {
         
         <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col">
           <div className="bg-white rounded-lg p-2 mb-6">
-            <TabsList className="grid grid-cols-3 md:grid-cols-6">
+            <TabsList className="grid grid-cols-3 md:grid-cols-8">
               <TabsTrigger value="overview" className="flex items-center gap-2">
                 <DatabaseBackup size={16} /> Overview
               </TabsTrigger>
@@ -191,6 +193,12 @@ const AdminDashboard: React.FC = () => {
               </TabsTrigger>
               <TabsTrigger value="coupons" className="flex items-center gap-2">
                 <Gift size={16} /> Coupons
+              </TabsTrigger>
+              <TabsTrigger value="emails" className="flex items-center gap-2">
+                <Mail size={16} /> Emails
+              </TabsTrigger>
+              <TabsTrigger value="comments" className="flex items-center gap-2">
+                <MessageSquare size={16} /> Comments
               </TabsTrigger>
               <TabsTrigger value="responses" className="flex items-center gap-2">
                 <FileText size={16} /> 
@@ -214,10 +222,15 @@ const AdminDashboard: React.FC = () => {
             </TabsContent>
             
             <TabsContent value="locations" className="flex-1">
-              <LocationMap 
-                selectedPartner={selectedPartner === 'all' ? undefined : selectedPartner} 
-                onPartnerSelect={handlePartnerSelect}
-              />
+              <div className="space-y-6">
+                <LocationMap 
+                  selectedPartner={selectedPartner === 'all' ? undefined : selectedPartner} 
+                  onPartnerSelect={handlePartnerSelect}
+                />
+                <LocationComments 
+                  selectedPartner={selectedPartner === 'all' ? undefined : selectedPartner}
+                />
+              </div>
             </TabsContent>
             
             <TabsContent value="questions" className="flex-1">
@@ -226,6 +239,14 @@ const AdminDashboard: React.FC = () => {
 
             <TabsContent value="coupons" className="flex-1">
               <CouponManager selectedPartner={selectedPartner === 'all' ? undefined : selectedPartner} />
+            </TabsContent>
+
+            <TabsContent value="emails" className="flex-1">
+              <EmailCollection selectedPartner={selectedPartner === 'all' ? undefined : selectedPartner} />
+            </TabsContent>
+
+            <TabsContent value="comments" className="flex-1">
+              <LocationComments selectedPartner={selectedPartner === 'all' ? undefined : selectedPartner} />
             </TabsContent>
             
             <TabsContent value="responses" className="flex-1">
