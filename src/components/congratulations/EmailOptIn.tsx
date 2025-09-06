@@ -7,6 +7,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { sanitizeEmail } from '@/utils/xssProtection';
 import { useSessionTracking } from '@/hooks/useSessionTracking';
+import { CheckCircle } from 'lucide-react';
 
 interface EmailOptInProps {
   onComplete: (email?: string) => void;
@@ -16,6 +17,7 @@ interface EmailOptInProps {
 export const EmailOptIn: React.FC<EmailOptInProps> = ({ onComplete, onSkip }) => {
   const [email, setEmail] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [emailSubmitted, setEmailSubmitted] = useState(false);
   const { trackSessionEvent } = useSessionTracking();
 
   const handleSubmit = async () => {
@@ -63,15 +65,58 @@ export const EmailOptIn: React.FC<EmailOptInProps> = ({ onComplete, onSkip }) =>
       trackSessionEvent('opt_in_email_submitted', undefined, undefined, { email: sanitizedEmail });
       
       toast.success("Thank you! We'll send you exclusive deals soon.");
-      onComplete(sanitizedEmail);
+      setEmailSubmitted(true);
+      
+      // Auto-complete after showing success for a few seconds
+      setTimeout(() => {
+        onComplete(sanitizedEmail);
+      }, 3000);
+      
     } catch (err) {
       console.error("Unexpected error during email opt-in:", err);
       toast.error("Something went wrong. Please try again later.");
-      onComplete();
     } finally {
       setIsSubmitting(false);
     }
   };
+
+  const handleSkipNow = () => {
+    if (emailSubmitted) {
+      onComplete(email);
+    } else {
+      onSkip();
+    }
+  };
+
+  if (emailSubmitted) {
+    return (
+      <Card className="p-4 border-2 border-green-200 bg-green-50">
+        <CardContent className="space-y-4 p-0">
+          <div className="text-center">
+            <CheckCircle className="h-12 w-12 text-green-600 mx-auto mb-2" />
+            <Label className="text-lg font-semibold text-green-800">
+              Perfect! You're all set!
+            </Label>
+            <p className="text-sm text-green-700 mt-2">
+              We've saved your email: <strong>{email}</strong>
+            </p>
+            <p className="text-xs text-green-600 mt-1">
+              You'll receive exclusive deals soon!
+            </p>
+          </div>
+          
+          <div className="flex justify-center">
+            <Button 
+              onClick={handleSkipNow}
+              className="bg-green-600 hover:bg-green-700"
+            >
+              Continue
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card className="p-4 border-2 border-primary/20">
@@ -98,12 +143,12 @@ export const EmailOptIn: React.FC<EmailOptInProps> = ({ onComplete, onSkip }) =>
               disabled={isSubmitting || !email.trim()}
               className="bg-primary hover:bg-primary/90"
             >
-              {isSubmitting ? 'Submitting...' : 'Subscribe'}
+              {isSubmitting ? 'Saving...' : 'Subscribe'}
             </Button>
             
             <Button 
               variant="outline"
-              onClick={onSkip}
+              onClick={handleSkipNow}
               disabled={isSubmitting}
             >
               Skip for now
