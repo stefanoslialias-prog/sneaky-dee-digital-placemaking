@@ -19,6 +19,7 @@ export interface Coupon {
   description: string;
   code: string;
   expiresIn: string;
+  expires_at?: string;
   image?: string;
   discount?: string;
   remaining?: number;

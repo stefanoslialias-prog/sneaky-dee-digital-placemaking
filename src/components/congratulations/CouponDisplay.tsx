@@ -26,11 +26,35 @@ export const CouponDisplay: React.FC<CouponDisplayProps> = ({ coupon }) => {
         <p className="text-gray-600 text-center mt-2">{coupon.description}</p>
       </div>
       
-      <div className="mt-6">
-        <div className="p-4 bg-white border-2 border-dashed border-toronto-blue rounded-md text-center">
-          <p className="text-sm text-gray-500 mb-1">Your coupon code:</p>
-          <p className="font-mono font-bold text-3xl text-toronto-blue mb-3 tracking-wider">{coupon.code}</p>
-          <p className="text-xs text-gray-400">Expires in {coupon.expiresIn}</p>
+      <div className="mt-6 space-y-4">
+        {/* Prominent Coupon Code */}
+        <div className="p-6 bg-white border-4 border-dashed border-toronto-blue rounded-lg text-center shadow-lg">
+          <p className="text-sm font-semibold text-gray-600 mb-2">YOUR COUPON CODE</p>
+          <div className="bg-toronto-blue/5 p-4 rounded-md border-2 border-toronto-blue/20">
+            <p className="font-mono font-bold text-4xl text-toronto-blue mb-2 tracking-widest">{coupon.code}</p>
+          </div>
+          <p className="text-xs text-gray-500 mt-2">Present this code at checkout</p>
+        </div>
+
+        {/* Expiry Date - Prominent */}
+        <div className="p-4 bg-red-50 border-2 border-red-300 rounded-lg text-center">
+          <p className="text-sm font-semibold text-red-600 mb-1">EXPIRES ON</p>
+          <p className="font-bold text-lg text-red-700">
+            {coupon.expires_at ? new Date(coupon.expires_at).toLocaleDateString('en-US', {
+              weekday: 'long',
+              year: 'numeric', 
+              month: 'long',
+              day: 'numeric'
+            }) : coupon.expiresIn}
+          </p>
+        </div>
+
+        {/* Usage Instructions */}
+        <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+          <p className="text-xs font-semibold text-blue-800 mb-1">IMPORTANT:</p>
+          <p className="text-xs text-blue-700">
+            Save this code! Take a screenshot or write it down. Use before expiry date. One-time use only.
+          </p>
         </div>
       </div>
     </div>

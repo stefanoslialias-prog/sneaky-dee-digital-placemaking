@@ -194,6 +194,7 @@ export const claimCoupon = async (params: ClaimCouponParams): Promise<ClaimCoupo
         description: sanitizeTextInput(result.coupon.description || ''),
         code: sanitizeTextInput(result.coupon.code || ''),
         discount: result.coupon.discount ? sanitizeTextInput(result.coupon.discount) : '',
+        expires_at: result.coupon.expires_at,
         expiresIn: formatExpiryDate(result.coupon.expires_at),
         image: result.coupon.image_url || undefined
       } : undefined,
@@ -263,6 +264,7 @@ export const getUserCoupons = async (): Promise<Coupon[]> => {
         description: sanitizeTextInput(item.coupons.description),
         code: sanitizeTextInput(item.coupons.code),
         discount: item.coupons.discount ? sanitizeTextInput(item.coupons.discount) : '',
+        expires_at: item.coupons.expires_at,
         expiresIn: formatExpiryDate(item.coupons.expires_at),
         image: item.coupons.image_url || undefined,
         claimedAt: new Date(item.claimed_at),
