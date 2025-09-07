@@ -42,11 +42,8 @@ const PartnerLocations: React.FC<PartnerLocationsProps> = ({ selectedPartner, on
     try {
       setLoading(true);
       
-      // Fetch all partners with their data
-      const { data: partnersData, error } = await supabase
-        .from('partner_overview')
-        .select('*')
-        .order('name');
+      // Fetch all partners with their data using secure function
+      const { data: partnersData, error } = await supabase.rpc('get_partner_analytics');
       
       if (error) throw error;
       

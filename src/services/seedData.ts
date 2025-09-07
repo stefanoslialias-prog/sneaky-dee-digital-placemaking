@@ -3,9 +3,9 @@ import { supabase } from '@/integrations/supabase/client';
 
 export const seedSampleCoupons = async () => {
   try {
-    // Check if coupons already exist
+    // Check if coupons already exist using public view
     const { data: existingCoupons, error: fetchError } = await supabase
-      .from('coupons')
+      .from('coupons_public')
       .select('id')
       .limit(1);
 

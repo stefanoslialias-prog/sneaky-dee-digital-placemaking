@@ -24,7 +24,7 @@ const App = () => (
             <Route path="/" element={<Index />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/admin" element={<Admin />} />
-            <Route path="/admin/dashboard" element={<AdminDashboard />} />
+            <Route path="/admin/dashboard" element={<Admin />} />
             <Route path="/survey" element={<Navigate to="/" />} /> {/* Redirect /survey to Index page */}
             <Route path="*" element={<NotFound />} />
           </Routes>

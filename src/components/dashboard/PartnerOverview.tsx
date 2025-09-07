@@ -131,12 +131,14 @@ const PartnerOverview: React.FC<PartnerOverviewProps> = ({ selectedPartner }) =>
       setLoading(true);
       
       if (selectedPartner) {
-        // Fetch specific partner data
-        const { data, error } = await supabase
-          .from('partner_overview')
-          .select('*')
-          .eq('partner_id', selectedPartner)
-          .single();
+        // Fetch specific partner data using secure function
+        const { data: allPartners, error } = await supabase.rpc('get_partner_analytics');
+        
+        if (error) {
+          throw error;
+        }
+        
+        const data = allPartners?.find(p => p.partner_id === selectedPartner) || null;
         
         if (error && error.code !== 'PGRST116') { // Not found is ok
           throw error;
@@ -144,10 +146,8 @@ const PartnerOverview: React.FC<PartnerOverviewProps> = ({ selectedPartner }) =>
         
         setPartnerData(data || null);
       } else {
-        // Aggregate all partners data for "All Partners" view
-        const { data, error } = await supabase
-          .from('partner_overview')
-          .select('*');
+        // Aggregate all partners data for "All Partners" view using secure function
+        const { data, error } = await supabase.rpc('get_partner_analytics');
         
         if (error) {
           throw error;

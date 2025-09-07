@@ -158,9 +158,9 @@ const PromotionOptIn: React.FC<PromotionOptInProps> = ({ onSkip, onRegister, onS
     
     // If we have a coupon ID, get its details
     if (couponId) {
-      // SECURITY FIX: Only select non-sensitive columns for email generation
+      // Use public view to get coupon details safely
       const { data, error } = await supabase
-        .from('coupons')
+        .from('coupons_public')
         .select('title, description, discount, expires_at')
         .eq('id', couponId)
         .single();
@@ -177,9 +177,9 @@ const PromotionOptIn: React.FC<PromotionOptInProps> = ({ onSkip, onRegister, onS
       }
     }
     
-    // Get 3 other active coupons to show (non-sensitive data only)
+    // Get 3 other active coupons to show using public view
     const { data: otherCoupons, error: couponsError } = await supabase
-      .from('coupons')
+      .from('coupons_public')
       .select('title, discount')
       .eq('active', true)
       .order('created_at', { ascending: false })
