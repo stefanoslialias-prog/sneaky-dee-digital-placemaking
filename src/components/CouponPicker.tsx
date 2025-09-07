@@ -84,6 +84,7 @@ const CouponPicker: React.FC<CouponPickerProps> = ({ onCouponSelected, partnerId
     loadCoupons();
 
     // Set up real-time subscription to listen for coupon changes
+    // Note: Listen to the underlying coupons table, not the view
     const channel = supabase
       .channel('coupon-changes')
       .on(
@@ -91,7 +92,7 @@ const CouponPicker: React.FC<CouponPickerProps> = ({ onCouponSelected, partnerId
         {
           event: '*', // Listen to all events (INSERT, UPDATE, DELETE)
           schema: 'public',
-          table: 'coupons_public'
+          table: 'coupons' // Listen to the base table, not the view
         },
         (payload) => {
           console.log('Real-time coupon change detected:', payload);
