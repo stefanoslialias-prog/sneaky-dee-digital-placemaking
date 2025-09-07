@@ -790,6 +790,23 @@ export type Database = {
         }
         Returns: Json
       }
+      get_partner_analytics: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          concerned_count: number
+          copy_clicks: number
+          download_clicks: number
+          happy_count: number
+          name: string
+          neutral_count: number
+          partner_id: string
+          respondent_sessions: number
+          slug: string
+          total_responses: number
+          visits: number
+          wallet_adds: number
+        }[]
+      }
       get_random_question_for_ip: {
         Args: { p_ip_address: string }
         Returns: {
