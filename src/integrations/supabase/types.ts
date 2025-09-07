@@ -184,6 +184,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "engagement_events_coupon_id_fkey"
+            columns: ["coupon_id"]
+            isOneToOne: false
+            referencedRelation: "coupons_public"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "engagement_events_partner_id_fkey"
             columns: ["partner_id"]
             isOneToOne: false
@@ -434,6 +441,13 @@ export type Database = {
             referencedRelation: "coupons"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "user_coupons_coupon_id_fkey"
+            columns: ["coupon_id"]
+            isOneToOne: false
+            referencedRelation: "coupons_public"
+            referencedColumns: ["id"]
+          },
         ]
       }
       user_emails: {
@@ -564,6 +578,13 @@ export type Database = {
             referencedRelation: "coupons"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "user_wallets_coupon_id_fkey"
+            columns: ["coupon_id"]
+            isOneToOne: false
+            referencedRelation: "coupons_public"
+            referencedColumns: ["id"]
+          },
         ]
       }
       users: {
@@ -622,6 +643,57 @@ export type Database = {
       }
     }
     Views: {
+      coupons_public: {
+        Row: {
+          active: boolean | null
+          created_at: string | null
+          description: string | null
+          discount: string | null
+          expires_at: string | null
+          id: string | null
+          image_url: string | null
+          partner_id: string | null
+          title: string | null
+        }
+        Insert: {
+          active?: boolean | null
+          created_at?: string | null
+          description?: string | null
+          discount?: string | null
+          expires_at?: string | null
+          id?: string | null
+          image_url?: string | null
+          partner_id?: string | null
+          title?: string | null
+        }
+        Update: {
+          active?: boolean | null
+          created_at?: string | null
+          description?: string | null
+          discount?: string | null
+          expires_at?: string | null
+          id?: string | null
+          image_url?: string | null
+          partner_id?: string | null
+          title?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "coupons_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partner_overview"
+            referencedColumns: ["partner_id"]
+          },
+          {
+            foreignKeyName: "coupons_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       location_analytics: {
         Row: {
           concerned_count: number | null

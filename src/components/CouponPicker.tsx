@@ -42,10 +42,8 @@ const CouponPicker: React.FC<CouponPickerProps> = ({ onCouponSelected, partnerId
       console.log('Loading coupons for picker with partnerId:', partnerId);
       
       let query = supabase
-        .from('coupons')
+        .from('coupons_public')
         .select('*')
-        .eq('active', true)
-        .gt('expires_at', new Date().toISOString())
         .order('created_at', { ascending: false });
 
       if (partnerId) {
@@ -65,7 +63,7 @@ const CouponPicker: React.FC<CouponPickerProps> = ({ onCouponSelected, partnerId
         id: coupon.id,
         title: coupon.title,
         description: coupon.description,
-        code: coupon.code,
+        code: '', // Code is not exposed during browsing - revealed only after claiming
         expiresIn: 'Soon', // We'll calculate this based on expires_at
         expires_at: coupon.expires_at,
         discount: coupon.discount,
@@ -93,7 +91,7 @@ const CouponPicker: React.FC<CouponPickerProps> = ({ onCouponSelected, partnerId
         {
           event: '*', // Listen to all events (INSERT, UPDATE, DELETE)
           schema: 'public',
-          table: 'coupons'
+          table: 'coupons_public'
         },
         (payload) => {
           console.log('Real-time coupon change detected:', payload);

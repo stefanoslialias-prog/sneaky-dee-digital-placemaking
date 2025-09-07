@@ -48,12 +48,10 @@ export const fetchCoupons = async (): Promise<Coupon[]> => {
   try {
     console.log('Fetching coupons from database...');
     
-    // SECURITY FIX: Only select non-sensitive columns, exclude 'code' and other sensitive data
+    // Use secure public view that doesn't expose coupon codes
     const { data, error } = await supabase
-      .from('coupons')
-      .select('id, title, description, discount, expires_at, image_url, created_at')
-      .eq('active', true)
-      .gt('expires_at', new Date().toISOString()) // Only fetch non-expired coupons
+      .from('coupons_public')
+      .select('*')
       .order('created_at', { ascending: false });
 
     if (error) {
