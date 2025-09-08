@@ -655,6 +655,28 @@ export type Database = {
           partner_id: string | null
           title: string | null
         }
+        Insert: {
+          active?: boolean | null
+          created_at?: string | null
+          description?: string | null
+          discount?: string | null
+          expires_at?: string | null
+          id?: string | null
+          image_url?: string | null
+          partner_id?: string | null
+          title?: string | null
+        }
+        Update: {
+          active?: boolean | null
+          created_at?: string | null
+          description?: string | null
+          discount?: string | null
+          expires_at?: string | null
+          id?: string | null
+          image_url?: string | null
+          partner_id?: string | null
+          title?: string | null
+        }
         Relationships: [
           {
             foreignKeyName: "coupons_partner_id_fkey"
