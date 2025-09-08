@@ -10,6 +10,19 @@ export const useEngagementTracking = () => {
     metadata: Record<string, any> = {}
   ) => {
     try {
+      // Get current user if authenticated
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      // Enrich metadata with auth context if user is logged in
+      const enrichedMetadata = {
+        ...metadata,
+        ...(user && {
+          auth_provider: user.app_metadata?.provider || 'email',
+          auth_email: user.email,
+          user_id: user.id
+        })
+      };
+
       const { error } = await supabase
         .from('engagement_events')
         .insert({
@@ -18,7 +31,7 @@ export const useEngagementTracking = () => {
           partner_id: partnerId,
           coupon_id: couponId,
           question_id: questionId,
-          metadata
+          metadata: enrichedMetadata
         });
 
       if (error) {

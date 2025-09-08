@@ -7,10 +7,12 @@ import useSurveyFlow from '@/hooks/useSurveyFlow';
 import SurveyStepRenderer from '@/components/SurveyStepRenderer';
 import { seedSampleCoupons, seedSampleQuestions } from '@/services/seedData';
 import { supabase } from '@/integrations/supabase/client';
+import { useSessionTracking } from '@/hooks/useSessionTracking';
 
 const Index = () => {
   const { deviceId } = useDeviceTracking();
   const { userInfo, setUserInfo } = useAuthState();
+  const { trackSessionEvent } = useSessionTracking();
   
   const {
     step,
@@ -32,12 +34,19 @@ const Index = () => {
     handleThankYouDone
   } = useSurveyFlow();
 
-  // Only seed data for admin users - anonymous users don't need this
+  // Track auth state changes and seed data for admin users
   useEffect(() => {
     const initializeData = async () => {
       try {
         const { data: { user } } = await supabase.auth.getUser();
         if (user) {
+          // Track auth login event
+          trackSessionEvent('auth_login', undefined, undefined, {
+            provider: user.app_metadata?.provider || 'email',
+            email: user.email,
+            timestamp: Date.now()
+          });
+
           // Check if user is admin before seeding
           const { data: isAdminData } = await supabase.rpc('has_role', {
             user_id: user.id,
@@ -55,7 +64,23 @@ const Index = () => {
     };
     
     initializeData();
-  }, []);
+
+    // Set up auth state change listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_IN' && session?.user) {
+        // Track auth login event for new sign-ins
+        trackSessionEvent('auth_login', undefined, undefined, {
+          provider: session.user.app_metadata?.provider || 'email',
+          email: session.user.email,
+          timestamp: Date.now()
+        });
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [trackSessionEvent]);
 
   const handleRegister = async (email: string, name: string) => {
     // Store user info for future promotions

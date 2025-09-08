@@ -139,12 +139,25 @@ const PromotionOptIn: React.FC<PromotionOptInProps> = ({ onSkip, onRegister, onS
     setIsLoading(true);
     
     try {
-      // In a real app, we would implement social sign-in with Supabase Auth
-      // For now, we'll just simulate it
-      setTimeout(() => {
-        onSocialSignIn(provider);
-        setIsLoading(false);
-      }, 800);
+      if (provider === 'google') {
+        const { data, error } = await supabase.auth.signInWithOAuth({
+          provider: 'google',
+          options: {
+            redirectTo: `${window.location.origin}/`
+          }
+        });
+
+        if (error) {
+          toast.error('Failed to sign in with Google');
+          console.error('Google sign-in error:', error);
+        }
+      } else {
+        // Apple sign-in simulation for now
+        setTimeout(() => {
+          onSocialSignIn(provider);
+          setIsLoading(false);
+        }, 800);
+      }
     } catch (error) {
       console.error(`Error during ${provider} sign-in:`, error);
       toast.error('Sign in failed. Please try again.');
