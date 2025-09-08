@@ -31,18 +31,12 @@ export const OptInPrompt: React.FC<OptInPromptProps> = ({ onOptInYes, onOptInNo 
         <Label className="font-medium block text-center text-lg">
           Would you like to receive more exclusive offers?
         </Label>
-        <div className="flex gap-3 justify-center">
+        <div className="flex justify-center">
           <Button 
             onClick={handleOptInYes}
             className="bg-primary hover:bg-primary/90"
           >
             Yes, I'm interested!
-          </Button>
-          <Button 
-            variant="outline"
-            onClick={handleOptInNo}
-          >
-            No thanks
           </Button>
         </div>
       </CardContent>
