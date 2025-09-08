@@ -6,7 +6,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Plus } from 'lucide-react';
+import { Plus, Trash2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -92,6 +92,27 @@ const PartnerLocations: React.FC<PartnerLocationsProps> = ({ selectedPartner, on
       toast.error(error.message || 'Failed to create partner');
     } finally {
       setIsCreating(false);
+    }
+  };
+
+  const handleDeactivatePartner = async (partnerId: string, partnerName: string) => {
+    if (!confirm(`Are you sure you want to deactivate ${partnerName}? This will remove them and their coupons from the public site.`)) {
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('partners')
+        .update({ active: false })
+        .eq('id', partnerId);
+
+      if (error) throw error;
+
+      toast.success('Partner deactivated successfully');
+      await fetchPartnerData();
+    } catch (error: any) {
+      console.error('Error deactivating partner:', error);
+      toast.error(error.message || 'Failed to deactivate partner');
     }
   };
 
@@ -255,9 +276,22 @@ const PartnerLocations: React.FC<PartnerLocationsProps> = ({ selectedPartner, on
                 >
                   <div className="flex items-center justify-between">
                     <span>{partner.name}</span>
-                    <Badge variant="secondary" className="text-xs">
-                      {partner.total_responses}
-                    </Badge>
+                    <div className="flex items-center gap-2">
+                      <Badge variant="secondary" className="text-xs">
+                        {partner.total_responses}
+                      </Badge>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeactivatePartner(partner.partner_id, partner.name);
+                        }}
+                        className="h-6 w-6 p-0 text-red-500 hover:text-red-700 hover:bg-red-50"
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
+                    </div>
                   </div>
                 </div>
               </li>

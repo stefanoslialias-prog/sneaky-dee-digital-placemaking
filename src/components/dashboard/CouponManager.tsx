@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Edit, Trash2, Save, X } from 'lucide-react';
+import { Plus, Edit, Trash2, Save, X, Gift } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -96,6 +96,21 @@ const CouponManager: React.FC<CouponManagerProps> = ({ selectedPartner }) => {
   useEffect(() => {
     fetchCoupons();
     fetchPartners();
+    
+    // Set up real-time subscription for coupons
+    const channel = supabase
+      .channel('public:coupons')
+      .on('postgres_changes',
+        { event: '*', schema: 'public', table: 'coupons' },
+        () => {
+          fetchCoupons();
+        }
+      )
+      .subscribe();
+      
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
   
   // Re-fetch when partner filter changes
@@ -255,8 +270,14 @@ const CouponManager: React.FC<CouponManagerProps> = ({ selectedPartner }) => {
         <CardContent>
           <div className="grid gap-4">
             {coupons.length === 0 ? (
-              <div className="text-center py-8 text-gray-500">
-                No coupons found. Create your first coupon to get started.
+              <div className="text-center py-12">
+                <Gift className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 mb-2">No coupons yet</h3>
+                <p className="text-gray-500 mb-4">Create your first coupon to get started with promotional offers.</p>
+                <Button onClick={handleAddCoupon}>
+                  <Plus className="mr-2 h-4 w-4" />
+                  Add Your First Coupon
+                </Button>
               </div>
             ) : (
               coupons.map((coupon) => (
