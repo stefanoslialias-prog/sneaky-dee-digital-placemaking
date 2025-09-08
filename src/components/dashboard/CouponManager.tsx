@@ -186,7 +186,7 @@ const CouponManager: React.FC<CouponManagerProps> = ({ selectedPartner }) => {
   };
 
   const handleDeleteCoupon = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this coupon?')) return;
+    if (!confirm('Are you sure you want to delete this coupon? This will also remove all related user claims and engagement data.')) return;
 
     try {
       // First check if user has admin role
@@ -207,7 +207,31 @@ const CouponManager: React.FC<CouponManagerProps> = ({ selectedPartner }) => {
         return;
       }
 
-      // First delete related user_coupons records
+      // Delete related records in order: engagement_events, user_wallets, user_coupons, then coupon
+      
+      // 1. Delete engagement events referencing this coupon
+      const { error: engagementError } = await supabase
+        .from('engagement_events')
+        .delete()
+        .eq('coupon_id', id);
+
+      if (engagementError) {
+        console.error('Error deleting engagement events:', engagementError);
+        throw new Error(`Failed to delete engagement events: ${engagementError.message}`);
+      }
+
+      // 2. Delete user wallet entries for this coupon
+      const { error: userWalletsError } = await supabase
+        .from('user_wallets')
+        .delete()
+        .eq('coupon_id', id);
+
+      if (userWalletsError) {
+        console.error('Error deleting user wallets:', userWalletsError);
+        throw new Error(`Failed to delete user wallets: ${userWalletsError.message}`);
+      }
+
+      // 3. Delete user coupon claims
       const { error: userCouponsError } = await supabase
         .from('user_coupons')
         .delete()
@@ -215,10 +239,10 @@ const CouponManager: React.FC<CouponManagerProps> = ({ selectedPartner }) => {
 
       if (userCouponsError) {
         console.error('Error deleting user coupons:', userCouponsError);
-        throw userCouponsError;
+        throw new Error(`Failed to delete user coupons: ${userCouponsError.message}`);
       }
 
-      // Then delete the coupon
+      // 4. Finally delete the coupon itself
       const { error } = await supabase
         .from('coupons')
         .delete()
@@ -226,14 +250,14 @@ const CouponManager: React.FC<CouponManagerProps> = ({ selectedPartner }) => {
 
       if (error) {
         console.error('Delete error details:', error);
-        throw error;
+        throw new Error(`Failed to delete coupon: ${error.message}`);
       }
       
-      toast.success('Coupon deleted successfully');
+      toast.success('Coupon and all related data deleted successfully');
       fetchCoupons();
     } catch (error) {
       console.error('Error deleting coupon:', error);
-      toast.error(`Failed to delete coupon: ${error.message || 'Unknown error'}`);
+      toast.error(error instanceof Error ? error.message : 'Failed to delete coupon');
     }
   };
 
