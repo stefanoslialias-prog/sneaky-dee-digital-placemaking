@@ -146,10 +146,10 @@ const CongratulationsScreen: React.FC<CongratulationsScreenProps> = ({
           <Button 
             variant="outline" 
             className="w-full mt-4" 
-            onClick={() => window.location.href = '/'}
+            onClick={() => window.open('https://kingswayfishandchips.com/', '_blank')}
           >
             <Home className="w-4 h-4 mr-2" />
-            Back to Home
+            Visit Our Website
           </Button>
         </CardFooter>
       </Card>
