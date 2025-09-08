@@ -34,7 +34,11 @@ export const useSurveyFlow = () => {
   const [showEmailOptIn, setShowEmailOptIn] = useState(false);
   const { startNewSession, trackSessionEvent } = useSessionTracking();
 
-  const handleStartSurvey = () => {
+  const handleStartSurvey = (email?: string) => {
+    // Store email if provided
+    if (email) {
+      localStorage.setItem('userEmail', email);
+    }
     setStep('partnerPicker');
   };
 
@@ -147,7 +151,7 @@ export const useSurveyFlow = () => {
 
   const handleOptInYes = () => {
     console.log('User opted in for more deals');
-    setShowEmailOptIn(true);
+    setStep('thankYou');
   };
 
   const handleOptInNo = () => {

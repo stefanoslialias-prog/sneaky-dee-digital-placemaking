@@ -29,7 +29,7 @@ interface SurveyStepRendererProps {
   userInfo: any;
   lastResponseId?: string | null;
   showEmailOptIn?: boolean;
-  onStartSurvey: () => void;
+  onStartSurvey: (email?: string) => void;
   onPartnerSelected: (partner: Partner) => void;
   onSkipRegistration: () => void;
   onRegister: (email: string, name: string) => void;

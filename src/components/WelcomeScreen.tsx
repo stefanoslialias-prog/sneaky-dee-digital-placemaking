@@ -1,46 +1,78 @@
-import React from "react";
+import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Gift, Wifi, User, LogIn } from "lucide-react";
-import { Link } from "react-router-dom";
-import { useAuth } from "@/hooks/useAuth";
-import { supabase } from "@/integrations/supabase/client";
+import { Input } from "@/components/ui/input";
+import { Gift, Wifi } from "lucide-react";
 import { useSessionTracking } from "@/hooks/useSessionTracking";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { sanitizeEmail } from "@/utils/xssProtection";
 interface WelcomeScreenProps {
-  onStartSurvey: () => void;
+  onStartSurvey: (email?: string) => void;
 }
 const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
   onStartSurvey
 }) => {
-  const {
-    user,
-    logout
-  } = useAuth();
+  const [email, setEmail] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { trackSessionEvent } = useSessionTracking();
 
-  const handleGoogleSignIn = async () => {
+  const handleStartWithEmail = async () => {
+    const sanitizedEmail = sanitizeEmail(email);
+    
+    if (!sanitizedEmail) {
+      toast.error('Please enter a valid email address');
+      return;
+    }
+
+    setIsSubmitting(true);
+    
     try {
-      const { data, error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: `${window.location.origin}/`
-        }
-      });
+      // Generate a secure device ID
+      let deviceId = localStorage.getItem('deviceId');
+      if (!deviceId) {
+        const array = new Uint8Array(16);
+        crypto.getRandomValues(array);
+        deviceId = Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('');
+        localStorage.setItem('deviceId', deviceId);
+      }
+
+      // Record email for future offers
+      const emailData = {
+        device_id: deviceId,
+        email_address: sanitizedEmail,
+        subject: 'Your Exclusive Deals',
+        email_content: 'Thank you for joining! We will send you exclusive deals.',
+        status: 'pending' as const,
+        retries: 0
+      };
+
+      const { error } = await supabase
+        .from('user_emails')
+        .insert(emailData);
 
       if (error) {
-        toast.error('Failed to sign in with Google');
-        console.error('Google sign-in error:', error);
-      } else {
-        // Track the auth login event
-        trackSessionEvent('auth_login', undefined, undefined, {
-          provider: 'google',
-          timestamp: Date.now()
-        });
+        console.error("Error saving email:", error);
+        toast.error("There was an issue saving your email. Please try again.");
+        setIsSubmitting(false);
+        return;
       }
-    } catch (error) {
-      toast.error('Failed to sign in with Google');
-      console.error('Google sign-in error:', error);
+
+      // Track email submission
+      trackSessionEvent('email_collected', undefined, undefined, { email: sanitizedEmail });
+      
+      toast.success("Great! Let's find you some deals.");
+      onStartSurvey(sanitizedEmail);
+      
+    } catch (err) {
+      console.error("Unexpected error:", err);
+      toast.error("Something went wrong. Please try again later.");
+    } finally {
+      setIsSubmitting(false);
     }
+  };
+
+  const handleSkipEmail = () => {
+    onStartSurvey();
   };
   return <div className="text-center max-w-lg animate-fade-in">
       {/* Shop Local Banner */}
@@ -63,58 +95,45 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
       {/* Subtext */}
       <p className="text-gray-600 mb-6">Discover exclusive offers at nearby shops.</p>
 
-      {/* CTA Button */}
-      <Button onClick={onStartSurvey} size="lg" className="bg-toronto-blue hover:bg-toronto-lightblue transition-all transform hover:scale-105 active:scale-95 shadow-md mb-4">
-        <Gift size={18} className="mr-1" />
-        Connect & Get Offers
-      </Button>
+      {/* Email Input */}
+      <div className="mb-6 space-y-3">
+        <Input
+          type="email"
+          placeholder="Enter your email for exclusive deals"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          className="text-center border-2 border-toronto-blue/20 focus:border-toronto-blue"
+          disabled={isSubmitting}
+        />
+        
+        <Button 
+          onClick={handleStartWithEmail}
+          disabled={isSubmitting || !email.trim()}
+          size="lg" 
+          className="w-full bg-toronto-blue hover:bg-toronto-lightblue transition-all transform hover:scale-105 active:scale-95 shadow-md"
+        >
+          <svg width="16" height="16" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" className="mr-2">
+            <path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24c0,11.045,8.955,20,20,20c11.045,0,20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z" />
+            <path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z" />
+            <path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.202,0-9.619-3.317-11.283-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z" />
+            <path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.571c0.001-0.001,0.002-0.001,0.003-0.002l6.19,5.238C36.971,39.205,44,34,44,24C44,22.659,43.862,21.35,43.611,20.083z" />
+          </svg>
+          {isSubmitting ? 'Saving...' : 'Continue & Get Offers'}
+        </Button>
+        
+        <Button 
+          onClick={handleSkipEmail}
+          variant="outline"
+          disabled={isSubmitting}
+          className="w-full text-toronto-blue border-toronto-blue hover:bg-toronto-blue hover:text-white"
+        >
+          Skip Email (Browse Offers)
+        </Button>
+      </div>
 
       {/* Trust Messaging */}
       <div className="text-sm text-gray-500 mb-4">
-        🔒 <span className="font-semibold">Private & Secure</span> — No personal info needed.
-      </div>
-
-      {/* Authentication Options */}
-      <div className="mb-4 space-y-3">
-        {user ? <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
-            <p className="text-sm text-green-700 mb-2">
-              Welcome back, <span className="font-semibold">{user.name}</span>!
-            </p>
-            <div className="flex gap-2 justify-center">
-              <Button variant="outline" size="sm" onClick={logout} className="text-green-700 border-green-300 hover:bg-green-100">
-                Sign Out
-              </Button>
-            </div>
-          </div> : <div className="space-y-2">
-            <Button 
-              onClick={handleGoogleSignIn}
-              variant="outline"
-              size="sm"
-              className="w-full flex items-center justify-center gap-2 border border-gray-300 hover:bg-gray-50"
-            >
-              <svg width="16" height="16" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">
-                <path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24c0,11.045,8.955,20,20,20c11.045,0,20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z" />
-                <path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z" />
-                <path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.202,0-9.619-3.317-11.283-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z" />
-                <path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.571c0.001-0.001,0.002-0.001,0.003-0.002l6.19,5.238C36.971,39.205,44,34,44,24C44,22.659,43.862,21.35,43.611,20.083z" />
-              </svg>
-              Continue with Google
-            </Button>
-            <div className="flex gap-2 justify-center">
-              <Link to="/auth">
-                <Button variant="outline" size="sm" className="text-toronto-blue border-toronto-blue hover:bg-toronto-blue hover:text-white">
-                  <LogIn size={14} className="mr-1" />
-                  Sign In
-                </Button>
-              </Link>
-              <Link to="/auth">
-                <Button variant="outline" size="sm" className="text-toronto-blue border-toronto-blue hover:bg-toronto-blue hover:text-white">
-                  <User size={14} className="mr-1" />
-                  Sign Up
-                </Button>
-              </Link>
-            </div>
-          </div>}
+        🔒 <span className="font-semibold">Private & Secure</span> — We'll only send you great deals.
       </div>
 
       {/* Optional Timer (Optional Feature - If approved) */}
