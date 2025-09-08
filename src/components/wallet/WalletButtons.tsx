@@ -52,7 +52,7 @@ export const WalletButtons: React.FC<WalletButtonsProps> = ({
         onSuccess?.();
         
         // Track wallet add event
-        trackSessionEvent('pass_added', couponId);
+        trackSessionEvent('add_to_wallet', couponId);
         
         // If we have a pass URL, try to open it
         if (result.passUrl && platform === 'apple') {

@@ -86,6 +86,8 @@ const CongratulationsScreen: React.FC<CongratulationsScreenProps> = ({
         setClaimed(true);
         // Update the coupon with the actual claimed coupon data that includes the real code
         setCoupon(result.coupon);
+        // Track coupon claimed event for dashboard
+        trackSessionEvent('coupon_claimed', result.coupon.id);
         console.log('Coupon claimed successfully with code:', result.coupon.code);
         console.log('Full coupon object:', result.coupon);
       } else {

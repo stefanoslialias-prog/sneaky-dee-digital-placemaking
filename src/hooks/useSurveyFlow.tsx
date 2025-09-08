@@ -32,7 +32,7 @@ export const useSurveyFlow = () => {
   const [selectedPartner, setSelectedPartner] = useState<Partner | null>(null);
   const [lastResponseId, setLastResponseId] = useState<string | null>(null);
   const [showEmailOptIn, setShowEmailOptIn] = useState(false);
-  const { startNewSession } = useSessionTracking();
+  const { startNewSession, trackSessionEvent } = useSessionTracking();
 
   const handleStartSurvey = () => {
     setStep('partnerPicker');
@@ -87,6 +87,8 @@ export const useSurveyFlow = () => {
 
   const handleCouponSelected = (coupon: Coupon) => {
     setSelectedCoupon(coupon);
+    // Track coupon selection
+    trackSessionEvent('coupon_selected', coupon.id);
     setStep('sentiment');
   };
   
