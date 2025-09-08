@@ -187,15 +187,27 @@ const ResponseTable: React.FC<ResponseTableProps> = ({ selectedPartner }) => {
       }
 
       // Transform to the expected format
-      const formattedResponses = data?.map(item => ({
-        id: item.id,
-        timestamp: item.created_at,
-        location: item.partner_id ? partnerMap[item.partner_id] || 'Unknown Business' : 'General Survey',
-        sentiment: item.answer,
-        comment: item.comment,
-        coupon: item.session_id ? sessionCoupons[item.session_id] || null : null,
-        authEmail: item.session_id ? sessionEmails[item.session_id] || null : null
-      })) || [];
+      const formattedResponses = data?.map(item => {
+        // Determine location - prioritize partner name, then wifi location, then fallback
+        let location = 'General Survey';
+        if (item.partner_id && partnerMap[item.partner_id]) {
+          location = partnerMap[item.partner_id];
+        } else if (item.location_id && locationMap[item.location_id]) {
+          location = locationMap[item.location_id];
+        } else if (item.location_id) {
+          location = item.location_id;
+        }
+
+        return {
+          id: item.id,
+          timestamp: item.created_at,
+          location: location,
+          sentiment: item.answer,
+          comment: item.comment,
+          coupon: item.session_id ? sessionCoupons[item.session_id] || null : null,
+          authEmail: item.session_id ? sessionEmails[item.session_id] || null : null
+        };
+      }) || [];
       
       console.log('Formatted responses:', formattedResponses);
       setResponses(formattedResponses);
@@ -256,10 +268,19 @@ const ResponseTable: React.FC<ResponseTableProps> = ({ selectedPartner }) => {
           }
 
           // Format the data
+          let location = 'General Survey';
+          if (newItem.partner_id && partnerMap[newItem.partner_id]) {
+            location = partnerMap[newItem.partner_id];
+          } else if (newItem.location_id && locationMap[newItem.location_id]) {
+            location = locationMap[newItem.location_id];
+          } else if (newItem.location_id) {
+            location = newItem.location_id;
+          }
+
           const formattedResponse: SurveyResponse = {
             id: newItem.id,
             timestamp: newItem.created_at,
-            location: newItem.partner_id ? partnerMap[newItem.partner_id] || 'Unknown Business' : 'General Survey',
+            location: location,
             sentiment: newItem.answer,
             comment: newItem.comment,
             coupon: couponTitle,
@@ -377,14 +398,26 @@ const ResponseTable: React.FC<ResponseTableProps> = ({ selectedPartner }) => {
       }
 
       // Transform to the expected format
-      const exportData = data.map(item => ({
-        timestamp: new Date(item.created_at).toLocaleString(),
-        location: item.partner_id ? partnerMap[item.partner_id] || 'Unknown Business' : 'General Survey',
-        sentiment: item.answer,
-        comment: item.comment || '',
-        coupon: item.session_id ? sessionCoupons[item.session_id] || '' : '',
-        authEmail: item.session_id ? sessionEmails[item.session_id] || '' : ''
-      }));
+      const exportData = data.map(item => {
+        // Determine location - prioritize partner name, then wifi location, then fallback
+        let location = 'General Survey';
+        if (item.partner_id && partnerMap[item.partner_id]) {
+          location = partnerMap[item.partner_id];
+        } else if (item.location_id && locationMap[item.location_id]) {
+          location = locationMap[item.location_id];
+        } else if (item.location_id) {
+          location = item.location_id;
+        }
+
+        return {
+          timestamp: new Date(item.created_at).toLocaleString(),
+          location: location,
+          sentiment: item.answer,
+          comment: item.comment || '',
+          coupon: item.session_id ? sessionCoupons[item.session_id] || '' : '',
+          authEmail: item.session_id ? sessionEmails[item.session_id] || '' : ''
+        };
+      });
       
       // Create CSV content
       const headers = ['Timestamp', 'Location', 'Sentiment', 'Comment', 'Coupon', 'Auth Email'];
