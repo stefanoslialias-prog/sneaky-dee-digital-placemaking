@@ -41,6 +41,7 @@ const CongratulationsScreen: React.FC<CongratulationsScreenProps> = ({
   const [isClaiming, setIsClaiming] = useState(false);
   const [claimed, setClaimed] = useState(false);
   const [coupon, setCoupon] = useState(initialCoupon);
+  const [showSecondaryEmailOptIn, setShowSecondaryEmailOptIn] = useState(false);
   const { trackSessionEvent } = useSessionTracking();
 
   // Track when opt-in prompt is shown
@@ -143,14 +144,27 @@ const CongratulationsScreen: React.FC<CongratulationsScreenProps> = ({
             userName={userInfo?.name}
           />
           
-          {!userInfo?.email && (
+          {!userInfo?.email && !showSecondaryEmailOptIn && (
             <Button 
               variant="secondary" 
               className="w-full" 
-              onClick={onOptInYes}
+              onClick={() => setShowSecondaryEmailOptIn(true)}
             >
               📧 Want to hear about more offers?
             </Button>
+          )}
+          
+          {showSecondaryEmailOptIn && (
+            <EmailOptIn 
+              onComplete={(email) => {
+                setShowSecondaryEmailOptIn(false);
+                onEmailOptInComplete?.(email);
+              }}
+              onSkip={() => {
+                setShowSecondaryEmailOptIn(false);
+                onEmailOptInSkip?.();
+              }}
+            />
           )}
           
           <Button 
