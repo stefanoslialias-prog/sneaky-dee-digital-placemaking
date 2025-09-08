@@ -62,12 +62,18 @@ export const useSentimentSubmission = (question: Question | null, onComplete: (s
       
       console.log("Inserting response:", responseData);
       
-      // Insert response into Supabase and get the ID
-      const { data: responseResult, error: insertError } = await supabase
-        .from('survey_responses')
-        .insert(responseData)
-        .select('id')
-        .single();
+      // Use RPC function to insert response and get the ID
+      const { data: responseId, error: insertError } = await supabase.rpc(
+        'insert_survey_response',
+        {
+          p_question_id: question.id,
+          p_answer: sentiment,
+          p_session_id: currentSessionId,
+          p_comment: null,
+          p_location_id: locationId || null,
+          p_partner_id: partnerId || null
+        }
+      );
         
       if (insertError) {
         console.error('Error saving response:', insertError);
@@ -76,7 +82,7 @@ export const useSentimentSubmission = (question: Question | null, onComplete: (s
       }
       
       // Call onComplete to proceed to comment step
-      onComplete(sentiment, responseResult?.id);
+      onComplete(sentiment, responseId);
       toast.success('Thanks for sharing how you feel!');
       
     } catch (error) {

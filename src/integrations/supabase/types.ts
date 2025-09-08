@@ -830,6 +830,17 @@ export type Database = {
         Args: { required_role: string; user_id: string }
         Returns: boolean
       }
+      insert_survey_response: {
+        Args: {
+          p_answer: string
+          p_comment?: string
+          p_location_id?: string
+          p_partner_id?: string
+          p_question_id: string
+          p_session_id: string
+        }
+        Returns: string
+      }
       is_admin: {
         Args: Record<PropertyKey, never>
         Returns: boolean
