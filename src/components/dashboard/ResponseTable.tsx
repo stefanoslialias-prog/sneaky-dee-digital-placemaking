@@ -20,6 +20,7 @@ interface SurveyResponse {
   location: string;
   sentiment: string;
   comment?: string | null;
+  coupon?: string | null;
 }
 
 interface ResponseTableProps {
@@ -32,6 +33,7 @@ const ResponseTable: React.FC<ResponseTableProps> = ({ selectedPartner }) => {
   const [loading, setLoading] = useState(true);
   const [newResponses, setNewResponses] = useState(0);
   const [locationMap, setLocationMap] = useState<Record<string, string>>({});
+  const [couponMap, setCouponMap] = useState<Record<string, string>>({});
   const pageSize = 10;
   
   // Fetch location data to map IDs to names
@@ -59,6 +61,32 @@ const ResponseTable: React.FC<ResponseTableProps> = ({ selectedPartner }) => {
     
     fetchLocations();
   }, []);
+
+  // Fetch coupon data to map IDs to titles
+  useEffect(() => {
+    const fetchCoupons = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('coupons')
+          .select('id, title');
+          
+        if (error) throw error;
+        
+        const map: Record<string, string> = {};
+        if (data) {
+          data.forEach(coupon => {
+            map[coupon.id] = coupon.title;
+          });
+        }
+        
+        setCouponMap(map);
+      } catch (error) {
+        console.error('Error fetching coupons:', error);
+      }
+    };
+    
+    fetchCoupons();
+  }, []);
   
   // Fetch initial data
   useEffect(() => {
@@ -66,7 +94,7 @@ const ResponseTable: React.FC<ResponseTableProps> = ({ selectedPartner }) => {
     
     // Set up logging to debug any issues
     console.log('Setting up ResponseTable with locationMap:', locationMap);
-  }, [page, locationMap, selectedPartner]);
+  }, [page, locationMap, couponMap, selectedPartner]);
   
   const fetchResponses = async () => {
     try {
@@ -84,7 +112,8 @@ const ResponseTable: React.FC<ResponseTableProps> = ({ selectedPartner }) => {
           answer, 
           comment, 
           location_id,
-          partner_id
+          partner_id,
+          session_id
         `)
         .order('created_at', { ascending: false })
         .range(startIndex, startIndex + pageSize - 1);
@@ -100,13 +129,34 @@ const ResponseTable: React.FC<ResponseTableProps> = ({ selectedPartner }) => {
         
       if (error) throw error;
       
+      // Get coupon data for each session
+      const sessionIds = data?.map(item => item.session_id).filter(Boolean) || [];
+      let sessionCoupons: Record<string, string> = {};
+      
+      if (sessionIds.length > 0) {
+        const { data: engagementData } = await supabase
+          .from('engagement_events')
+          .select('session_id, coupon_id')
+          .in('session_id', sessionIds)
+          .eq('event_type', 'coupon_claimed');
+          
+        if (engagementData) {
+          engagementData.forEach(event => {
+            if (event.coupon_id && event.session_id) {
+              sessionCoupons[event.session_id] = couponMap[event.coupon_id] || 'Unknown Coupon';
+            }
+          });
+        }
+      }
+
       // Transform to the expected format
       const formattedResponses = data?.map(item => ({
         id: item.id,
         timestamp: item.created_at,
         location: item.location_id ? locationMap[item.location_id] || item.location_id : 'Unknown',
         sentiment: item.answer,
-        comment: item.comment
+        comment: item.comment,
+        coupon: item.session_id ? sessionCoupons[item.session_id] || null : null
       })) || [];
       
       console.log('Formatted responses:', formattedResponses);
@@ -136,19 +186,35 @@ const ResponseTable: React.FC<ResponseTableProps> = ({ selectedPartner }) => {
       .channel('response_table_updates')
       .on('postgres_changes', 
         { event: 'INSERT', schema: 'public', table: 'survey_responses' }, 
-        (payload) => {
+        async (payload) => {
           console.log('New response received in ResponseTable:', payload);
           
           // Extract the data from the payload
           const newItem = payload.new;
           
+          // Get coupon data for this session
+          let couponTitle = null;
+          if (newItem.session_id) {
+            const { data: engagementData } = await supabase
+              .from('engagement_events')
+              .select('coupon_id')
+              .eq('session_id', newItem.session_id)
+              .eq('event_type', 'coupon_claimed')
+              .limit(1);
+              
+            if (engagementData?.[0]?.coupon_id) {
+              couponTitle = couponMap[engagementData[0].coupon_id] || 'Unknown Coupon';
+            }
+          }
+
           // Format the data
           const formattedResponse: SurveyResponse = {
             id: newItem.id,
             timestamp: newItem.created_at,
             location: newItem.location_id ? locationMap[newItem.location_id] || newItem.location_id : 'Unknown',
             sentiment: newItem.answer,
-            comment: newItem.comment
+            comment: newItem.comment,
+            coupon: couponTitle
           };
           
           console.log('Adding new response to table:', formattedResponse);
@@ -170,7 +236,7 @@ const ResponseTable: React.FC<ResponseTableProps> = ({ selectedPartner }) => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [locationMap, pageSize]);
+  }, [locationMap, couponMap, pageSize]);
   
   // Get total count for pagination
   const [totalResponses, setTotalResponses] = useState(0);
@@ -215,7 +281,8 @@ const ResponseTable: React.FC<ResponseTableProps> = ({ selectedPartner }) => {
           answer, 
           comment, 
           location_id,
-          partner_id
+          partner_id,
+          session_id
         `)
         .order('created_at', { ascending: false });
       
@@ -233,16 +300,37 @@ const ResponseTable: React.FC<ResponseTableProps> = ({ selectedPartner }) => {
         return;
       }
       
+      // Get coupon data for export
+      const sessionIds = data.map(item => item.session_id).filter(Boolean);
+      let sessionCoupons: Record<string, string> = {};
+      
+      if (sessionIds.length > 0) {
+        const { data: engagementData } = await supabase
+          .from('engagement_events')
+          .select('session_id, coupon_id')
+          .in('session_id', sessionIds)
+          .eq('event_type', 'coupon_claimed');
+          
+        if (engagementData) {
+          engagementData.forEach(event => {
+            if (event.coupon_id && event.session_id) {
+              sessionCoupons[event.session_id] = couponMap[event.coupon_id] || 'Unknown Coupon';
+            }
+          });
+        }
+      }
+
       // Transform to the expected format
       const exportData = data.map(item => ({
         timestamp: new Date(item.created_at).toLocaleString(),
         location: item.location_id ? locationMap[item.location_id] || item.location_id : 'Unknown',
         sentiment: item.answer,
-        comment: item.comment || ''
+        comment: item.comment || '',
+        coupon: item.session_id ? sessionCoupons[item.session_id] || '' : ''
       }));
       
       // Create CSV content
-      const headers = ['Timestamp', 'Location', 'Sentiment', 'Comment'];
+      const headers = ['Timestamp', 'Location', 'Sentiment', 'Comment', 'Coupon'];
       const csvRows = [headers];
       
       // Add data rows
@@ -251,7 +339,8 @@ const ResponseTable: React.FC<ResponseTableProps> = ({ selectedPartner }) => {
           row.timestamp,
           row.location,
           row.sentiment,
-          row.comment
+          row.comment,
+          row.coupon
         ]);
       }
       
@@ -309,13 +398,14 @@ const ResponseTable: React.FC<ResponseTableProps> = ({ selectedPartner }) => {
                 <TableHead>Location</TableHead>
                 <TableHead>Sentiment</TableHead>
                 <TableHead>Comment</TableHead>
+                <TableHead>Coupon</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {loading ? (
                 Array(5).fill(null).map((_, index) => (
                   <TableRow key={`loading-${index}`}>
-                    {[1, 2, 3, 4].map((cellIndex) => (
+                    {[1, 2, 3, 4, 5].map((cellIndex) => (
                       <TableCell key={`loading-cell-${index}-${cellIndex}`}>
                         <div className="h-5 bg-gray-200 rounded animate-pulse w-3/4"></div>
                       </TableCell>
@@ -341,13 +431,16 @@ const ResponseTable: React.FC<ResponseTableProps> = ({ selectedPartner }) => {
                     <TableCell>
                       {response.comment || <span className="text-gray-400 italic">No comment</span>}
                     </TableCell>
+                    <TableCell>
+                      {response.coupon || <span className="text-gray-400 italic">No coupon</span>}
+                    </TableCell>
                   </TableRow>
                 ))
               )}
               
               {!loading && responses.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={4} className="text-center text-gray-500">
+                  <TableCell colSpan={5} className="text-center text-gray-500">
                     No responses found
                   </TableCell>
                 </TableRow>

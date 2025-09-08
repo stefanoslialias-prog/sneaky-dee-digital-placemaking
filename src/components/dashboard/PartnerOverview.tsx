@@ -3,7 +3,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { ChartBar, ChartPie, Users, TrendingUp } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import SummaryCards from './SummaryCards';
 import SentimentChart from './charts/SentimentChart';
 
 interface PartnerOverviewProps {
@@ -50,6 +49,7 @@ const PartnerOverview: React.FC<PartnerOverviewProps> = ({ selectedPartner }) =>
     opt_in_no: 0,
     opt_in_email_submitted: 0
   });
+  const [topCoupons, setTopCoupons] = useState<Array<{ title: string; count: number }>>([]);
   const [loading, setLoading] = useState(true);
 
   const fetchEngagementData = async () => {
@@ -120,6 +120,36 @@ const PartnerOverview: React.FC<PartnerOverviewProps> = ({ selectedPartner }) =>
       });
       
       setEngagementData(eventCounts);
+
+      // Count coupon claims to get top coupons
+      const couponClaims = allEvents
+        .filter(event => event.event_type === 'coupon_claimed' && event.coupon_id)
+        .reduce((acc, event) => {
+          acc[event.coupon_id] = (acc[event.coupon_id] || 0) + 1;
+          return acc;
+        }, {} as Record<string, number>);
+
+      // Get coupon titles and create top coupons list
+      if (Object.keys(couponClaims).length > 0) {
+        const { data: coupons } = await supabase
+          .from('coupons')
+          .select('id, title')
+          .in('id', Object.keys(couponClaims));
+
+        const topCouponsWithTitles = Object.entries(couponClaims)
+          .map(([couponId, count]) => {
+            const coupon = coupons?.find(c => c.id === couponId);
+            return {
+              title: coupon?.title || 'Unknown Coupon',
+              count: Number(count)
+            };
+          })
+          .sort((a, b) => b.count - a.count);
+
+        setTopCoupons(topCouponsWithTitles);
+      } else {
+        setTopCoupons([]);
+      }
       
     } catch (error) {
       console.error('Error fetching engagement data:', error);
@@ -269,7 +299,7 @@ const PartnerOverview: React.FC<PartnerOverviewProps> = ({ selectedPartner }) =>
   const conversionRate = partnerData.visits > 0 ? ((partnerData.total_responses / partnerData.visits) * 100).toFixed(1) : "0";
 
   return (
-    <div className="grid gap-6 grid-cols-1 md:grid-cols-4">
+    <div className="grid gap-6 grid-cols-1 md:grid-cols-5">
       {/* Summary cards */}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -320,6 +350,27 @@ const PartnerOverview: React.FC<PartnerOverviewProps> = ({ selectedPartner }) =>
           <p className="text-xs text-muted-foreground">
             Copy/download actions
           </p>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-sm font-medium">Top Coupons</CardTitle>
+          <ChartBar className="h-4 w-4 text-muted-foreground" />
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-1">
+            {topCoupons.length > 0 ? (
+              topCoupons.slice(0, 2).map((coupon, index) => (
+                <div key={coupon.title} className="flex justify-between items-center text-xs">
+                  <span className="truncate flex-1 mr-1">{coupon.title}</span>
+                  <span className="font-bold">{coupon.count}</span>
+                </div>
+              ))
+            ) : (
+              <span className="text-xs text-muted-foreground">No coupons claimed</span>
+            )}
+          </div>
         </CardContent>
       </Card>
       
