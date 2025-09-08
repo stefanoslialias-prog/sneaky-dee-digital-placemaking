@@ -21,7 +21,6 @@ interface SurveyResponse {
   sentiment: string;
   comment?: string | null;
   coupon?: string | null;
-  authProvider?: string | null;
   authEmail?: string | null;
 }
 
@@ -36,6 +35,7 @@ const ResponseTable: React.FC<ResponseTableProps> = ({ selectedPartner }) => {
   const [newResponses, setNewResponses] = useState(0);
   const [locationMap, setLocationMap] = useState<Record<string, string>>({});
   const [couponMap, setCouponMap] = useState<Record<string, string>>({});
+  const [partnerMap, setPartnerMap] = useState<Record<string, string>>({});
   const pageSize = 10;
   
   // Fetch location data to map IDs to names
@@ -89,6 +89,32 @@ const ResponseTable: React.FC<ResponseTableProps> = ({ selectedPartner }) => {
     
     fetchCoupons();
   }, []);
+
+  // Fetch partner data to map IDs to names
+  useEffect(() => {
+    const fetchPartners = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('partners')
+          .select('id, name');
+          
+        if (error) throw error;
+        
+        const map: Record<string, string> = {};
+        if (data) {
+          data.forEach(partner => {
+            map[partner.id] = partner.name;
+          });
+        }
+        
+        setPartnerMap(map);
+      } catch (error) {
+        console.error('Error fetching partners:', error);
+      }
+    };
+    
+    fetchPartners();
+  }, []);
   
   // Fetch initial data
   useEffect(() => {
@@ -96,7 +122,7 @@ const ResponseTable: React.FC<ResponseTableProps> = ({ selectedPartner }) => {
     
     // Set up logging to debug any issues
     console.log('Setting up ResponseTable with locationMap:', locationMap);
-  }, [page, locationMap, couponMap, selectedPartner]);
+  }, [page, locationMap, couponMap, partnerMap, selectedPartner]);
   
   const fetchResponses = async () => {
     try {
@@ -131,29 +157,30 @@ const ResponseTable: React.FC<ResponseTableProps> = ({ selectedPartner }) => {
         
       if (error) throw error;
       
-      // Get engagement data for each session (coupons and auth info)
+      // Get engagement data for each session (coupons and emails)
       const sessionIds = data?.map(item => item.session_id).filter(Boolean) || [];
       let sessionCoupons: Record<string, string> = {};
-      let sessionAuth: Record<string, { provider: string; email: string }> = {};
+      let sessionEmails: Record<string, string> = {};
       
       if (sessionIds.length > 0) {
         const { data: engagementData } = await supabase
           .from('engagement_events')
           .select('session_id, coupon_id, event_type, metadata')
           .in('session_id', sessionIds)
-          .in('event_type', ['coupon_claimed', 'auth_login']);
+          .in('event_type', ['coupon_selected', 'coupon_claimed', 'email_collected']);
           
         if (engagementData) {
           engagementData.forEach(event => {
-            if (event.event_type === 'coupon_claimed' && event.coupon_id && event.session_id) {
-              sessionCoupons[event.session_id] = couponMap[event.coupon_id] || 'Unknown Coupon';
+            // Prioritize coupon_selected over coupon_claimed
+            if ((event.event_type === 'coupon_selected' || event.event_type === 'coupon_claimed') && event.coupon_id && event.session_id) {
+              // Only set if not already set, or if this is a coupon_selected event
+              if (!sessionCoupons[event.session_id] || event.event_type === 'coupon_selected') {
+                sessionCoupons[event.session_id] = couponMap[event.coupon_id] || 'Unknown Coupon';
+              }
             }
-            if (event.event_type === 'auth_login' && event.session_id && event.metadata) {
+            if (event.event_type === 'email_collected' && event.session_id && event.metadata) {
               const metadata = event.metadata as any;
-              sessionAuth[event.session_id] = {
-                provider: metadata.auth_provider || metadata.provider || 'Unknown',
-                email: metadata.auth_email || metadata.email || 'Unknown'
-              };
+              sessionEmails[event.session_id] = metadata.email || 'Unknown';
             }
           });
         }
@@ -163,12 +190,11 @@ const ResponseTable: React.FC<ResponseTableProps> = ({ selectedPartner }) => {
       const formattedResponses = data?.map(item => ({
         id: item.id,
         timestamp: item.created_at,
-        location: item.location_id ? locationMap[item.location_id] || item.location_id : 'Unknown',
+        location: item.partner_id ? partnerMap[item.partner_id] || 'Unknown Business' : 'General Survey',
         sentiment: item.answer,
         comment: item.comment,
         coupon: item.session_id ? sessionCoupons[item.session_id] || null : null,
-        authProvider: item.session_id ? sessionAuth[item.session_id]?.provider || null : null,
-        authEmail: item.session_id ? sessionAuth[item.session_id]?.email || null : null
+        authEmail: item.session_id ? sessionEmails[item.session_id] || null : null
       })) || [];
       
       console.log('Formatted responses:', formattedResponses);
@@ -206,16 +232,26 @@ const ResponseTable: React.FC<ResponseTableProps> = ({ selectedPartner }) => {
           
           // Get coupon data for this session
           let couponTitle = null;
+          let authEmail = null;
           if (newItem.session_id) {
             const { data: engagementData } = await supabase
               .from('engagement_events')
-              .select('coupon_id')
+              .select('coupon_id, event_type, metadata')
               .eq('session_id', newItem.session_id)
-              .eq('event_type', 'coupon_claimed')
-              .limit(1);
+              .in('event_type', ['coupon_selected', 'coupon_claimed', 'email_collected']);
               
-            if (engagementData?.[0]?.coupon_id) {
-              couponTitle = couponMap[engagementData[0].coupon_id] || 'Unknown Coupon';
+            if (engagementData) {
+              engagementData.forEach(event => {
+                if ((event.event_type === 'coupon_selected' || event.event_type === 'coupon_claimed') && event.coupon_id) {
+                  if (!couponTitle || event.event_type === 'coupon_selected') {
+                    couponTitle = couponMap[event.coupon_id] || 'Unknown Coupon';
+                  }
+                }
+                if (event.event_type === 'email_collected' && event.metadata) {
+                  const metadata = event.metadata as any;
+                  authEmail = metadata.email || null;
+                }
+              });
             }
           }
 
@@ -223,10 +259,11 @@ const ResponseTable: React.FC<ResponseTableProps> = ({ selectedPartner }) => {
           const formattedResponse: SurveyResponse = {
             id: newItem.id,
             timestamp: newItem.created_at,
-            location: newItem.location_id ? locationMap[newItem.location_id] || newItem.location_id : 'Unknown',
+            location: newItem.partner_id ? partnerMap[newItem.partner_id] || 'Unknown Business' : 'General Survey',
             sentiment: newItem.answer,
             comment: newItem.comment,
-            coupon: couponTitle
+            coupon: couponTitle,
+            authEmail: authEmail
           };
           
           console.log('Adding new response to table:', formattedResponse);
@@ -248,7 +285,7 @@ const ResponseTable: React.FC<ResponseTableProps> = ({ selectedPartner }) => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [locationMap, couponMap, pageSize]);
+  }, [locationMap, couponMap, partnerMap, pageSize]);
   
   // Get total count for pagination
   const [totalResponses, setTotalResponses] = useState(0);
@@ -312,29 +349,28 @@ const ResponseTable: React.FC<ResponseTableProps> = ({ selectedPartner }) => {
         return;
       }
       
-      // Get engagement data for export (coupons and auth info)
+      // Get engagement data for export (coupons and emails)
       const sessionIds = data.map(item => item.session_id).filter(Boolean);
       let sessionCoupons: Record<string, string> = {};
-      let sessionAuth: Record<string, { provider: string; email: string }> = {};
+      let sessionEmails: Record<string, string> = {};
       
       if (sessionIds.length > 0) {
         const { data: engagementData } = await supabase
           .from('engagement_events')
           .select('session_id, coupon_id, event_type, metadata')
           .in('session_id', sessionIds)
-          .in('event_type', ['coupon_claimed', 'auth_login']);
+          .in('event_type', ['coupon_selected', 'coupon_claimed', 'email_collected']);
           
         if (engagementData) {
           engagementData.forEach(event => {
-            if (event.event_type === 'coupon_claimed' && event.coupon_id && event.session_id) {
-              sessionCoupons[event.session_id] = couponMap[event.coupon_id] || 'Unknown Coupon';
+            if ((event.event_type === 'coupon_selected' || event.event_type === 'coupon_claimed') && event.coupon_id && event.session_id) {
+              if (!sessionCoupons[event.session_id] || event.event_type === 'coupon_selected') {
+                sessionCoupons[event.session_id] = couponMap[event.coupon_id] || 'Unknown Coupon';
+              }
             }
-            if (event.event_type === 'auth_login' && event.session_id && event.metadata) {
+            if (event.event_type === 'email_collected' && event.session_id && event.metadata) {
               const metadata = event.metadata as any;
-              sessionAuth[event.session_id] = {
-                provider: metadata.auth_provider || metadata.provider || 'Unknown',
-                email: metadata.auth_email || metadata.email || 'Unknown'
-              };
+              sessionEmails[event.session_id] = metadata.email || 'Unknown';
             }
           });
         }
@@ -343,16 +379,15 @@ const ResponseTable: React.FC<ResponseTableProps> = ({ selectedPartner }) => {
       // Transform to the expected format
       const exportData = data.map(item => ({
         timestamp: new Date(item.created_at).toLocaleString(),
-        location: item.location_id ? locationMap[item.location_id] || item.location_id : 'Unknown',
+        location: item.partner_id ? partnerMap[item.partner_id] || 'Unknown Business' : 'General Survey',
         sentiment: item.answer,
         comment: item.comment || '',
         coupon: item.session_id ? sessionCoupons[item.session_id] || '' : '',
-        authProvider: item.session_id ? sessionAuth[item.session_id]?.provider || '' : '',
-        authEmail: item.session_id ? sessionAuth[item.session_id]?.email || '' : ''
+        authEmail: item.session_id ? sessionEmails[item.session_id] || '' : ''
       }));
       
       // Create CSV content
-      const headers = ['Timestamp', 'Location', 'Sentiment', 'Comment', 'Coupon', 'Auth Provider', 'Auth Email'];
+      const headers = ['Timestamp', 'Location', 'Sentiment', 'Comment', 'Coupon', 'Auth Email'];
       const csvRows = [headers];
       
       // Add data rows
@@ -363,7 +398,6 @@ const ResponseTable: React.FC<ResponseTableProps> = ({ selectedPartner }) => {
           row.sentiment,
           row.comment,
           row.coupon,
-          row.authProvider || '',
           row.authEmail || ''
         ]);
       }
@@ -423,7 +457,6 @@ const ResponseTable: React.FC<ResponseTableProps> = ({ selectedPartner }) => {
                 <TableHead>Sentiment</TableHead>
                 <TableHead>Comment</TableHead>
                 <TableHead>Coupon</TableHead>
-                <TableHead>Auth Provider</TableHead>
                 <TableHead>Auth Email</TableHead>
               </TableRow>
             </TableHeader>
@@ -431,7 +464,7 @@ const ResponseTable: React.FC<ResponseTableProps> = ({ selectedPartner }) => {
               {loading ? (
                 Array(5).fill(null).map((_, index) => (
                   <TableRow key={`loading-${index}`}>
-                    {[1, 2, 3, 4, 5, 6, 7].map((cellIndex) => (
+                    {[1, 2, 3, 4, 5, 6].map((cellIndex) => (
                       <TableCell key={`loading-cell-${index}-${cellIndex}`}>
                         <div className="h-5 bg-gray-200 rounded animate-pulse w-3/4"></div>
                       </TableCell>
@@ -461,9 +494,6 @@ const ResponseTable: React.FC<ResponseTableProps> = ({ selectedPartner }) => {
                       {response.coupon || <span className="text-gray-400 italic">No coupon</span>}
                     </TableCell>
                     <TableCell>
-                      {response.authProvider || <span className="text-gray-400 italic">No auth</span>}
-                    </TableCell>
-                    <TableCell>
                       {response.authEmail || <span className="text-gray-400 italic">No email</span>}
                     </TableCell>
                   </TableRow>
@@ -472,7 +502,7 @@ const ResponseTable: React.FC<ResponseTableProps> = ({ selectedPartner }) => {
               
               {!loading && responses.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center text-gray-500">
+                  <TableCell colSpan={6} className="text-center text-gray-500">
                     No responses found
                   </TableCell>
                 </TableRow>
