@@ -189,75 +189,22 @@ const CouponManager: React.FC<CouponManagerProps> = ({ selectedPartner }) => {
     if (!confirm('Are you sure you want to delete this coupon? This will also remove all related user claims and engagement data.')) return;
 
     try {
-      // First check if user has admin role
-      const { data: userRoles, error: roleError } = await supabase
-        .from('user_roles')
-        .select('role')
-        .eq('user_id', (await supabase.auth.getUser()).data.user?.id);
-
-      if (roleError) {
-        console.error('Error checking user role:', roleError);
-        toast.error('Permission check failed');
-        return;
-      }
-
-      const isAdmin = userRoles?.some(role => role.role === 'admin');
-      if (!isAdmin) {
-        toast.error('Admin access required to delete coupons');
-        return;
-      }
-
-      // Delete related records in order: engagement_events, user_wallets, user_coupons, then coupon
-      
-      // 1. Delete engagement events referencing this coupon
-      const { error: engagementError } = await supabase
-        .from('engagement_events')
-        .delete()
-        .eq('coupon_id', id);
-
-      if (engagementError) {
-        console.error('Error deleting engagement events:', engagementError);
-        throw new Error(`Failed to delete engagement events: ${engagementError.message}`);
-      }
-
-      // 2. Delete user wallet entries for this coupon
-      const { error: userWalletsError } = await supabase
-        .from('user_wallets')
-        .delete()
-        .eq('coupon_id', id);
-
-      if (userWalletsError) {
-        console.error('Error deleting user wallets:', userWalletsError);
-        throw new Error(`Failed to delete user wallets: ${userWalletsError.message}`);
-      }
-
-      // 3. Delete user coupon claims
-      const { error: userCouponsError } = await supabase
-        .from('user_coupons')
-        .delete()
-        .eq('coupon_id', id);
-
-      if (userCouponsError) {
-        console.error('Error deleting user coupons:', userCouponsError);
-        throw new Error(`Failed to delete user coupons: ${userCouponsError.message}`);
-      }
-
-      // 4. Finally delete the coupon itself
+      // With CASCADE DELETE enabled, we only need to delete the coupon
+      // All related records in user_coupons, engagement_events, and user_wallets will be automatically deleted
       const { error } = await supabase
         .from('coupons')
         .delete()
         .eq('id', id);
 
       if (error) {
-        console.error('Delete error details:', error);
-        throw new Error(`Failed to delete coupon: ${error.message}`);
+        throw error;
       }
       
       toast.success('Coupon and all related data deleted successfully');
       fetchCoupons();
     } catch (error) {
       console.error('Error deleting coupon:', error);
-      toast.error(error instanceof Error ? error.message : 'Failed to delete coupon');
+      toast.error(`Failed to delete coupon: ${error.message}`);
     }
   };
 
