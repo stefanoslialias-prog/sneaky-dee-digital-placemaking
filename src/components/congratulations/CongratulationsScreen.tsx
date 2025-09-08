@@ -143,6 +143,16 @@ const CongratulationsScreen: React.FC<CongratulationsScreenProps> = ({
             userName={userInfo?.name}
           />
           
+          {!userInfo?.email && (
+            <Button 
+              variant="secondary" 
+              className="w-full" 
+              onClick={onOptInYes}
+            >
+              📧 Want to hear about more offers?
+            </Button>
+          )}
+          
           <Button 
             variant="outline" 
             className="w-full mt-4" 
