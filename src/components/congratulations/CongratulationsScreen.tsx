@@ -55,9 +55,9 @@ const CongratulationsScreen: React.FC<CongratulationsScreenProps> = ({
     // Track congratulations view
     trackSessionEvent('view_congratulations', initialCoupon.id);
 
-    // Automatically claim the coupon when component mounts
+  // Automatically claim the coupon when component mounts (if it's a real coupon)
     const claimSelectedCoupon = async () => {
-      if (!claimed && !isClaiming) {
+      if (!claimed && !isClaiming && initialCoupon.id !== 'no-coupon') {
         await handleClaimCoupon();
       }
     };

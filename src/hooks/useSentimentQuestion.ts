@@ -43,8 +43,12 @@ export const useSentimentQuestion = (partnerId?: string) => {
       }
 
       if (!allQuestions || allQuestions.length === 0) {
-        console.log("No active questions found");
-        setQuestion(null);
+        console.log("No active questions found, using default question");
+        // Set a default question when none are available
+        setQuestion({
+          id: 'default-question',
+          text: 'How would you rate your overall experience today?'
+        });
         return;
       }
 

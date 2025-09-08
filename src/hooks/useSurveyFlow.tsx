@@ -129,7 +129,12 @@ export const useSurveyFlow = () => {
       }
     }
     
-    setStep('congratulations');
+    // Skip congratulations step if no coupon was selected
+    if (!selectedCoupon || selectedCoupon.id === 'no-coupon') {
+      setStep('thankYou');
+    } else {
+      setStep('congratulations');
+    }
   };
 
   const handleDone = () => {

@@ -107,6 +107,18 @@ const PartnerPicker: React.FC<PartnerPickerProps> = ({ onPartnerSelected }) => {
           <div className="text-center py-8">
             <Building2 className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
             <p className="text-muted-foreground">No partners available at the moment</p>
+            <Button 
+              onClick={() => onPartnerSelected({
+                id: 'default',
+                name: 'General Survey',
+                slug: 'general',
+                description: 'Share your general feedback',
+                active: true
+              })}
+              className="mt-4"
+            >
+              Continue with General Survey
+            </Button>
           </div>
         ) : (
           partners.map((partner) => (

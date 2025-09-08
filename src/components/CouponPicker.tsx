@@ -204,8 +204,21 @@ const CouponPicker: React.FC<CouponPickerProps> = ({ onCouponSelected, partnerId
             <div className="text-center p-4">
               <p>No offers available at the moment.</p>
               <p className="text-sm text-gray-500 mt-2">
-                Please check back later or contact support if this persists.
+                You can still continue with the survey to share your feedback.
               </p>
+              <Button 
+                onClick={() => onCouponSelected({
+                  id: 'no-coupon',
+                  title: 'No Coupon Selected',
+                  description: 'Continue without selecting a coupon',
+                  code: '',
+                  expiresIn: '',
+                })}
+                variant="outline"
+                className="mt-4"
+              >
+                Continue Without Offer
+              </Button>
             </div>
           )}
         </CardContent>
