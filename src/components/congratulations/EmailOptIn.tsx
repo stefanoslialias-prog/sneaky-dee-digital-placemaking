@@ -67,10 +67,8 @@ export const EmailOptIn: React.FC<EmailOptInProps> = ({ onComplete, onSkip }) =>
       toast.success("Thank you! We'll send you exclusive deals soon.");
       setEmailSubmitted(true);
       
-      // Auto-complete after showing success for a few seconds
-      setTimeout(() => {
-        onComplete(sanitizedEmail);
-      }, 3000);
+      // Don't auto-complete, just show the thank you message
+      // onComplete(sanitizedEmail);
       
     } catch (err) {
       console.error("Unexpected error during email opt-in:", err);
@@ -95,23 +93,14 @@ export const EmailOptIn: React.FC<EmailOptInProps> = ({ onComplete, onSkip }) =>
           <div className="text-center">
             <CheckCircle className="h-12 w-12 text-green-600 mx-auto mb-2" />
             <Label className="text-lg font-semibold text-green-800">
-              Perfect! You're all set!
+              Thank you for your interest!
             </Label>
             <p className="text-sm text-green-700 mt-2">
               We've saved your email: <strong>{email}</strong>
             </p>
             <p className="text-xs text-green-600 mt-1">
-              You'll receive exclusive deals soon!
+              We will let you know for more offers in the future.
             </p>
-          </div>
-          
-          <div className="flex justify-center">
-            <Button 
-              onClick={handleSkipNow}
-              className="bg-green-600 hover:bg-green-700"
-            >
-              Continue
-            </Button>
           </div>
         </CardContent>
       </Card>
