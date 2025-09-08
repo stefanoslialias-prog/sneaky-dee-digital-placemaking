@@ -129,7 +129,7 @@ const CongratulationsScreen: React.FC<CongratulationsScreenProps> = ({
         <CardContent className="space-y-4">
           <CouponDisplay coupon={coupon} />
           <ClaimStatus isClaiming={isClaiming} claimed={claimed} coupon={coupon} />
-          <OptInPrompt onOptInYes={onOptInYes} onOptInNo={onOptInNo} />
+          
         </CardContent>
         
         <CardFooter className="flex flex-col space-y-3">
