@@ -71,7 +71,7 @@ const CouponManager: React.FC<CouponManagerProps> = ({ selectedPartner }) => {
       setCoupons(data || []);
     } catch (error) {
       console.error('Error fetching coupons:', error);
-      toast.error('Failed to load coupons');
+      toast.error(`Failed to load coupons: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
       setLoading(false);
     }
