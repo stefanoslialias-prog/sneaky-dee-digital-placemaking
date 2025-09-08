@@ -94,19 +94,23 @@ const ResponseTable: React.FC<ResponseTableProps> = ({ selectedPartner }) => {
   useEffect(() => {
     const fetchPartners = async () => {
       try {
+        console.log('Fetching partners...');
         const { data, error } = await supabase
           .from('partners')
           .select('id, name');
           
         if (error) throw error;
         
+        console.log('Partners data received:', data);
         const map: Record<string, string> = {};
         if (data) {
           data.forEach(partner => {
             map[partner.id] = partner.name;
+            console.log(`Mapping partner ${partner.id} -> ${partner.name}`);
           });
         }
         
+        console.log('Final partner map:', map);
         setPartnerMap(map);
       } catch (error) {
         console.error('Error fetching partners:', error);
@@ -188,14 +192,24 @@ const ResponseTable: React.FC<ResponseTableProps> = ({ selectedPartner }) => {
 
       // Transform to the expected format
       const formattedResponses = data?.map(item => {
+        console.log('Processing item:', item);
+        console.log('Partner ID:', item.partner_id);
+        console.log('Partner map:', partnerMap);
+        console.log('Partner name from map:', partnerMap[item.partner_id]);
+        
         // Determine location - prioritize partner name, then wifi location, then fallback
         let location = 'General Survey';
         if (item.partner_id && partnerMap[item.partner_id]) {
           location = partnerMap[item.partner_id];
+          console.log('Using partner name:', location);
         } else if (item.location_id && locationMap[item.location_id]) {
           location = locationMap[item.location_id];
+          console.log('Using wifi location name:', location);
         } else if (item.location_id) {
           location = item.location_id;
+          console.log('Using raw location_id:', location);
+        } else {
+          console.log('Using fallback location:', location);
         }
 
         return {
