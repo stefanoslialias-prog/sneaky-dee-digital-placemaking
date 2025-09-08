@@ -1,6 +1,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Home } from 'lucide-react';
 import { Coupon } from '../CouponPicker';
 import { CouponDisplay } from './CouponDisplay';
 import { ClaimStatus } from './ClaimStatus';
@@ -140,6 +142,15 @@ const CongratulationsScreen: React.FC<CongratulationsScreenProps> = ({
             userEmail={userInfo?.email}
             userName={userInfo?.name}
           />
+          
+          <Button 
+            variant="outline" 
+            className="w-full mt-4" 
+            onClick={() => window.location.href = '/'}
+          >
+            <Home className="w-4 h-4 mr-2" />
+            Back to Home
+          </Button>
         </CardFooter>
       </Card>
 
