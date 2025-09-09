@@ -176,7 +176,9 @@ const ResponseTable: React.FC<ResponseTableProps> = ({ selectedPartner }) => {
           .in('event_type', ['coupon_selected', 'coupon_claimed', 'email_collected', 'opt_in_email_submitted', 'email_skipped', 'email_opt_in_skipped']);
           
         if (engagementData) {
+          console.log('Processing engagement data:', engagementData);
           engagementData.forEach(event => {
+            console.log('Processing event:', event);
             // Prioritize coupon_selected over coupon_claimed
             if ((event.event_type === 'coupon_selected' || event.event_type === 'coupon_claimed') && event.coupon_id && event.session_id) {
               // Only set if not already set, or if this is a coupon_selected event
@@ -188,26 +190,49 @@ const ResponseTable: React.FC<ResponseTableProps> = ({ selectedPartner }) => {
               const metadata = event.metadata as any;
               sessionEmails[event.session_id] = metadata.email || metadata.email_address || 'Unknown';
               sessionsWithEmailCollected.add(event.session_id);
+              console.log(`Found email collected for session ${event.session_id}: ${sessionEmails[event.session_id]}`);
             }
             if ((event.event_type === 'email_skipped' || event.event_type === 'email_opt_in_skipped') && event.session_id && event.metadata) {
               const metadata = event.metadata as any;
               sessionEmails[event.session_id] = metadata.email_status || 'email not provided by survey taker';
               sessionsWithEmailSkipped.add(event.session_id);
+              console.log(`Found email skipped for session ${event.session_id}: ${sessionEmails[event.session_id]}`);
             }
           });
+          console.log('Final sessionEmails:', sessionEmails);
+          console.log('Sessions with email skipped:', Array.from(sessionsWithEmailSkipped));
+          console.log('Sessions with email collected:', Array.from(sessionsWithEmailCollected));
         }
       }
 
-      // Time-based fallback ONLY for sessions that collected emails but don't have them in engagement_events
-      // NEVER apply fallback to sessions that explicitly skipped email
+      // For sessions with NO email events at all, assume email was not provided
+      const responsesWithoutAnyEmailEvents = data?.filter(item => 
+        item.session_id && 
+        !sessionEmails[item.session_id] && 
+        !sessionsWithEmailSkipped.has(item.session_id) &&
+        !sessionsWithEmailCollected.has(item.session_id)
+      ) || [];
+      
+      // Set default "no email" message for sessions without any email events
+      responsesWithoutAnyEmailEvents.forEach(response => {
+        if (response.session_id) {
+          sessionEmails[response.session_id] = 'email not provided by survey taker';
+          console.log(`Session ${response.session_id} has no email events - marking as email not provided`);
+        }
+      });
+
+      // Time-based fallback ONLY for sessions that had email collection events but missing in engagement_events
+      // This should be very rare and only for data integrity issues
       const responsesWithoutEmails = data?.filter(item => 
         item.session_id && 
         !sessionEmails[item.session_id] && 
-        !sessionsWithEmailSkipped.has(item.session_id)
+        !sessionsWithEmailSkipped.has(item.session_id) &&
+        sessionsWithEmailCollected.has(item.session_id) // Only for sessions that definitely collected emails
       ) || [];
       
       if (responsesWithoutEmails.length > 0) {
-        console.log(`Found ${responsesWithoutEmails.length} responses without emails (excluding skipped), attempting time-based fallback`);
+        console.log(`Found ${responsesWithoutEmails.length} responses with email collection events but missing emails, attempting time-based fallback`);
+        console.log('Responses without emails:', responsesWithoutEmails.map(r => ({ id: r.id, session_id: r.session_id, created_at: r.created_at })));
         
         // For each response without email, check if there's a corresponding email in user_emails table
         // that was created around the same time AND belongs to the same survey flow
@@ -333,8 +358,15 @@ const ResponseTable: React.FC<ResponseTableProps> = ({ selectedPartner }) => {
                 });
               }
               
-              // Time-based fallback ONLY if email was not explicitly skipped
-              if (!authEmail && !emailSkipped) {
+              // If no email events found at all for this session, assume email not provided
+              if (!authEmail && !emailSkipped && engagementData && engagementData.length === 0) {
+                authEmail = 'email not provided by survey taker';
+                console.log(`Real-time: Session ${newItem.session_id} has no email events - marking as email not provided`);
+              }
+              
+              // Time-based fallback ONLY if email was not explicitly skipped AND we have some engagement events
+              // This means the user likely provided email but it's not in engagement_events for some reason
+              if (!authEmail && !emailSkipped && engagementData && engagementData.length > 0) {
                 console.log('No email found in engagement_events for new response, checking user_emails fallback');
                 const responseTime = new Date(newItem.created_at);
                 const bufferTime = 5 * 60 * 1000; // Reduce to 5 minutes for more precision
@@ -468,6 +500,7 @@ const ResponseTable: React.FC<ResponseTableProps> = ({ selectedPartner }) => {
       let sessionCoupons: Record<string, string> = {};
       let sessionEmails: Record<string, string> = {};
       let sessionsWithEmailSkipped: Set<string> = new Set();
+      let sessionsWithEmailCollected: Set<string> = new Set();
       
       if (sessionIds.length > 0) {
         const { data: engagementData } = await supabase
@@ -486,6 +519,7 @@ const ResponseTable: React.FC<ResponseTableProps> = ({ selectedPartner }) => {
             if ((event.event_type === 'email_collected' || event.event_type === 'opt_in_email_submitted') && event.session_id && event.metadata) {
               const metadata = event.metadata as any;
               sessionEmails[event.session_id] = metadata.email || metadata.email_address || 'Unknown';
+              sessionsWithEmailCollected.add(event.session_id);
             }
             if ((event.event_type === 'email_skipped' || event.event_type === 'email_opt_in_skipped') && event.session_id && event.metadata) {
               const metadata = event.metadata as any;
@@ -495,6 +529,21 @@ const ResponseTable: React.FC<ResponseTableProps> = ({ selectedPartner }) => {
           });
         }
       }
+
+      // For sessions with NO email events at all, assume email was not provided
+      const responsesWithoutAnyEmailEvents = data.filter(item => 
+        item.session_id && 
+        !sessionEmails[item.session_id] && 
+        !sessionsWithEmailSkipped.has(item.session_id) &&
+        !sessionsWithEmailCollected.has(item.session_id)
+      );
+      
+      // Set default "no email" message for sessions without any email events
+      responsesWithoutAnyEmailEvents.forEach(response => {
+        if (response.session_id) {
+          sessionEmails[response.session_id] = 'email not provided by survey taker';
+        }
+      });
 
       // Time-based fallback for CSV export - ONLY for sessions that did NOT skip email
       const responsesWithoutEmails = data.filter(item => 
