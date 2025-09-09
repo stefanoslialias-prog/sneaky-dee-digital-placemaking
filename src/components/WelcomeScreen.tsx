@@ -59,9 +59,21 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
         return;
       }
 
-      // Store the email for immediate session tracking
+      // Store the email for immediate session tracking AND track it directly
       console.log('WelcomeScreen: Storing email in localStorage:', sanitizedEmail);
       localStorage.setItem('collectedEmail', sanitizedEmail);
+      
+      // Track email immediately with a temporary session - this will be linked later
+      try {
+        await supabase.from('engagement_events').insert({
+          event_type: 'email_collected',
+          session_id: 'temp-welcome-session',
+          metadata: { email: sanitizedEmail }
+        });
+        console.log('WelcomeScreen: Directly inserted email_collected event');
+      } catch (engagementError) {
+        console.error('WelcomeScreen: Error inserting engagement event:', engagementError);
+      }
       
       toast.success("Great! Let's find you some deals.");
       onStartSurvey(sanitizedEmail);

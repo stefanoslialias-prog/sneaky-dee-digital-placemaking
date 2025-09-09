@@ -188,6 +188,36 @@ const ResponseTable: React.FC<ResponseTableProps> = ({ selectedPartner }) => {
             }
           });
         }
+        
+        // ALSO check for temporary session emails that were directly inserted
+        const { data: tempEmailEvents } = await supabase
+          .from('engagement_events')
+          .select('event_type, metadata, created_at')
+          .in('event_type', ['email_collected', 'opt_in_email_submitted'])
+          .in('session_id', ['temp-welcome-session', 'temp-congratulations-session']);
+          
+        console.log('Found temp email events:', tempEmailEvents);
+        
+        // Match temp emails to survey responses by time proximity (within 5 minutes)
+        if (tempEmailEvents && tempEmailEvents.length > 0 && data) {
+          data.forEach(response => {
+            if (!sessionEmails[response.session_id]) { // Only if no email found via normal session
+              const responseTime = new Date(response.created_at);
+              
+              tempEmailEvents.forEach(emailEvent => {
+                const emailTime = new Date(emailEvent.created_at);
+                const timeDiff = Math.abs(emailTime.getTime() - responseTime.getTime());
+                
+                // If within 5 minutes, associate this email
+                if (timeDiff <= 5 * 60 * 1000) {
+                  const metadata = emailEvent.metadata as any;
+                  sessionEmails[response.session_id] = metadata.email || 'Unknown';
+                  console.log(`Matched temp email ${metadata.email} to response ${response.id} (time diff: ${Math.round(timeDiff / 1000)}s)`);
+                }
+              });
+            }
+          });
+        }
       }
 
       // Do not use time-based fallback - if no email was collected for the session, 
