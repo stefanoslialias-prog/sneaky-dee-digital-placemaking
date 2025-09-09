@@ -104,6 +104,15 @@ export const EmailOptIn: React.FC<EmailOptInProps> = ({ onComplete, onSkip }) =>
               We will let you know for more offers in the future.
             </p>
           </div>
+          
+          <div className="flex justify-center mt-4">
+            <Button 
+              onClick={() => onComplete(email)}
+              className="bg-primary hover:bg-primary/90"
+            >
+              Return Home
+            </Button>
+          </div>
         </CardContent>
       </Card>
     );
