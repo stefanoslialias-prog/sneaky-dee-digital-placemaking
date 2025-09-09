@@ -73,8 +73,6 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
   };
 
   const handleSkipEmail = () => {
-    // Track that the user skipped email collection
-    trackSessionEvent('email_skipped', undefined, undefined, { email_status: 'no email provided' });
     onStartSurvey();
   };
   return <div className="text-center max-w-lg animate-fade-in">
