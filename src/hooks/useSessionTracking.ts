@@ -38,7 +38,9 @@ export const useSessionTracking = () => {
     
     // Check if there's a collected email from the welcome screen
     const collectedEmail = localStorage.getItem('collectedEmail');
+    console.log('startNewSession: Looking for collectedEmail in localStorage:', collectedEmail);
     if (collectedEmail) {
+      console.log('startNewSession: Found email, tracking event with session:', newSessionId);
       // Track the email with the proper session ID
       trackEvent('email_collected', newSessionId, newPartnerId, undefined, undefined, { 
         email: collectedEmail 
@@ -46,6 +48,9 @@ export const useSessionTracking = () => {
       // Clean up temp storage
       localStorage.removeItem('collectedEmail');
       localStorage.removeItem('tempSessionId');
+      console.log('startNewSession: Email tracking complete, cleaned up localStorage');
+    } else {
+      console.log('startNewSession: No collectedEmail found in localStorage');
     }
     
     // Track visit event

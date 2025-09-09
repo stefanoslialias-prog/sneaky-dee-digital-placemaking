@@ -58,15 +58,8 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
         return;
       }
 
-      // Track email submission with a temporary session that will be linked later
-      const tempSessionId = `temp-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36)}-${Date.now()}`;
-      trackSessionEvent('email_collected', undefined, undefined, { 
-        email: sanitizedEmail,
-        temp_session: tempSessionId 
-      });
-      
-      // Store the email and temp session for later linking
-      localStorage.setItem('tempSessionId', tempSessionId);
+      // Store the email for linking to the session when it starts
+      console.log('WelcomeScreen: Storing email in localStorage:', sanitizedEmail);
       localStorage.setItem('collectedEmail', sanitizedEmail);
       
       toast.success("Great! Let's find you some deals.");
