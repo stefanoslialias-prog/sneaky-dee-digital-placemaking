@@ -171,7 +171,7 @@ const ResponseTable: React.FC<ResponseTableProps> = ({ selectedPartner }) => {
           .from('engagement_events')
           .select('session_id, coupon_id, event_type, metadata')
           .in('session_id', sessionIds)
-          .in('event_type', ['coupon_selected', 'coupon_claimed', 'email_collected', 'opt_in_email_submitted']);
+          .in('event_type', ['coupon_selected', 'coupon_claimed', 'email_collected', 'opt_in_email_submitted', 'email_skipped', 'email_opt_in_skipped']);
           
         if (engagementData) {
           engagementData.forEach(event => {
@@ -185,6 +185,9 @@ const ResponseTable: React.FC<ResponseTableProps> = ({ selectedPartner }) => {
             if ((event.event_type === 'email_collected' || event.event_type === 'opt_in_email_submitted') && event.session_id && event.metadata) {
               const metadata = event.metadata as any;
               sessionEmails[event.session_id] = metadata.email || metadata.email_address || 'Unknown';
+            }
+            if ((event.event_type === 'email_skipped' || event.event_type === 'email_opt_in_skipped') && event.session_id) {
+              sessionEmails[event.session_id] = 'no email provided';
             }
           });
         }
@@ -312,7 +315,7 @@ const ResponseTable: React.FC<ResponseTableProps> = ({ selectedPartner }) => {
               .from('engagement_events')
               .select('coupon_id, event_type, metadata')
               .eq('session_id', newItem.session_id)
-              .in('event_type', ['coupon_selected', 'coupon_claimed', 'email_collected', 'opt_in_email_submitted']);
+              .in('event_type', ['coupon_selected', 'coupon_claimed', 'email_collected', 'opt_in_email_submitted', 'email_skipped', 'email_opt_in_skipped']);
               
             if (engagementData) {
               engagementData.forEach(event => {
@@ -324,6 +327,9 @@ const ResponseTable: React.FC<ResponseTableProps> = ({ selectedPartner }) => {
                 if ((event.event_type === 'email_collected' || event.event_type === 'opt_in_email_submitted') && event.metadata) {
                   const metadata = event.metadata as any;
                   authEmail = metadata.email || metadata.email_address || null;
+                }
+                if (event.event_type === 'email_skipped' || event.event_type === 'email_opt_in_skipped') {
+                  authEmail = 'no email provided';
                 }
               });
             }
@@ -475,7 +481,7 @@ const ResponseTable: React.FC<ResponseTableProps> = ({ selectedPartner }) => {
           .from('engagement_events')
           .select('session_id, coupon_id, event_type, metadata')
           .in('session_id', sessionIds)
-          .in('event_type', ['coupon_selected', 'coupon_claimed', 'email_collected', 'opt_in_email_submitted']);
+          .in('event_type', ['coupon_selected', 'coupon_claimed', 'email_collected', 'opt_in_email_submitted', 'email_skipped', 'email_opt_in_skipped']);
           
         if (engagementData) {
           engagementData.forEach(event => {
