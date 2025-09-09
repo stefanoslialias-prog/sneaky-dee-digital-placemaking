@@ -35,10 +35,9 @@ export const useSurveyFlow = () => {
   const { startNewSession, trackSessionEvent } = useSessionTracking();
 
   const handleStartSurvey = (email?: string) => {
-    // Store email if provided
-    if (email) {
-      localStorage.setItem('userEmail', email);
-    }
+    // Store email if provided, otherwise use default message
+    const emailToStore = email || "email not provided by survey taker";
+    localStorage.setItem('userEmail', emailToStore);
     setStep('partnerPicker');
   };
 
@@ -172,26 +171,33 @@ export const useSurveyFlow = () => {
   };
 
   const handleThankYouDone = async () => {
-    // Before redirecting, trigger the email sending function
-    try {
-      console.log("Triggering email sending process");
-      
-      // Call the edge function to process pending emails
-      const { data, error } = await supabase.functions.invoke('send-promo-emails', {
-        method: 'POST',
-        body: { trigger: 'thank-you-page' }
-      });
-      
-      if (error) {
-        console.error("Error triggering email sending:", error);
-      } else {
-        console.log("Email sending triggered:", data);
-        toast.success("Check your email for exclusive deals!", {
-          duration: 5000
+    // Before redirecting, trigger the email sending function only if a real email was provided
+    const storedEmail = localStorage.getItem('userEmail');
+    const hasRealEmail = storedEmail && storedEmail !== "email not provided by survey taker";
+    
+    if (hasRealEmail) {
+      try {
+        console.log("Triggering email sending process");
+        
+        // Call the edge function to process pending emails
+        const { data, error } = await supabase.functions.invoke('send-promo-emails', {
+          method: 'POST',
+          body: { trigger: 'thank-you-page' }
         });
+        
+        if (error) {
+          console.error("Error triggering email sending:", error);
+        } else {
+          console.log("Email sending triggered:", data);
+          toast.success("Check your email for exclusive deals!", {
+            duration: 5000
+          });
+        }
+      } catch (err) {
+        console.error("Failed to trigger email sending:", err);
       }
-    } catch (err) {
-      console.error("Failed to trigger email sending:", err);
+    } else {
+      console.log("No email provided, skipping email sending");
     }
     
     // Reset the flow
