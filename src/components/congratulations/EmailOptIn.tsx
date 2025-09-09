@@ -62,6 +62,7 @@ export const EmailOptIn: React.FC<EmailOptInProps> = ({ onComplete, onSkip }) =>
       }
 
       // Track email submission
+      console.log('EmailOptIn: Tracking opt_in_email_submitted with email:', sanitizedEmail);
       trackSessionEvent('opt_in_email_submitted', undefined, undefined, { email: sanitizedEmail });
       
       toast.success("Thank you! We'll send you exclusive deals soon.");
@@ -79,9 +80,11 @@ export const EmailOptIn: React.FC<EmailOptInProps> = ({ onComplete, onSkip }) =>
   };
 
   const handleSkipNow = () => {
+    console.log('EmailOptIn: handleSkipNow called, emailSubmitted:', emailSubmitted);
     if (emailSubmitted) {
       onComplete(email);
     } else {
+      console.log('EmailOptIn: User skipped email, calling onSkip');
       onSkip();
     }
   };

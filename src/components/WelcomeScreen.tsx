@@ -59,7 +59,7 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
         return;
       }
 
-      // Store the email for linking to the session when it starts
+      // Store the email for immediate session tracking
       console.log('WelcomeScreen: Storing email in localStorage:', sanitizedEmail);
       localStorage.setItem('collectedEmail', sanitizedEmail);
       
@@ -76,6 +76,8 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
 
   const handleSkipEmail = () => {
     console.log('WelcomeScreen: handleSkipEmail called');
+    // Clear any stored email data
+    localStorage.removeItem('collectedEmail');
     onStartSurvey();
   };
   return <div className="text-center max-w-lg animate-fade-in">
