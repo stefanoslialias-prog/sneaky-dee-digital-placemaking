@@ -35,9 +35,12 @@ export const useSurveyFlow = () => {
   const { startNewSession, trackSessionEvent } = useSessionTracking();
 
   const handleStartSurvey = (email?: string) => {
-    // Store email if provided, otherwise use default message
-    const emailToStore = email || "email not provided by survey taker";
-    localStorage.setItem('userEmail', emailToStore);
+    // Store email if provided, otherwise clear any stored email
+    if (email) {
+      localStorage.setItem('userEmail', email);
+    } else {
+      localStorage.removeItem('userEmail');
+    }
     setStep('partnerPicker');
   };
 
@@ -173,9 +176,8 @@ export const useSurveyFlow = () => {
   const handleThankYouDone = async () => {
     // Before redirecting, trigger the email sending function only if a real email was provided
     const storedEmail = localStorage.getItem('userEmail');
-    const hasRealEmail = storedEmail && storedEmail !== "email not provided by survey taker";
     
-    if (hasRealEmail) {
+    if (storedEmail) {
       try {
         console.log("Triggering email sending process");
         
