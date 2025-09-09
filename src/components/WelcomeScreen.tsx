@@ -18,6 +18,7 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
   const { trackSessionEvent } = useSessionTracking();
 
   const handleStartWithEmail = async () => {
+    console.log('WelcomeScreen: handleStartWithEmail called with email:', email);
     const sanitizedEmail = sanitizeEmail(email);
     
     if (!sanitizedEmail) {
@@ -74,6 +75,7 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
   };
 
   const handleSkipEmail = () => {
+    console.log('WelcomeScreen: handleSkipEmail called');
     onStartSurvey();
   };
   return <div className="text-center max-w-lg animate-fade-in">
