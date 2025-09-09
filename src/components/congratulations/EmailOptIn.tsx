@@ -82,6 +82,8 @@ export const EmailOptIn: React.FC<EmailOptInProps> = ({ onComplete, onSkip }) =>
     if (emailSubmitted) {
       onComplete(email);
     } else {
+      // Track email opt-in skip event
+      trackSessionEvent('email_opt_in_skipped', undefined, undefined, { email_status: 'email not provided by survey taker' });
       onSkip();
     }
   };
