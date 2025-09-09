@@ -205,40 +205,59 @@ const ResponseTable: React.FC<ResponseTableProps> = ({ selectedPartner }) => {
         }
       }
 
-      // For sessions with NO email events at all, assume email was not provided
-      const responsesWithoutAnyEmailEvents = data?.filter(item => 
-        item.session_id && 
-        !sessionEmails[item.session_id] && 
-        !sessionsWithEmailSkipped.has(item.session_id) &&
-        !sessionsWithEmailCollected.has(item.session_id)
-      ) || [];
-      
-      // Set default "no email" message for sessions without any email events
-      responsesWithoutAnyEmailEvents.forEach(response => {
-        if (response.session_id) {
-          sessionEmails[response.session_id] = 'email not provided by survey taker';
-          console.log(`Session ${response.session_id} has no email events - marking as email not provided`);
-        }
-      });
-
-      // Time-based fallback ONLY for sessions that had email collection events but missing in engagement_events
-      // This should be very rare and only for data integrity issues
+      // Time-based fallback for sessions without email events in engagement_events
+      // This handles cases where email was provided but events weren't recorded properly
       const responsesWithoutEmails = data?.filter(item => 
         item.session_id && 
         !sessionEmails[item.session_id] && 
-        !sessionsWithEmailSkipped.has(item.session_id) &&
-        sessionsWithEmailCollected.has(item.session_id) // Only for sessions that definitely collected emails
+        !sessionsWithEmailSkipped.has(item.session_id)
       ) || [];
       
       if (responsesWithoutEmails.length > 0) {
-        console.log(`Found ${responsesWithoutEmails.length} responses with email collection events but missing emails, attempting time-based fallback`);
+        console.log(`Found ${responsesWithoutEmails.length} responses without emails, attempting careful time-based fallback`);
         console.log('Responses without emails:', responsesWithoutEmails.map(r => ({ id: r.id, session_id: r.session_id, created_at: r.created_at })));
+
+        // For each response without email, check if there's a corresponding email in user_emails table
+        // Use very tight time matching (2 minutes) to prevent cross-contamination
+        for (const response of responsesWithoutEmails) {
+          const responseTime = new Date(response.created_at);
+          const bufferTime = 2 * 60 * 1000; // 2 minutes for tight precision
+          
+          const { data: userEmailsData } = await supabase
+            .from('user_emails')
+            .select('email_address, sent_at, device_id')
+            .gte('sent_at', new Date(responseTime.getTime() - bufferTime).toISOString())
+            .lte('sent_at', new Date(responseTime.getTime() + bufferTime).toISOString())
+            .order('sent_at', { ascending: false });
+            
+          if (userEmailsData && userEmailsData.length > 0) {
+            // Find the most recent email within the tight time window
+            const nearestEmail = userEmailsData[0];
+            const emailTime = new Date(nearestEmail.sent_at);
+            const timeDiff = Math.abs(emailTime.getTime() - responseTime.getTime());
+            
+            // Only match if within 2 minutes
+            if (timeDiff <= bufferTime && response.session_id) {
+              sessionEmails[response.session_id] = nearestEmail.email_address;
+              console.log(`Matched response ${response.id} with email ${nearestEmail.email_address} (time diff: ${Math.round(timeDiff / 1000)}s)`);
+            } else if (response.session_id) {
+              // If no email found in tight window, assume user didn't provide email
+              sessionEmails[response.session_id] = 'email not provided by survey taker';
+              console.log(`No email found within 2 minutes for response ${response.id} - marking as email not provided`);
+            }
+          } else if (response.session_id) {
+            // If no emails in the time range at all, assume user didn't provide email
+            sessionEmails[response.session_id] = 'email not provided by survey taker';
+            console.log(`No emails found in time range for response ${response.id} - marking as email not provided`);
+          }
+        }
+      }
         
         // For each response without email, check if there's a corresponding email in user_emails table
         // that was created around the same time AND belongs to the same survey flow
         for (const response of responsesWithoutEmails) {
           const responseTime = new Date(response.created_at);
-          const bufferTime = 5 * 60 * 1000; // Reduce to 5 minutes for more precision
+          const bufferTime = 2 * 60 * 1000; // Reduce to 2 minutes for tight precision
           
           const { data: userEmailsData } = await supabase
             .from('user_emails')
@@ -253,11 +272,19 @@ const ResponseTable: React.FC<ResponseTableProps> = ({ selectedPartner }) => {
             const emailTime = new Date(nearestEmail.sent_at);
             const timeDiff = Math.abs(emailTime.getTime() - responseTime.getTime());
             
-            // Only match if within 5 minutes and there's a reasonable chance it's the same user
+            // Only match if within 2 minutes (updated from 5 minutes)
             if (timeDiff <= bufferTime && response.session_id) {
               sessionEmails[response.session_id] = nearestEmail.email_address;
               console.log(`Matched response ${response.id} with email ${nearestEmail.email_address} (time diff: ${Math.round(timeDiff / 1000)}s)`);
+            } else if (response.session_id) {
+              // If no email found in tight window, assume user didn't provide email
+              sessionEmails[response.session_id] = 'email not provided by survey taker';
+              console.log(`No email found within 2 minutes for response ${response.id} - marking as email not provided`);
             }
+          } else if (response.session_id) {
+            // If no emails in the time range at all, assume user didn't provide email
+            sessionEmails[response.session_id] = 'email not provided by survey taker';
+            console.log(`No emails found in time range for response ${response.id} - marking as email not provided`);
           }
         }
       }
@@ -369,7 +396,7 @@ const ResponseTable: React.FC<ResponseTableProps> = ({ selectedPartner }) => {
               if (!authEmail && !emailSkipped && engagementData && engagementData.length > 0) {
                 console.log('No email found in engagement_events for new response, checking user_emails fallback');
                 const responseTime = new Date(newItem.created_at);
-                const bufferTime = 5 * 60 * 1000; // Reduce to 5 minutes for more precision
+                const bufferTime = 2 * 60 * 1000; // Reduce to 2 minutes for tight precision
                 
                 const { data: userEmailsData } = await supabase
                   .from('user_emails')
@@ -558,7 +585,7 @@ const ResponseTable: React.FC<ResponseTableProps> = ({ selectedPartner }) => {
         // For each response without email, check if there's a corresponding email in user_emails table
         for (const response of responsesWithoutEmails) {
           const responseTime = new Date(response.created_at);
-          const bufferTime = 5 * 60 * 1000; // 5 minutes for precision
+          const bufferTime = 2 * 60 * 1000; // 2 minutes for tight precision
           
           const { data: userEmailsData } = await supabase
             .from('user_emails')
