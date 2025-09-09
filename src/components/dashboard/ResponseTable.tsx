@@ -205,87 +205,61 @@ const ResponseTable: React.FC<ResponseTableProps> = ({ selectedPartner }) => {
         }
       }
 
-      // Time-based fallback for sessions without email events in engagement_events
-      // This handles cases where email was provided but events weren't recorded properly
+      // Time-based fallback for missing emails from user_emails table
       const responsesWithoutEmails = data?.filter(item => 
-        item.session_id && 
-        !sessionEmails[item.session_id] && 
-        !sessionsWithEmailSkipped.has(item.session_id)
+        item.session_id && !sessionEmails[item.session_id] && !sessionsWithEmailSkipped.has(item.session_id)
       ) || [];
       
       if (responsesWithoutEmails.length > 0) {
-        console.log(`Found ${responsesWithoutEmails.length} responses without emails, attempting careful time-based fallback`);
-        console.log('Responses without emails:', responsesWithoutEmails.map(r => ({ id: r.id, session_id: r.session_id, created_at: r.created_at })));
-
-        // For each response without email, check if there's a corresponding email in user_emails table
-        // Use very tight time matching (2 minutes) to prevent cross-contamination
-        for (const response of responsesWithoutEmails) {
-          const responseTime = new Date(response.created_at);
-          const bufferTime = 2 * 60 * 1000; // 2 minutes for tight precision
-          
-          const { data: userEmailsData } = await supabase
-            .from('user_emails')
-            .select('email_address, sent_at, device_id')
-            .gte('sent_at', new Date(responseTime.getTime() - bufferTime).toISOString())
-            .lte('sent_at', new Date(responseTime.getTime() + bufferTime).toISOString())
-            .order('sent_at', { ascending: false });
-            
-          if (userEmailsData && userEmailsData.length > 0) {
-            // Find the most recent email within the tight time window
-            const nearestEmail = userEmailsData[0];
-            const emailTime = new Date(nearestEmail.sent_at);
-            const timeDiff = Math.abs(emailTime.getTime() - responseTime.getTime());
-            
-            // Only match if within 2 minutes
-            if (timeDiff <= bufferTime && response.session_id) {
-              sessionEmails[response.session_id] = nearestEmail.email_address;
-              console.log(`Matched response ${response.id} with email ${nearestEmail.email_address} (time diff: ${Math.round(timeDiff / 1000)}s)`);
-            } else if (response.session_id) {
-              // If no email found in tight window, assume user didn't provide email
-              sessionEmails[response.session_id] = 'email not provided by survey taker';
-              console.log(`No email found within 2 minutes for response ${response.id} - marking as email not provided`);
-            }
-          } else if (response.session_id) {
-            // If no emails in the time range at all, assume user didn't provide email
-            sessionEmails[response.session_id] = 'email not provided by survey taker';
-            console.log(`No emails found in time range for response ${response.id} - marking as email not provided`);
-          }
-        }
-      }
+        console.log(`Found ${responsesWithoutEmails.length} responses without emails, attempting time-based fallback`);
         
-        // For each response without email, check if there's a corresponding email in user_emails table
-        // that was created around the same time AND belongs to the same survey flow
-        for (const response of responsesWithoutEmails) {
-          const responseTime = new Date(response.created_at);
-          const bufferTime = 2 * 60 * 1000; // Reduce to 2 minutes for tight precision
+        // Get time range for the current page (±2 minutes buffer for precision)
+        const timestamps = data?.map(item => new Date(item.created_at)) || [];
+        const minTime = new Date(Math.min(...timestamps.map(t => t.getTime())) - 2 * 60 * 1000);
+        const maxTime = new Date(Math.max(...timestamps.map(t => t.getTime())) + 2 * 60 * 1000);
+        
+        const { data: userEmailsData } = await supabase
+          .from('user_emails')
+          .select('email_address, sent_at')
+          .gte('sent_at', minTime.toISOString())
+          .lte('sent_at', maxTime.toISOString());
           
-          const { data: userEmailsData } = await supabase
-            .from('user_emails')
-            .select('email_address, sent_at, device_id')
-            .gte('sent_at', new Date(responseTime.getTime() - bufferTime).toISOString())
-            .lte('sent_at', new Date(responseTime.getTime() + bufferTime).toISOString())
-            .order('sent_at', { ascending: false });
+        if (userEmailsData && userEmailsData.length > 0) {
+          console.log(`Found ${userEmailsData.length} user_emails in time range for fallback`);
+          
+          responsesWithoutEmails.forEach(response => {
+            const responseTime = new Date(response.created_at);
             
-          if (userEmailsData && userEmailsData.length > 0) {
-            // Find the most recent email within the time window
-            const nearestEmail = userEmailsData[0];
-            const emailTime = new Date(nearestEmail.sent_at);
-            const timeDiff = Math.abs(emailTime.getTime() - responseTime.getTime());
+            // Find the nearest email within ±2 minutes
+            let nearestEmail = null;
+            let smallestTimeDiff = Infinity;
             
-            // Only match if within 2 minutes (updated from 5 minutes)
-            if (timeDiff <= bufferTime && response.session_id) {
-              sessionEmails[response.session_id] = nearestEmail.email_address;
-              console.log(`Matched response ${response.id} with email ${nearestEmail.email_address} (time diff: ${Math.round(timeDiff / 1000)}s)`);
+            userEmailsData.forEach(emailRecord => {
+              const emailTime = new Date(emailRecord.sent_at);
+              const timeDiff = Math.abs(emailTime.getTime() - responseTime.getTime());
+              
+              // Only consider emails within 2 minutes (120000 ms)
+              if (timeDiff <= 2 * 60 * 1000 && timeDiff < smallestTimeDiff) {
+                smallestTimeDiff = timeDiff;
+                nearestEmail = emailRecord.email_address;
+              }
+            });
+            
+            if (nearestEmail && response.session_id) {
+              sessionEmails[response.session_id] = nearestEmail;
+              console.log(`Matched response ${response.id} with email ${nearestEmail} (time diff: ${Math.round(smallestTimeDiff / 1000)}s)`);
             } else if (response.session_id) {
-              // If no email found in tight window, assume user didn't provide email
               sessionEmails[response.session_id] = 'email not provided by survey taker';
               console.log(`No email found within 2 minutes for response ${response.id} - marking as email not provided`);
             }
-          } else if (response.session_id) {
-            // If no emails in the time range at all, assume user didn't provide email
-            sessionEmails[response.session_id] = 'email not provided by survey taker';
-            console.log(`No emails found in time range for response ${response.id} - marking as email not provided`);
-          }
+          });
+        } else {
+          // If no emails found in time range, mark all as not provided
+          responsesWithoutEmails.forEach(response => {
+            if (response.session_id) {
+              sessionEmails[response.session_id] = 'email not provided by survey taker';
+            }
+          });
         }
       }
 
@@ -355,69 +329,67 @@ const ResponseTable: React.FC<ResponseTableProps> = ({ selectedPartner }) => {
           // Extract the data from the payload
           const newItem = payload.new;
           
-            let couponTitle = null;
-            let authEmail = null;
-            let emailSkipped = false;
-            
-            if (newItem.session_id) {
-              const { data: engagementData } = await supabase
-                .from('engagement_events')
-                .select('coupon_id, event_type, metadata')
-                .eq('session_id', newItem.session_id)
-                .in('event_type', ['coupon_selected', 'coupon_claimed', 'email_collected', 'opt_in_email_submitted', 'email_skipped', 'email_opt_in_skipped']);
-                
-              if (engagementData) {
-                engagementData.forEach(event => {
-                  if ((event.event_type === 'coupon_selected' || event.event_type === 'coupon_claimed') && event.coupon_id) {
-                    if (!couponTitle || event.event_type === 'coupon_selected') {
-                      couponTitle = couponMap[event.coupon_id] || 'Unknown Coupon';
-                    }
-                  }
-                  if ((event.event_type === 'email_collected' || event.event_type === 'opt_in_email_submitted') && event.metadata) {
-                    const metadata = event.metadata as any;
-                    authEmail = metadata.email || metadata.email_address || null;
-                  }
-                  if ((event.event_type === 'email_skipped' || event.event_type === 'email_opt_in_skipped') && event.metadata) {
-                    const metadata = event.metadata as any;
-                    authEmail = metadata.email_status || 'email not provided by survey taker';
-                    emailSkipped = true;
-                  }
-                });
-              }
+          // Get coupon data for this session
+          let couponTitle = null;
+          let authEmail = null;
+          let emailSkipped = false;
+          
+          if (newItem.session_id) {
+            const { data: engagementData } = await supabase
+              .from('engagement_events')
+              .select('coupon_id, event_type, metadata')
+              .eq('session_id', newItem.session_id)
+              .in('event_type', ['coupon_selected', 'coupon_claimed', 'email_collected', 'opt_in_email_submitted', 'email_skipped', 'email_opt_in_skipped']);
               
-              // If no email events found at all for this session, assume email not provided
-              if (!authEmail && !emailSkipped && engagementData && engagementData.length === 0) {
-                authEmail = 'email not provided by survey taker';
-                console.log(`Real-time: Session ${newItem.session_id} has no email events - marking as email not provided`);
-              }
-              
-              // Time-based fallback ONLY if email was not explicitly skipped AND we have some engagement events
-              // This means the user likely provided email but it's not in engagement_events for some reason
-              if (!authEmail && !emailSkipped && engagementData && engagementData.length > 0) {
-                console.log('No email found in engagement_events for new response, checking user_emails fallback');
-                const responseTime = new Date(newItem.created_at);
-                const bufferTime = 2 * 60 * 1000; // Reduce to 2 minutes for tight precision
-                
-                const { data: userEmailsData } = await supabase
-                  .from('user_emails')
-                  .select('email_address, sent_at, device_id')
-                  .gte('sent_at', new Date(responseTime.getTime() - bufferTime).toISOString())
-                  .lte('sent_at', new Date(responseTime.getTime() + bufferTime).toISOString())
-                  .order('sent_at', { ascending: false })
-                  .limit(1);
-                  
-                if (userEmailsData && userEmailsData.length > 0) {
-                  const nearestEmail = userEmailsData[0];
-                  const emailTime = new Date(nearestEmail.sent_at);
-                  const timeDiff = Math.abs(emailTime.getTime() - responseTime.getTime());
-                  
-                  if (timeDiff <= bufferTime) {
-                    authEmail = nearestEmail.email_address;
-                    console.log(`Real-time fallback: matched email ${nearestEmail.email_address} (time diff: ${Math.round(timeDiff / 1000)}s)`);
+            if (engagementData) {
+              engagementData.forEach(event => {
+                if ((event.event_type === 'coupon_selected' || event.event_type === 'coupon_claimed') && event.coupon_id) {
+                  if (!couponTitle || event.event_type === 'coupon_selected') {
+                    couponTitle = couponMap[event.coupon_id] || 'Unknown Coupon';
                   }
                 }
+                if ((event.event_type === 'email_collected' || event.event_type === 'opt_in_email_submitted') && event.metadata) {
+                  const metadata = event.metadata as any;
+                  authEmail = metadata.email || metadata.email_address || null;
+                }
+                if ((event.event_type === 'email_skipped' || event.event_type === 'email_opt_in_skipped') && event.metadata) {
+                  const metadata = event.metadata as any;
+                  authEmail = metadata.email_status || 'email not provided by survey taker';
+                  emailSkipped = true;
+                }
+              });
+            }
+            
+            // Time-based fallback ONLY if email was not explicitly skipped
+            if (!authEmail && !emailSkipped) {
+              console.log('No email found in engagement_events for new response, checking user_emails fallback');
+              const responseTime = new Date(newItem.created_at);
+              const bufferTime = 2 * 60 * 1000; // Reduce to 2 minutes for tight precision
+              
+              const { data: userEmailsData } = await supabase
+                .from('user_emails')
+                .select('email_address, sent_at, device_id')
+                .gte('sent_at', new Date(responseTime.getTime() - bufferTime).toISOString())
+                .lte('sent_at', new Date(responseTime.getTime() + bufferTime).toISOString())
+                .order('sent_at', { ascending: false })
+                .limit(1);
+                
+              if (userEmailsData && userEmailsData.length > 0) {
+                const nearestEmail = userEmailsData[0];
+                const emailTime = new Date(nearestEmail.sent_at);
+                const timeDiff = Math.abs(emailTime.getTime() - responseTime.getTime());
+                
+                if (timeDiff <= bufferTime) {
+                  authEmail = nearestEmail.email_address;
+                  console.log(`Real-time fallback: matched email ${nearestEmail.email_address} (time diff: ${Math.round(timeDiff / 1000)}s)`);
+                } else {
+                  authEmail = 'email not provided by survey taker';
+                }
+              } else {
+                authEmail = 'email not provided by survey taker';
               }
             }
+          }
 
           // Format the data
           let location = 'General Survey';
@@ -608,8 +580,9 @@ const ResponseTable: React.FC<ResponseTableProps> = ({ selectedPartner }) => {
         }
       }
 
-      // Transform to the expected format
-      const exportData = data.map(item => {
+      // Create CSV content
+      const csvHeaders = ['Timestamp', 'Location', 'Sentiment', 'Comment', 'Coupon', 'Auth Email'];
+      const csvRows = data.map(item => {
         // Determine location - prioritize partner name, then wifi location, then fallback
         let location = 'General Survey';
         if (item.partner_id && partnerMap[item.partner_id]) {
@@ -620,39 +593,22 @@ const ResponseTable: React.FC<ResponseTableProps> = ({ selectedPartner }) => {
           location = item.location_id;
         }
 
-        return {
-          timestamp: new Date(item.created_at).toLocaleString(),
-          location: location,
-          sentiment: item.answer,
-          comment: item.comment || '',
-          coupon: item.session_id ? sessionCoupons[item.session_id] || '' : '',
-          authEmail: item.session_id ? sessionEmails[item.session_id] || '' : ''
-        };
+        return [
+          new Date(item.created_at).toLocaleString(),
+          location,
+          item.answer,
+          item.comment || '',
+          item.session_id ? sessionCoupons[item.session_id] || '' : '',
+          item.session_id ? sessionEmails[item.session_id] || '' : ''
+        ];
       });
       
-      // Create CSV content
-      const headers = ['Timestamp', 'Location', 'Sentiment', 'Comment', 'Coupon', 'Auth Email'];
-      const csvRows = [headers];
-      
-      // Add data rows
-      for (const row of exportData) {
-        csvRows.push([
-          row.timestamp,
-          row.location,
-          row.sentiment,
-          row.comment,
-          row.coupon,
-          row.authEmail || ''
-        ]);
-      }
-      
-      // Convert to CSV string
-      const csvString = csvRows
-        .map(row => row.map(cell => `"${cell}"`).join(','))
+      const csvContent = [csvHeaders, ...csvRows]
+        .map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(','))
         .join('\n');
       
-      // Create and trigger download
-      const blob = new Blob([csvString], { type: 'text/csv' });
+      // Download the CSV
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
@@ -673,109 +629,119 @@ const ResponseTable: React.FC<ResponseTableProps> = ({ selectedPartner }) => {
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
         <div className="flex flex-col gap-0.5">
-          <CardTitle className="flex items-center gap-2">
-            Raw Survey Data
-            {newResponses > 0 && (
-              <Badge 
-                variant="destructive" 
-                className="animate-pulse cursor-pointer"
-                onClick={fetchResponses}
-              >
-                +{newResponses} new
-              </Badge>
-            )}
-          </CardTitle>
+          <CardTitle className="text-xl font-semibold">Raw Data</CardTitle>
           <CardDescription>
-            View and export anonymized survey responses
+            Survey responses with engagement details
+            {selectedPartner && selectedPartner !== 'all' && (
+              <span className="ml-2">
+                • Filtered by: <strong>{partnerMap[selectedPartner] || selectedPartner}</strong>
+              </span>
+            )}
           </CardDescription>
         </div>
-        <Button onClick={exportToCsv}>Export CSV</Button>
+        <div className="flex gap-2">
+          {newResponses > 0 && (
+            <Badge variant="secondary" className="animate-pulse">
+              +{newResponses} new
+            </Badge>
+          )}
+          <Button 
+            onClick={exportToCsv}
+            variant="outline"
+            size="sm"
+          >
+            Export CSV
+          </Button>
+        </div>
       </CardHeader>
+      
       <CardContent>
-        <div className="rounded-md border">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Time</TableHead>
-                <TableHead>Location</TableHead>
-                <TableHead>Sentiment</TableHead>
-                <TableHead>Comment</TableHead>
-                <TableHead>Coupon</TableHead>
-                <TableHead>Auth Email</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {loading ? (
-                Array(5).fill(null).map((_, index) => (
-                  <TableRow key={`loading-${index}`}>
-                    {[1, 2, 3, 4, 5, 6].map((cellIndex) => (
-                      <TableCell key={`loading-cell-${index}-${cellIndex}`}>
-                        <div className="h-5 bg-gray-200 rounded animate-pulse w-3/4"></div>
-                      </TableCell>
-                    ))}
-                  </TableRow>
-                ))
-              ) : (
-                responses.map((response) => (
-                  <TableRow key={response.id} className="animate-fade-in">
-                    <TableCell>
+        {loading ? (
+          <div className="text-center py-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+            <p className="mt-2 text-sm text-muted-foreground">Loading responses...</p>
+          </div>
+        ) : responses.length === 0 ? (
+          <div className="text-center py-8">
+            <p className="text-muted-foreground">No survey responses found.</p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Timestamp</TableHead>
+                  <TableHead>Location</TableHead>
+                  <TableHead>Sentiment</TableHead>
+                  <TableHead>Comment</TableHead>
+                  <TableHead>Coupon</TableHead>
+                  <TableHead>Auth Email</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {responses.map((response) => (
+                  <TableRow key={response.id}>
+                    <TableCell className="whitespace-nowrap">
                       {new Date(response.timestamp).toLocaleString()}
                     </TableCell>
-                    <TableCell>{response.location}</TableCell>
                     <TableCell>
-                      <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${
-                        response.sentiment === 'happy' ? 'bg-green-100 text-green-800' : 
-                        response.sentiment === 'neutral' ? 'bg-blue-100 text-blue-800' : 
-                        'bg-red-100 text-red-800'
-                      }`}>
+                      <Badge variant="outline">
+                        {response.location}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <Badge 
+                        variant={
+                          response.sentiment === 'happy' ? 'default' :
+                          response.sentiment === 'neutral' ? 'secondary' : 'destructive'
+                        }
+                      >
                         {response.sentiment}
-                      </span>
+                      </Badge>
                     </TableCell>
-                    <TableCell>
-                      {response.comment || <span className="text-gray-400 italic">No comment</span>}
+                    <TableCell className="max-w-xs">
+                      <div className="truncate" title={response.comment || ''}>
+                        {response.comment || 'No comment'}
+                      </div>
                     </TableCell>
-                    <TableCell>
-                      {response.coupon || <span className="text-gray-400 italic">No coupon</span>}
+                    <TableCell className="max-w-xs">
+                      <div className="truncate" title={response.coupon || ''}>
+                        {response.coupon || 'No coupon'}
+                      </div>
                     </TableCell>
-                    <TableCell>
-                      {response.authEmail || <span className="text-gray-400 italic">No email</span>}
+                    <TableCell className="max-w-xs">
+                      <div className="truncate" title={response.authEmail || ''}>
+                        {response.authEmail || 'No email'}
+                      </div>
                     </TableCell>
                   </TableRow>
-                ))
-              )}
-              
-              {!loading && responses.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={6} className="text-center text-gray-500">
-                    No responses found
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </div>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        )}
       </CardContent>
+      
       <CardFooter className="flex items-center justify-between">
-        <div className="text-sm text-gray-500">
-          Showing {responses.length > 0 ? (page - 1) * pageSize + 1 : 0}-{Math.min(page * pageSize, totalResponses)} of {totalResponses} responses
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <span>
+            Page {page} of {totalPages} • {totalResponses} total responses
+          </span>
         </div>
         <div className="flex items-center gap-2">
           <Button
             variant="outline"
             size="sm"
-            onClick={() => setPage(page => Math.max(1, page - 1))}
+            onClick={() => setPage(p => Math.max(1, p - 1))}
             disabled={page === 1 || loading}
           >
             Previous
           </Button>
-          <div className="text-sm">
-            Page {page} of {totalPages || 1}
-          </div>
           <Button
             variant="outline"
             size="sm"
-            onClick={() => setPage(page => Math.min(totalPages, page + 1))}
-            disabled={page >= totalPages || loading}
+            onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+            disabled={page === totalPages || loading}
           >
             Next
           </Button>
