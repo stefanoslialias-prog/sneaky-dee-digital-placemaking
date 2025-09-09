@@ -36,6 +36,18 @@ export const useSessionTracking = () => {
       localStorage.removeItem('currentPartnerId');
     }
     
+    // Check if there's a collected email from the welcome screen
+    const collectedEmail = localStorage.getItem('collectedEmail');
+    if (collectedEmail) {
+      // Track the email with the proper session ID
+      trackEvent('email_collected', newSessionId, newPartnerId, undefined, undefined, { 
+        email: collectedEmail 
+      });
+      // Clean up temp storage
+      localStorage.removeItem('collectedEmail');
+      localStorage.removeItem('tempSessionId');
+    }
+    
     // Track visit event
     trackEvent('visit_partner_page', newSessionId, newPartnerId);
   };

@@ -35,11 +35,14 @@ export const useSurveyFlow = () => {
   const { startNewSession, trackSessionEvent } = useSessionTracking();
 
   const handleStartSurvey = (email?: string) => {
-    // Store email if provided, otherwise clear any stored email
+    // Store email if provided for later session linking
     if (email) {
       localStorage.setItem('userEmail', email);
     } else {
       localStorage.removeItem('userEmail');
+      // Also clean up any temp email data if user skipped
+      localStorage.removeItem('collectedEmail');
+      localStorage.removeItem('tempSessionId');
     }
     setStep('partnerPicker');
   };
