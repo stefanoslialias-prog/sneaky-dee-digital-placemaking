@@ -61,22 +61,7 @@ export const EmailOptIn: React.FC<EmailOptInProps> = ({ onComplete, onSkip }) =>
         return;
       }
 
-      // Track email submission directly AND through session tracking
-      console.log('EmailOptIn: Tracking opt_in_email_submitted with email:', sanitizedEmail);
-      
-      // Direct insertion to ensure it gets recorded
-      try {
-        await supabase.from('engagement_events').insert({
-          event_type: 'opt_in_email_submitted',
-          session_id: 'temp-congratulations-session',
-          metadata: { email: sanitizedEmail }
-        });
-        console.log('EmailOptIn: Directly inserted opt_in_email_submitted event');
-      } catch (engagementError) {
-        console.error('EmailOptIn: Error inserting engagement event:', engagementError);
-      }
-      
-      // Also try the session tracking
+      // Track email submission
       trackSessionEvent('opt_in_email_submitted', undefined, undefined, { email: sanitizedEmail });
       
       toast.success("Thank you! We'll send you exclusive deals soon.");
@@ -94,11 +79,9 @@ export const EmailOptIn: React.FC<EmailOptInProps> = ({ onComplete, onSkip }) =>
   };
 
   const handleSkipNow = () => {
-    console.log('EmailOptIn: handleSkipNow called, emailSubmitted:', emailSubmitted);
     if (emailSubmitted) {
       onComplete(email);
     } else {
-      console.log('EmailOptIn: User skipped email, calling onSkip');
       onSkip();
     }
   };

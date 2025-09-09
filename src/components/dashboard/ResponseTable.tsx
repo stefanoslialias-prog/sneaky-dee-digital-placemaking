@@ -188,40 +188,55 @@ const ResponseTable: React.FC<ResponseTableProps> = ({ selectedPartner }) => {
             }
           });
         }
+      }
+
+      // Time-based fallback for missing emails from user_emails table
+      const responsesWithoutEmails = data?.filter(item => 
+        item.session_id && !sessionEmails[item.session_id]
+      ) || [];
+      
+      if (responsesWithoutEmails.length > 0) {
+        console.log(`Found ${responsesWithoutEmails.length} responses without emails, attempting time-based fallback`);
         
-        // ALSO check for temporary session emails that were directly inserted
-        const { data: tempEmailEvents } = await supabase
-          .from('engagement_events')
-          .select('event_type, metadata, created_at')
-          .in('event_type', ['email_collected', 'opt_in_email_submitted'])
-          .in('session_id', ['temp-welcome-session', 'temp-congratulations-session']);
+        // Get time range for the current page (±30 minutes buffer)
+        const timestamps = data?.map(item => new Date(item.created_at)) || [];
+        const minTime = new Date(Math.min(...timestamps.map(t => t.getTime())) - 30 * 60 * 1000);
+        const maxTime = new Date(Math.max(...timestamps.map(t => t.getTime())) + 30 * 60 * 1000);
+        
+        const { data: userEmailsData } = await supabase
+          .from('user_emails')
+          .select('email_address, sent_at')
+          .gte('sent_at', minTime.toISOString())
+          .lte('sent_at', maxTime.toISOString());
           
-        console.log('Found temp email events:', tempEmailEvents);
-        
-        // Match temp emails to survey responses by time proximity (within 5 minutes)
-        if (tempEmailEvents && tempEmailEvents.length > 0 && data) {
-          data.forEach(response => {
-            if (!sessionEmails[response.session_id]) { // Only if no email found via normal session
-              const responseTime = new Date(response.created_at);
+        if (userEmailsData && userEmailsData.length > 0) {
+          console.log(`Found ${userEmailsData.length} user_emails in time range for fallback`);
+          
+          responsesWithoutEmails.forEach(response => {
+            const responseTime = new Date(response.created_at);
+            
+            // Find the nearest email within ±30 minutes
+            let nearestEmail = null;
+            let smallestTimeDiff = Infinity;
+            
+            userEmailsData.forEach(emailRecord => {
+              const emailTime = new Date(emailRecord.sent_at);
+              const timeDiff = Math.abs(emailTime.getTime() - responseTime.getTime());
               
-              tempEmailEvents.forEach(emailEvent => {
-                const emailTime = new Date(emailEvent.created_at);
-                const timeDiff = Math.abs(emailTime.getTime() - responseTime.getTime());
-                
-                // If within 5 minutes, associate this email
-                if (timeDiff <= 5 * 60 * 1000) {
-                  const metadata = emailEvent.metadata as any;
-                  sessionEmails[response.session_id] = metadata.email || 'Unknown';
-                  console.log(`Matched temp email ${metadata.email} to response ${response.id} (time diff: ${Math.round(timeDiff / 1000)}s)`);
-                }
-              });
+              // Only consider emails within 30 minutes (1800000 ms)
+              if (timeDiff <= 30 * 60 * 1000 && timeDiff < smallestTimeDiff) {
+                smallestTimeDiff = timeDiff;
+                nearestEmail = emailRecord.email_address;
+              }
+            });
+            
+            if (nearestEmail && response.session_id) {
+              sessionEmails[response.session_id] = nearestEmail;
+              console.log(`Matched response ${response.id} with email ${nearestEmail} (time diff: ${Math.round(smallestTimeDiff / 1000)}s)`);
             }
           });
         }
       }
-
-      // Do not use time-based fallback - if no email was collected for the session, 
-      // then no email should be displayed in the admin dashboard
 
       // Transform to the expected format
       const formattedResponses = data?.map(item => {
@@ -313,8 +328,38 @@ const ResponseTable: React.FC<ResponseTableProps> = ({ selectedPartner }) => {
               });
             }
             
-            // Do not use time-based fallback for real-time updates
-            // If no email was collected for the session, no email should be shown
+            // Time-based fallback for missing email in real-time
+            if (!authEmail) {
+              console.log('No email found in engagement_events for new response, checking user_emails fallback');
+              const responseTime = new Date(newItem.created_at);
+              const bufferTime = 30 * 60 * 1000; // 30 minutes in ms
+              
+              const { data: userEmailsData } = await supabase
+                .from('user_emails')
+                .select('email_address, sent_at')
+                .gte('sent_at', new Date(responseTime.getTime() - bufferTime).toISOString())
+                .lte('sent_at', new Date(responseTime.getTime() + bufferTime).toISOString());
+                
+              if (userEmailsData && userEmailsData.length > 0) {
+                let nearestEmail = null;
+                let smallestTimeDiff = Infinity;
+                
+                userEmailsData.forEach(emailRecord => {
+                  const emailTime = new Date(emailRecord.sent_at);
+                  const timeDiff = Math.abs(emailTime.getTime() - responseTime.getTime());
+                  
+                  if (timeDiff <= bufferTime && timeDiff < smallestTimeDiff) {
+                    smallestTimeDiff = timeDiff;
+                    nearestEmail = emailRecord.email_address;
+                  }
+                });
+                
+                if (nearestEmail) {
+                  authEmail = nearestEmail;
+                  console.log(`Real-time fallback: matched email ${nearestEmail} (time diff: ${Math.round(smallestTimeDiff / 1000)}s)`);
+                }
+              }
+            }
           }
 
           // Format the data
@@ -447,8 +492,53 @@ const ResponseTable: React.FC<ResponseTableProps> = ({ selectedPartner }) => {
         }
       }
 
-      // Do not use time-based fallback for CSV export
-      // If no email was collected for the session, no email should be exported
+      // Time-based fallback for CSV export
+      const responsesWithoutEmails = data.filter(item => 
+        item.session_id && !sessionEmails[item.session_id]
+      );
+      
+      if (responsesWithoutEmails.length > 0) {
+        console.log(`CSV Export: Found ${responsesWithoutEmails.length} responses without emails, attempting time-based fallback`);
+        
+        // Get time range for all data (±30 minutes buffer)
+        const timestamps = data.map(item => new Date(item.created_at));
+        const minTime = new Date(Math.min(...timestamps.map(t => t.getTime())) - 30 * 60 * 1000);
+        const maxTime = new Date(Math.max(...timestamps.map(t => t.getTime())) + 30 * 60 * 1000);
+        
+        const { data: userEmailsData } = await supabase
+          .from('user_emails')
+          .select('email_address, sent_at')
+          .gte('sent_at', minTime.toISOString())
+          .lte('sent_at', maxTime.toISOString());
+          
+        if (userEmailsData && userEmailsData.length > 0) {
+          console.log(`CSV Export: Found ${userEmailsData.length} user_emails in time range for fallback`);
+          
+          responsesWithoutEmails.forEach(response => {
+            const responseTime = new Date(response.created_at);
+            
+            // Find the nearest email within ±30 minutes
+            let nearestEmail = null;
+            let smallestTimeDiff = Infinity;
+            
+            userEmailsData.forEach(emailRecord => {
+              const emailTime = new Date(emailRecord.sent_at);
+              const timeDiff = Math.abs(emailTime.getTime() - responseTime.getTime());
+              
+              // Only consider emails within 30 minutes (1800000 ms)
+              if (timeDiff <= 30 * 60 * 1000 && timeDiff < smallestTimeDiff) {
+                smallestTimeDiff = timeDiff;
+                nearestEmail = emailRecord.email_address;
+              }
+            });
+            
+            if (nearestEmail && response.session_id) {
+              sessionEmails[response.session_id] = nearestEmail;
+              console.log(`CSV Export: Matched response ${response.id} with email ${nearestEmail} (time diff: ${Math.round(smallestTimeDiff / 1000)}s)`);
+            }
+          });
+        }
+      }
 
       // Transform to the expected format
       const exportData = data.map(item => {

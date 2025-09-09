@@ -18,7 +18,6 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
   const { trackSessionEvent } = useSessionTracking();
 
   const handleStartWithEmail = async () => {
-    console.log('WelcomeScreen: handleStartWithEmail called with email:', email);
     const sanitizedEmail = sanitizeEmail(email);
     
     if (!sanitizedEmail) {
@@ -59,21 +58,8 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
         return;
       }
 
-      // Store the email for immediate session tracking AND track it directly
-      console.log('WelcomeScreen: Storing email in localStorage:', sanitizedEmail);
-      localStorage.setItem('collectedEmail', sanitizedEmail);
-      
-      // Track email immediately with a temporary session - this will be linked later
-      try {
-        await supabase.from('engagement_events').insert({
-          event_type: 'email_collected',
-          session_id: 'temp-welcome-session',
-          metadata: { email: sanitizedEmail }
-        });
-        console.log('WelcomeScreen: Directly inserted email_collected event');
-      } catch (engagementError) {
-        console.error('WelcomeScreen: Error inserting engagement event:', engagementError);
-      }
+      // Track email submission
+      trackSessionEvent('email_collected', undefined, undefined, { email: sanitizedEmail });
       
       toast.success("Great! Let's find you some deals.");
       onStartSurvey(sanitizedEmail);
@@ -87,9 +73,6 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
   };
 
   const handleSkipEmail = () => {
-    console.log('WelcomeScreen: handleSkipEmail called');
-    // Clear any stored email data
-    localStorage.removeItem('collectedEmail');
     onStartSurvey();
   };
   return <div className="text-center max-w-lg animate-fade-in">
