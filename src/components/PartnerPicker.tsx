@@ -73,7 +73,13 @@ const PartnerPicker: React.FC<PartnerPickerProps> = ({ onPartnerSelected }) => {
   };
 
   const getPartnerIcon = (name: string) => {
-    if (name.toLowerCase().includes('fish')) return '🐟';
+    if (name.toLowerCase().includes('fish')) return (
+      <img 
+        src="/lovable-uploads/b408f457-0b1a-4c42-a6a8-75b543ae4ab8.png" 
+        alt="Business logo"
+        className="w-8 h-8 rounded object-contain"
+      />
+    );
     if (name.toLowerCase().includes('test')) return '🧪';
     return '🏪';
   };
@@ -142,7 +148,7 @@ const PartnerPicker: React.FC<PartnerPickerProps> = ({ onPartnerSelected }) => {
                           className="w-8 h-8 rounded"
                         />
                       ) : (
-                        <span>{getPartnerIcon(partner.name)}</span>
+                        getPartnerIcon(partner.name)
                       )}
                     </div>
                     <div>
