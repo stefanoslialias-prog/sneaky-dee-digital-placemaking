@@ -80,7 +80,7 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
   return <div className="text-center max-w-lg animate-fade-in">
       {/* Shop Local Banner */}
       <div className="mt-10 mb-6">
-        <img src="/lovable-uploads/a5c50d31-a577-40dd-b769-0f586cc4f47e.png" alt="Shop Local Win Local" className="mx-auto h-36 w-auto" onError={e => {
+        <img src="/lovable-uploads/e8a40045-22a7-4e2b-b1c9-ef7fd50c29ab.png" alt="Kingsway Fish & Chips" className="mx-auto h-36 w-auto" onError={e => {
         e.currentTarget.style.display = "none";
       }} />
       </div>
