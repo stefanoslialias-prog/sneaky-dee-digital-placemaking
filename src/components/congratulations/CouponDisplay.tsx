@@ -12,12 +12,12 @@ export const CouponDisplay: React.FC<CouponDisplayProps> = ({ coupon }) => {
       <div className="flex flex-col items-center mb-3">
         <div className="w-20 h-20 rounded-full bg-toronto-blue/10 flex items-center justify-center mb-4">
           <img 
-            src={coupon.image || '/lovable-uploads/bd068280-e55a-4131-8a50-96bb2b06a92a.png'}
-            alt="Shop Local Win Local" 
+            src={coupon.image || '/lovable-uploads/832c9c34-7b33-4497-9a5c-ca17d9c8d678.png'}
+            alt="Kingsway Fish & Chips" 
             className="h-16 w-16 object-contain rounded-full"
             onError={(e) => {
               // Fallback to logo
-              e.currentTarget.src = '/lovable-uploads/68284ad5-d0ad-4d79-9dcb-65d03682dbcd.png';
+              e.currentTarget.src = '/lovable-uploads/832c9c34-7b33-4497-9a5c-ca17d9c8d678.png';
             }}
           />
         </div>
