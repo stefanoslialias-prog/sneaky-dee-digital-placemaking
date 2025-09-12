@@ -96,7 +96,7 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
       <h1 className="text-3xl font-bold mb-4 font-playfair">Local Rewards Await</h1>
 
       {/* Subtext */}
-      <p className="text-gray-600 mb-6">Discover exclusive offers at nearby shops.</p>
+      <p className="text-gray-600 mb-6">Free WiFi + Exclusive Offers</p>
 
       {/* Email Collection Section */}
       <div className="mb-6 space-y-3">
@@ -165,10 +165,6 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
         🔒 <span className="font-semibold">Private & Secure</span> — We'll only send you great deals.
       </div>
 
-      {/* Optional Timer (Optional Feature - If approved) */}
-      <div className="text-xs text-red-500 mb-2">
-        Offers available for the next 10 minutes while you're connected.
-      </div>
 
       {/* Terms & Conditions */}
       <div className="text-xs text-gray-400">

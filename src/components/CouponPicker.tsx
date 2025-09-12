@@ -144,7 +144,7 @@ const CouponPicker: React.FC<CouponPickerProps> = ({ onCouponSelected, partnerId
       <Card>
         <CardHeader className="text-center">
           <CardTitle className="text-2xl font-bold mb-2 font-playfair">
-            Pick Your Free Reward!
+            Tap to Redeem
           </CardTitle>
           <CardDescription className="text-gray-600 mb-4">
             Choose from our available offers — just answer 1 quick question

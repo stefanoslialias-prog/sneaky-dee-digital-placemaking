@@ -31,7 +31,7 @@ const ThankYou: React.FC<ThankYouProps> = ({ onDone, userInfo }) => {
             <CheckCircle size={32} className="text-green-600" />
           </div>
           <CardTitle className="text-2xl font-playfair mb-2">
-            Thank You, {userInfo?.name ? userInfo.name : "Friend"}!
+            Thank You for Your Support
           </CardTitle>
         </CardHeader>
 
@@ -70,10 +70,7 @@ const ThankYou: React.FC<ThankYouProps> = ({ onDone, userInfo }) => {
           <div className="p-4 bg-green-50 rounded-lg flex items-center gap-3 text-left mb-4">
             <Gift className="text-green-500 flex-shrink-0" />
             <div>
-              <p className="font-medium">Look out for exclusive offers!</p>
-              <p className="text-sm text-gray-600">
-                Keep an eye out for exclusive offers wherever you are delivered straight to your inbox.
-              </p>
+              <p className="font-medium">Watch for exclusive offers tailored just for you delivered straight into your inbox.</p>
             </div>
           </div>
 
@@ -88,7 +85,7 @@ const ThankYou: React.FC<ThankYouProps> = ({ onDone, userInfo }) => {
         {/* Footer */}
         <CardFooter className="flex justify-center">
           <Button
-            onClick={onDone}
+            onClick={() => window.location.href = "http://kingswayfishandchips.com/"}
             size="lg"
             variant="default"
             className="bg-toronto-blue hover:bg-toronto-lightblue transition-all"
