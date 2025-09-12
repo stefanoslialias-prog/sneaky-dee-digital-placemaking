@@ -84,14 +84,14 @@ const ThankYou: React.FC<ThankYouProps> = ({ onDone, userInfo }) => {
 
         {/* Footer */}
         <CardFooter className="flex justify-center">
-          <Button
-            onClick={() => window.location.href = "http://kingswayfishandchips.com/"}
-            size="lg"
-            variant="default"
-            className="bg-toronto-blue hover:bg-toronto-lightblue transition-all"
+          <a 
+            href="http://kingswayfishandchips.com/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 h-10 px-4 py-2 bg-toronto-blue hover:bg-toronto-lightblue text-white text-lg"
           >
             Return Home
-          </Button>
+          </a>
         </CardFooter>
       </Card>
     </div>
