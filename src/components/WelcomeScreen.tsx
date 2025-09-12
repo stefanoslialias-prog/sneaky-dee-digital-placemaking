@@ -178,7 +178,14 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
           WiFi Terms of Service
         </a>{" "}
         and{" "}
-        <span className="text-toronto-blue">Privacy Policy</span>.
+        <a 
+          href="/documents/privacy-policy.pdf" 
+          target="_blank" 
+          rel="noopener noreferrer"
+          className="text-toronto-blue hover:underline"
+        >
+          Privacy Policy
+        </a>.
       </div>
     </div>;
 };
