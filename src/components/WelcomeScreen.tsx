@@ -170,7 +170,7 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
       <div className="text-xs text-gray-400">
         By continuing, you agree to our{" "}
         <a 
-          href="/documents/wifi-terms-of-service.docx" 
+          href="/documents/wifi-terms-of-service.pdf" 
           target="_blank" 
           rel="noopener noreferrer"
           className="text-toronto-blue hover:underline"
