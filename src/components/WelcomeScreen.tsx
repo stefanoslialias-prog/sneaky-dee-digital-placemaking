@@ -67,13 +67,6 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
       setIsSubmitting(false);
     }
   };
-  const handleSkipEmail = () => {
-    // Track email skip event
-    trackSessionEvent('email_skipped', undefined, undefined, {
-      email_status: 'email not provided by survey taker'
-    });
-    onStartSurvey();
-  };
   return <div className="text-center max-w-lg animate-fade-in">
       {/* Shop Local Banner */}
       <div className="mt-10 mb-6">
@@ -123,9 +116,6 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
             </div>
           </>}
         
-        <Button onClick={handleSkipEmail} variant="outline" disabled={isSubmitting} className="w-full text-toronto-blue border-toronto-blue hover:bg-toronto-blue hover:text-white">
-          Skip Email (Browse Offers)
-        </Button>
       </div>
 
       {/* Trust Messaging */}
