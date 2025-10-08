@@ -41,7 +41,9 @@ export const useSurveyFlow = () => {
     } else {
       localStorage.removeItem('userEmail');
     }
-    setStep('partnerPicker');
+    // Skip partner picker and go directly to coupon picker
+    startNewSession(undefined);
+    setStep('couponPicker');
   };
 
   const handlePartnerSelected = (partner: Partner) => {
