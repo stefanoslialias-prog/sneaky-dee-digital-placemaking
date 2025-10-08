@@ -38,16 +38,11 @@ export const CouponDisplay: React.FC<CouponDisplayProps> = ({ coupon }) => {
           <p className="text-xs text-gray-500 mt-2">Present this code at checkout</p>
         </div>
 
-        {/* Expiry Date - Prominent */}
+        {/* Share Message */}
         <div className="p-4 bg-red-50 border-2 border-red-300 rounded-lg text-center">
-          <p className="text-sm font-semibold text-red-600 mb-1">EXPIRES ON</p>
+          <p className="text-sm font-semibold text-red-600 mb-1">SHARE</p>
           <p className="font-bold text-lg text-red-700">
-            {coupon.expires_at ? new Date(coupon.expires_at).toLocaleDateString('en-US', {
-              weekday: 'long',
-              year: 'numeric', 
-              month: 'long',
-              day: 'numeric'
-            }) : coupon.expiresIn}
+            Send to family, friends and colleagues.
           </p>
         </div>
 
