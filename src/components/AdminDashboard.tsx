@@ -129,7 +129,7 @@ const AdminDashboard: React.FC = () => {
             </Badge>
           </div>
           <img 
-            src="/lovable-uploads/68284ad5-d0ad-4d79-9dcb-65d03682dbcd.png" 
+            src="/lovable-uploads/digital-placemaking-new-logo.png" 
             alt="Digital Placemaking" 
             className="h-7" 
             onError={(e) => {

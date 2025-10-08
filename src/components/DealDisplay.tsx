@@ -54,7 +54,7 @@ const DealDisplay: React.FC = () => {
         <div className="flex items-center justify-between">
           <CardTitle className="font-playfair text-2xl">Thanks for your feedback!</CardTitle>
           <img 
-            src="/lovable-uploads/68284ad5-d0ad-4d79-9dcb-65d03682dbcd.png" 
+            src="/lovable-uploads/digital-placemaking-new-logo.png" 
             alt="Digital Placemaking" 
             className="h-8" 
             onError={(e) => {
