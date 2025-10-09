@@ -170,7 +170,7 @@ const CongratulationsScreen: React.FC<CongratulationsScreenProps> = ({
           <Button 
             variant="outline" 
             className="w-full mt-4" 
-            onClick={() => window.open('https://kingswayfishandchips.com/', '_blank')}
+            onClick={() => window.open('https://kingswayfishandchips.com/tiles/', '_blank')}
           >
             <Home className="w-4 h-4 mr-2" />
             Visit Our Website
