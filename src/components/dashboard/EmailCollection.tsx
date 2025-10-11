@@ -6,9 +6,10 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
-import { Mail, Download, Eye, Search, MessageSquare } from 'lucide-react';
+import { Mail, Download, Eye, Search, MessageSquare, Send } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { sanitizeTextInput } from '@/utils/xssProtection';
 
 interface EmailCollectionProps {
   selectedPartner?: string;
@@ -36,6 +37,12 @@ const EmailCollection: React.FC<EmailCollectionProps> = ({ selectedPartner }) =>
     sent: 0,
     failed: 0
   });
+  
+  // Mass email state
+  const [showComposeDialog, setShowComposeDialog] = useState(false);
+  const [emailSubject, setEmailSubject] = useState('');
+  const [emailContent, setEmailContent] = useState('');
+  const [isSending, setIsSending] = useState(false);
 
   const fetchEmails = async () => {
     try {
@@ -97,6 +104,65 @@ const EmailCollection: React.FC<EmailCollectionProps> = ({ selectedPartner }) =>
     a.download = `email-collection-${new Date().toISOString().split('T')[0]}.csv`;
     a.click();
     window.URL.revokeObjectURL(url);
+  };
+
+  const handleSendMassEmail = async () => {
+    if (!emailSubject.trim() || !emailContent.trim()) {
+      toast.error('Please fill in both subject and content');
+      return;
+    }
+
+    // Get unique email addresses
+    const uniqueEmails = [...new Set(emails.map(e => e.email_address))];
+    
+    if (uniqueEmails.length === 0) {
+      toast.error('No email addresses found');
+      return;
+    }
+
+    const confirmed = window.confirm(
+      `Are you sure you want to send this email to ${uniqueEmails.length} recipient(s)?`
+    );
+    
+    if (!confirmed) return;
+
+    setIsSending(true);
+    
+    try {
+      // Sanitize inputs
+      const sanitizedSubject = sanitizeTextInput(emailSubject, 200);
+      const sanitizedContent = sanitizeTextInput(emailContent, 5000);
+
+      // Insert emails into user_emails table with pending status
+      const emailRecords = uniqueEmails.map(email => ({
+        email_address: email,
+        subject: sanitizedSubject,
+        email_content: sanitizedContent,
+        status: 'pending',
+        device_id: 'mass-email'
+      }));
+
+      const { error: insertError } = await supabase
+        .from('user_emails')
+        .insert(emailRecords);
+
+      if (insertError) throw insertError;
+
+      toast.success(`Mass email queued for ${uniqueEmails.length} recipient(s)`);
+      
+      // Reset form
+      setEmailSubject('');
+      setEmailContent('');
+      setShowComposeDialog(false);
+      
+      // Refresh email list
+      await fetchEmails();
+    } catch (error) {
+      console.error('Error sending mass email:', error);
+      toast.error('Failed to queue mass email');
+    } finally {
+      setIsSending(false);
+    }
   };
 
   const getStatusBadge = (status: string) => {
@@ -216,6 +282,64 @@ const EmailCollection: React.FC<EmailCollectionProps> = ({ selectedPartner }) =>
               </CardDescription>
             </div>
             <div className="flex items-center gap-2">
+              <Dialog open={showComposeDialog} onOpenChange={setShowComposeDialog}>
+                <DialogTrigger asChild>
+                  <Button size="sm">
+                    <Send className="mr-2 h-4 w-4" />
+                    Send Mass Email
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-2xl">
+                  <DialogHeader>
+                    <DialogTitle>Compose Mass Email</DialogTitle>
+                    <DialogDescription>
+                      Send an email to all {[...new Set(emails.map(e => e.email_address))].length} collected email addresses
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="space-y-4">
+                    <div>
+                      <Label htmlFor="subject">Subject</Label>
+                      <Input
+                        id="subject"
+                        placeholder="Email subject..."
+                        value={emailSubject}
+                        onChange={(e) => setEmailSubject(e.target.value)}
+                        maxLength={200}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="content">Email Content</Label>
+                      <Textarea
+                        id="content"
+                        placeholder="Type your email message here..."
+                        value={emailContent}
+                        onChange={(e) => setEmailContent(e.target.value)}
+                        className="min-h-[300px]"
+                        maxLength={5000}
+                      />
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {emailContent.length}/5000 characters
+                      </p>
+                    </div>
+                    <div className="flex justify-end gap-2">
+                      <Button
+                        variant="outline"
+                        onClick={() => setShowComposeDialog(false)}
+                        disabled={isSending}
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        onClick={handleSendMassEmail}
+                        disabled={isSending || !emailSubject.trim() || !emailContent.trim()}
+                      >
+                        {isSending ? 'Sending...' : 'Send Email'}
+                      </Button>
+                    </div>
+                  </div>
+                </DialogContent>
+              </Dialog>
+              
               <Button variant="outline" size="sm" onClick={handleExportEmails}>
                 <Download className="mr-2 h-4 w-4" />
                 Export CSV
