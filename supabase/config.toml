@@ -1,1 +1,7 @@
 project_id = "wzymfxmvlbvqoxgnuckr"
+
+[functions.send-promo-emails]
+verify_jwt = false
+
+[functions.google-wallet]
+verify_jwt = false
