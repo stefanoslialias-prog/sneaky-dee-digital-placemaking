@@ -6,7 +6,6 @@ import { toast } from 'sonner';
 import { Coupon } from '../CouponPicker';
 import { WalletButtons } from '../wallet/WalletButtons';
 import { useSessionTracking } from '@/hooks/useSessionTracking';
-import { supabase } from '@/integrations/supabase/client';
 
 interface ActionButtonsProps {
   coupon: Coupon;
@@ -38,49 +37,33 @@ export const ActionButtons: React.FC<ActionButtonsProps> = ({
     }
   };
 
-  const handleAddToGoogleWallet = async () => {
-    try {
-      toast.loading('Creating Google Wallet pass...');
-      
-      // Call the Google Wallet edge function
-      const { data, error } = await supabase.functions.invoke('google-wallet', {
-        body: {
-          id: coupon.id,
-          title: coupon.title,
-          code: coupon.code,
-          discount: coupon.discount || 'Special Offer',
-          validUntil: coupon.expires_at || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-          description: coupon.description,
-        }
-      });
+  const handleDownloadCoupon = () => {
+    // Create a simple text file with coupon details
+    const couponText = `
+${coupon.title}
+${coupon.description}
 
-      if (error) {
-        console.error('Google Wallet error:', error);
-        toast.error('Failed to add to Google Wallet');
-        return;
-      }
+Coupon Code: ${coupon.code}
+Discount: ${coupon.discount || 'Special Offer'}
+Expires: ${coupon.expiresIn}
 
-      if (data?.success && data?.saveUrl) {
-        // Create a temporary link and click it - this works better for cross-origin redirects
-        const link = document.createElement('a');
-        link.href = data.saveUrl;
-        link.target = '_blank';
-        link.rel = 'noopener noreferrer';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        
-        toast.success('Opening Google Wallet...');
-        
-        // Track wallet add event
-        trackSessionEvent('add_to_google_wallet', coupon.id);
-      } else {
-        toast.error(data?.message || 'Failed to create wallet pass');
-      }
-    } catch (err) {
-      console.error('Failed to add to Google Wallet:', err);
-      toast.error('Failed to add to Google Wallet');
-    }
+Present this coupon at checkout to redeem your discount.
+    `.trim();
+
+    const blob = new Blob([couponText], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${coupon.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_coupon.txt`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    
+    toast.success('Coupon downloaded to your device!');
+    
+    // Track download event
+    trackSessionEvent('download_coupon', coupon.id);
   };
 
   return (
@@ -104,12 +87,12 @@ export const ActionButtons: React.FC<ActionButtonsProps> = ({
       </Button>
 
       <Button 
-        onClick={handleAddToGoogleWallet}
+        onClick={handleDownloadCoupon}
         className="w-full bg-toronto-blue hover:bg-toronto-lightblue"
         size="lg"
       >
         <Download className="mr-2 h-4 w-4" />
-        Add to Google Wallet
+        Download Coupon
       </Button>
     </div>
   );
