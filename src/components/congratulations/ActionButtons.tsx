@@ -39,7 +39,19 @@ export const ActionButtons: React.FC<ActionButtonsProps> = ({
   };
 
   const handleAddToGoogleWallet = async () => {
+    // Open window immediately to avoid pop-up blocking
+    const walletWindow = window.open('about:blank', '_blank');
+    
+    // Check if pop-up was blocked
+    if (!walletWindow) {
+      toast.error('Pop-up blocked. Please allow pop-ups for this site.');
+      return;
+    }
+    
     try {
+      // Show loading state in the new window
+      walletWindow.document.write('<html><body style="display:flex;align-items:center;justify-content:center;height:100vh;font-family:sans-serif;"><h2>Loading Google Wallet...</h2></body></html>');
+      
       // Call the Google Wallet edge function
       const { data, error } = await supabase.functions.invoke('google-wallet', {
         body: {
@@ -54,22 +66,25 @@ export const ActionButtons: React.FC<ActionButtonsProps> = ({
 
       if (error) {
         console.error('Google Wallet error:', error);
+        walletWindow.close();
         toast.error('Failed to add to Google Wallet');
         return;
       }
 
       if (data?.success && data?.saveUrl) {
-        // Open Google Wallet save URL
-        window.open(data.saveUrl, '_blank');
+        // Navigate the opened window to the Google Wallet save URL
+        walletWindow.location.href = data.saveUrl;
         toast.success('Opening Google Wallet...');
         
         // Track wallet add event
         trackSessionEvent('add_to_google_wallet', coupon.id);
       } else {
+        walletWindow.close();
         toast.error(data?.message || 'Failed to create wallet pass');
       }
     } catch (err) {
       console.error('Failed to add to Google Wallet:', err);
+      walletWindow.close();
       toast.error('Failed to add to Google Wallet');
     }
   };
