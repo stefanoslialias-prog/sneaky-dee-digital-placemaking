@@ -40,7 +40,7 @@ export const ActionButtons: React.FC<ActionButtonsProps> = ({
 
   const handleAddToGoogleWallet = async () => {
     // Open window immediately to avoid pop-up blocking
-    const walletWindow = window.open('about:blank', '_blank');
+    const walletWindow = window.open('', '_blank');
     
     // Check if pop-up was blocked
     if (!walletWindow) {
@@ -49,9 +49,6 @@ export const ActionButtons: React.FC<ActionButtonsProps> = ({
     }
     
     try {
-      // Show loading state in the new window
-      walletWindow.document.write('<html><body style="display:flex;align-items:center;justify-content:center;height:100vh;font-family:sans-serif;"><h2>Loading Google Wallet...</h2></body></html>');
-      
       // Call the Google Wallet edge function
       const { data, error } = await supabase.functions.invoke('google-wallet', {
         body: {
@@ -73,7 +70,7 @@ export const ActionButtons: React.FC<ActionButtonsProps> = ({
 
       if (data?.success && data?.saveUrl) {
         // Navigate the opened window to the Google Wallet save URL
-        walletWindow.location.href = data.saveUrl;
+        walletWindow.location = data.saveUrl;
         toast.success('Opening Google Wallet...');
         
         // Track wallet add event
