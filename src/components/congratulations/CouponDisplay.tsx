@@ -12,7 +12,7 @@ export const CouponDisplay: React.FC<CouponDisplayProps> = ({ coupon }) => {
       <div className="flex flex-col items-center mb-3">
         <div className="w-20 h-20 rounded-full bg-toronto-blue/10 flex items-center justify-center mb-4">
           <img 
-            src={coupon.image || '/lovable-uploads/832c9c34-7b33-4497-9a5c-ca17d9c8d678.png'}
+            src={coupon.image || '/lovable-uploads/sneaky-dees-logo.jpg'}
             alt="Sneaky Dee's"
             className="h-16 w-16 object-contain rounded-full"
             onError={(e) => {

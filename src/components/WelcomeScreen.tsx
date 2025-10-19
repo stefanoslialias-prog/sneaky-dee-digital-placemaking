@@ -70,7 +70,7 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
   return <div className="text-center max-w-lg animate-fade-in">
       {/* Shop Local Banner */}
       <div className="mt-10 mb-6">
-        <img src="/lovable-uploads/e8a40045-22a7-4e2b-b1c9-ef7fd50c29ab.png" alt="Sneaky Dee's" className="mx-auto h-36 w-auto" onError={e => {
+        <img src="/lovable-uploads/sneaky-dees-logo.jpg" alt="Sneaky Dee's" className="mx-auto h-36 w-auto" onError={e => {
         e.currentTarget.style.display = "none";
       }} />
       </div>
