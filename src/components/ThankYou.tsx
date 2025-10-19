@@ -85,7 +85,7 @@ const ThankYou: React.FC<ThankYouProps> = ({ onDone, userInfo }) => {
         {/* Footer */}
         <CardFooter className="flex justify-center">
           <a 
-            href="http://kingswayfishandchips.com/"
+            href="https://sneaky-dees.com/"
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 h-10 px-4 py-2 bg-toronto-blue hover:bg-toronto-lightblue text-white text-lg"
