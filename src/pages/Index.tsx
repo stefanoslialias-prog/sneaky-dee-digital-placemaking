@@ -26,7 +26,6 @@ const Index = () => {
     handleSkipRegistration,
     handleCouponSelected,
     handleSentimentComplete,
-    handleCommentComplete,
     handleOptInYes,
     handleOptInNo,
     handleEmailOptInComplete,
@@ -116,7 +115,6 @@ const Index = () => {
         onSocialSignIn={handleSocialSignIn}
         onCouponSelected={handleCouponSelected}
         onSentimentComplete={handleSentimentComplete}
-        onCommentComplete={handleCommentComplete}
         onOptInYes={handleOptInYes}
         onOptInNo={handleOptInNo}
         onEmailOptInComplete={handleEmailOptInComplete}

@@ -12,7 +12,6 @@ export type AppStep =
   | 'promotionOptIn'
   | 'couponPicker'
   | 'sentiment'
-  | 'comment'
   | 'congratulations'
   | 'thankYou';
 
@@ -107,43 +106,14 @@ export const useSurveyFlow = () => {
       mockDatabase.addResponse('1', selectedSentiment);
     }
     
-    setStep('comment');
-  };
-
-  const handleCommentComplete = async (comment?: string) => {
-    // If the user provided a comment, save it
-    if (comment) {
-      console.log('User comment:', comment);
-      
-      // If we have a previous survey response, update it with the comment
-      try {
-        const { data: recentResponses, error: fetchError } = await supabase
-          .from('survey_responses')
-          .select('id')
-          .order('created_at', { ascending: false })
-          .limit(1);
-          
-        if (!fetchError && recentResponses && recentResponses.length > 0) {
-          const responseId = recentResponses[0].id;
-          
-          // Update the response with the comment
-          await supabase
-            .from('survey_responses')
-            .update({ comment: comment })
-            .eq('id', responseId);
-        }
-      } catch (err) {
-        console.error('Failed to update survey response with comment:', err);
-      }
-    }
-    
-    // Skip congratulations step if no coupon was selected
+    // Skip comment step and go directly to congratulations or thank you
     if (!selectedCoupon || selectedCoupon.id === 'no-coupon') {
       setStep('thankYou');
     } else {
       setStep('congratulations');
     }
   };
+
 
   const handleDone = () => {
     setStep('welcome');
@@ -221,7 +191,6 @@ export const useSurveyFlow = () => {
     handleSocialSignIn,
     handleCouponSelected,
     handleSentimentComplete,
-    handleCommentComplete,
     handleDone,
     handleOptInYes,
     handleOptInNo,

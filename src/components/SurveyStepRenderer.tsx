@@ -6,7 +6,7 @@ import MultiQuestionSurvey from '@/components/MultiQuestionSurvey';
 import { Coupon } from '@/components/CouponPicker';
 import CouponPicker from '@/components/CouponPicker';
 import { CongratulationsScreen } from '@/components/congratulations';
-import CommentStep from '@/components/CommentStep';
+
 import PromotionOptIn from '@/components/PromotionOptIn';
 import ThankYou from '@/components/ThankYou';
 import { Sentiment } from '@/services/mockData';
@@ -36,7 +36,6 @@ interface SurveyStepRendererProps {
   onSocialSignIn: (provider: 'google' | 'apple') => void;
   onCouponSelected: (coupon: Coupon) => void;
   onSentimentComplete: (sentiment: Sentiment, responseId?: string) => void;
-  onCommentComplete: (comment?: string) => void;
   onOptInYes: () => void;
   onOptInNo: () => void;
   onEmailOptInComplete?: (email?: string) => void;
@@ -58,7 +57,6 @@ const SurveyStepRenderer: React.FC<SurveyStepRendererProps> = ({
   onSocialSignIn,
   onCouponSelected,
   onSentimentComplete,
-  onCommentComplete,
   onOptInYes,
   onOptInNo,
   onEmailOptInComplete,
@@ -106,16 +104,6 @@ const SurveyStepRenderer: React.FC<SurveyStepRendererProps> = ({
             <MultiQuestionSurvey 
               onComplete={onSentimentComplete}
               partnerId={selectedPartner?.id}
-            />
-          </div>
-        );
-        
-      case 'comment':
-        return (
-          <div className="animate-fade-in">
-            <CommentStep 
-              onComplete={onCommentComplete}
-              responseId={lastResponseId || undefined}
             />
           </div>
         );
