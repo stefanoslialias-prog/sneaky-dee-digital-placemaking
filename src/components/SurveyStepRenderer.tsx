@@ -2,7 +2,7 @@
 import React from 'react';
 import { AppStep } from '@/hooks/useSurveyFlow';
 import WelcomeScreen from '@/components/WelcomeScreen';
-import SentimentSurvey from '@/components/SentimentSurvey';
+import MultiQuestionSurvey from '@/components/MultiQuestionSurvey';
 import { Coupon } from '@/components/CouponPicker';
 import CouponPicker from '@/components/CouponPicker';
 import { CongratulationsScreen } from '@/components/congratulations';
@@ -103,7 +103,7 @@ const SurveyStepRenderer: React.FC<SurveyStepRendererProps> = ({
       case 'sentiment':
         return (
           <div className="animate-fade-in">
-            <SentimentSurvey 
+            <MultiQuestionSurvey 
               onComplete={onSentimentComplete}
               partnerId={selectedPartner?.id}
             />

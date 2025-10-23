@@ -11,25 +11,20 @@ interface Question {
 }
 
 export const useSentimentQuestion = (partnerId?: string) => {
-  const [question, setQuestion] = useState<Question | null>(null);
+  const [questions, setQuestions] = useState<Question[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const fetchRandomQuestion = async () => {
+  const fetchQuestions = async () => {
     setLoading(true);
     try {
-      // Get user's IP address (or a placeholder for testing)
-      const ipAddress = await fetch('https://api.ipify.org?format=json')
-        .then(res => res.json())
-        .then(data => data.ip)
-        .catch(() => 'unknown-ip-' + Math.random().toString(36).substring(7));
+      console.log("Fetching all active questions");
       
-      console.log("Fetching question for IP:", ipAddress);
-      
-      // Get all active questions first, optionally filtered by partner
+      // Get all active questions, optionally filtered by partner
       let query = supabase
         .from('survey_questions')
         .select('id, text, type, options')
-        .eq('active', true);
+        .eq('active', true)
+        .order('order', { ascending: true });
 
       if (partnerId) {
         query = query.eq('partner_id', partnerId);
@@ -39,40 +34,36 @@ export const useSentimentQuestion = (partnerId?: string) => {
         
       if (error) {
         console.error('Error fetching questions:', error);
-        toast.error('Failed to load survey question');
-        setQuestion(null);
+        toast.error('Failed to load survey questions');
+        setQuestions([]);
         return;
       }
 
       if (!allQuestions || allQuestions.length === 0) {
         console.log("No active questions found, using default question");
         // Set a default question when none are available
-        setQuestion({
+        setQuestions([{
           id: 'default-question',
           text: 'How would you rate your overall experience today?'
-        });
+        }]);
         return;
       }
 
-      // Randomly select 1 question
-      const randomIndex = Math.floor(Math.random() * allQuestions.length);
-      const selectedQuestion = allQuestions[randomIndex];
-      
-      console.log("Selected question:", selectedQuestion);
-      setQuestion(selectedQuestion);
+      console.log(`Found ${allQuestions.length} active questions`);
+      setQuestions(allQuestions);
       
     } catch (error) {
-      console.error('Failed to fetch question:', error);
-      toast.error('Failed to load survey question');
-      setQuestion(null);
+      console.error('Failed to fetch questions:', error);
+      toast.error('Failed to load survey questions');
+      setQuestions([]);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    console.log("useSentimentQuestion hook initialized, fetching question");
-    fetchRandomQuestion();
+    console.log("useSentimentQuestion hook initialized, fetching questions");
+    fetchQuestions();
     
     // Set up real-time subscription to survey_questions table
     const channel = supabase
@@ -84,17 +75,17 @@ export const useSentimentQuestion = (partnerId?: string) => {
           table: 'survey_questions'
         }, 
         (payload) => {
-          // When questions change, refresh the question
+          // When questions change, refresh the questions
           if (payload.eventType === 'INSERT') {
             toast('New survey question available!', {
               action: {
                 label: 'Refresh',
-                onClick: () => fetchRandomQuestion()
+                onClick: () => fetchQuestions()
               }
             });
           } else {
-            // Refresh question for any other change
-            fetchRandomQuestion();
+            // Refresh questions for any other change
+            fetchQuestions();
           }
         }
       )
@@ -107,8 +98,8 @@ export const useSentimentQuestion = (partnerId?: string) => {
   }, [partnerId]); // Re-fetch when partnerId changes
 
   return {
-    question,
+    questions,
     loading,
-    fetchRandomQuestion
+    fetchQuestions
   };
 };
