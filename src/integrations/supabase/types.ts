@@ -67,6 +67,7 @@ export type Database = {
           event_data: Json | null
           event_type: string
           id: string
+          metadata: Json | null
           session_id: string
         }
         Insert: {
@@ -74,6 +75,7 @@ export type Database = {
           event_data?: Json | null
           event_type: string
           id?: string
+          metadata?: Json | null
           session_id: string
         }
         Update: {
@@ -81,6 +83,7 @@ export type Database = {
           event_data?: Json | null
           event_type?: string
           id?: string
+          metadata?: Json | null
           session_id?: string
         }
         Relationships: []
