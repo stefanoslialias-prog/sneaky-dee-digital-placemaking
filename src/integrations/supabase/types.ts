@@ -410,10 +410,19 @@ export type Database = {
         }
         Returns: string
       }
-      update_response_comment: {
-        Args: { p_comment: string; p_response_id: string }
-        Returns: undefined
-      }
+      update_response_comment:
+        | {
+            Args: { p_comment: string; p_response_id: string }
+            Returns: undefined
+          }
+        | {
+            Args: {
+              p_comment: string
+              p_response_id: string
+              p_session_id: string
+            }
+            Returns: undefined
+          }
     }
     Enums: {
       app_role: "admin" | "moderator" | "user"
