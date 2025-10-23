@@ -42,56 +42,39 @@ const PartnerLocations: React.FC<PartnerLocationsProps> = ({ selectedPartner, on
     try {
       setLoading(true);
       
-      // First try to fetch analytics data using secure function
-      const { data: partnersData, error } = await supabase.rpc('get_partner_analytics');
+      // Fetch basic partner list from partners table
+      const { data: basicPartners, error: basicError } = await supabase
+        .from('partners')
+        .select('id, name, slug, description, active')
+        .eq('active', true)
+        .order('name');
       
-      if (partnersData && partnersData.length > 0) {
-        // Use analytics data if available
-        setPartners(partnersData);
-        
-        // Set selected partner data
-        if (selectedPartner && partnersData) {
-          const selected = partnersData.find(p => p.partner_id === selectedPartner);
-          setSelectedPartnerData(selected || null);
-        } else {
-          setSelectedPartnerData(null);
-        }
+      if (basicError) throw basicError;
+      
+      // Convert to analytics format with zero metrics
+      const fallbackPartners = (basicPartners || []).map(p => ({
+        partner_id: p.id,
+        name: p.name,
+        slug: p.slug,
+        total_responses: 0,
+        happy_count: 0,
+        neutral_count: 0,
+        concerned_count: 0,
+        respondent_sessions: 0,
+        visits: 0,
+        copy_clicks: 0,
+        download_clicks: 0,
+        wallet_adds: 0,
+      }));
+      
+      setPartners(fallbackPartners);
+      
+      // Set selected partner data
+      if (selectedPartner && fallbackPartners) {
+        const selected = fallbackPartners.find(p => p.partner_id === selectedPartner);
+        setSelectedPartnerData(selected || null);
       } else {
-        // Fallback: Fetch basic partner list from partners table
-        console.log('Analytics not available, falling back to basic partner list');
-        const { data: basicPartners, error: basicError } = await supabase
-          .from('partners')
-          .select('id, name, slug, description, active')
-          .eq('active', true)
-          .order('name');
-        
-        if (basicError) throw basicError;
-        
-        // Convert to analytics format with zero metrics
-        const fallbackPartners = (basicPartners || []).map(p => ({
-          partner_id: p.id,
-          name: p.name,
-          slug: p.slug,
-          total_responses: 0,
-          happy_count: 0,
-          neutral_count: 0,
-          concerned_count: 0,
-          respondent_sessions: 0,
-          visits: 0,
-          copy_clicks: 0,
-          download_clicks: 0,
-          wallet_adds: 0,
-        }));
-        
-        setPartners(fallbackPartners);
-        
-        // Set selected partner data
-        if (selectedPartner && fallbackPartners) {
-          const selected = fallbackPartners.find(p => p.partner_id === selectedPartner);
-          setSelectedPartnerData(selected || null);
-        } else {
-          setSelectedPartnerData(null);
-        }
+        setSelectedPartnerData(null);
       }
     } catch (error) {
       console.error('Error fetching partner data:', error);

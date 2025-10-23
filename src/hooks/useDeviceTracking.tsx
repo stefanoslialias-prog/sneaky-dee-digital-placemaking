@@ -1,6 +1,5 @@
 
 import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
 
 export function useDeviceTracking() {
   const [deviceId, setDeviceId] = useState<string | null>(null);
@@ -30,8 +29,8 @@ export function useDeviceTracking() {
         localStorage.setItem('deviceId', newDeviceId);
         setDeviceId(newDeviceId);
         
-        // Record device in database with error handling
-        await recordDeviceInDatabase(newDeviceId);
+        // Device tracking via localStorage only
+        console.log('Device tracked:', newDeviceId.substring(0, 8) + '...');
       } catch (error) {
         console.error('Error initializing device ID:', error);
         // Fallback to timestamp-based ID if crypto fails
@@ -43,45 +42,6 @@ export function useDeviceTracking() {
 
     initializeDeviceId();
   }, []);
-
-  const recordDeviceInDatabase = async (deviceId: string) => {
-    try {
-      // Validate device ID before inserting
-      if (!deviceId || deviceId.length < 10) {
-        throw new Error('Invalid device ID');
-      }
-
-      // Check if device already exists
-      const { data: existingDevice, error: checkError } = await supabase
-        .from('devices')
-        .select('id')
-        .eq('mac_address', deviceId)
-        .single();
-
-      if (checkError && checkError.code !== 'PGRST116') {
-        console.error('Error checking device:', checkError);
-        return;
-      }
-
-      // Only insert if device doesn't exist
-      if (!existingDevice) {
-        const { error } = await supabase
-          .from('devices')
-          .insert({
-            mac_address: deviceId,
-            opt_in: false
-          });
-          
-        if (error) {
-          console.error('Error recording device:', error);
-        } else {
-          console.log('Device recorded successfully:', deviceId.substring(0, 8) + '...');
-        }
-      }
-    } catch (err) {
-      console.error('Failed to record device:', err);
-    }
-  };
 
   return { deviceId };
 }

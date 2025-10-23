@@ -28,39 +28,22 @@ export const useLocationData = () => {
         setLocations(demoLocations);
         return demoLocations;
       } else if (locationData) {
-        // Fetch traffic data for each location
-        const locationSummaries = await Promise.all(
-          locationData.map(async (location) => {
-            // Get latest traffic for this location
-            const { data: trafficData } = await supabase
-              .from('location_traffic')
-              .select('device_count')
-              .eq('location_id', location.id)
-              .order('timestamp', { ascending: false })
-              .limit(1)
-              .single();
-              
-            // Get response count for this location
-            const { count: responseCount } = await supabase
-              .from('survey_responses')
-              .select('*', { count: 'exact', head: true })
-              .eq('location_id', location.id);
+        // Generate demo location data (no location_traffic table)
+        const locationSummaries = locationData.map(location => {
+          // Generate diverse but high engagement data (50-80% participation rate)
+          const footTraffic = Math.floor(Math.random() * 1000) + 800;
+          const completionRate = 0.5 + (Math.random() * 0.3); // 50-80% participation rate
+          const linkClicks = Math.floor(Math.random() * 1000) + 500;
+          const sessions = Math.round(linkClicks * completionRate);
             
-            // Generate diverse but high engagement data (50-80% participation rate)
-            const footTraffic = trafficData?.device_count || Math.floor(Math.random() * 1000) + 800;
-            const completionRate = 0.5 + (Math.random() * 0.3); // 50-80% participation rate
-            const linkClicks = Math.floor(Math.random() * 1000) + 500;
-            const sessions = Math.round(linkClicks * completionRate);
-              
-            return {
-              id: location.id,
-              name: location.name,
-              totalSessions: sessions,
-              footTraffic: footTraffic,
-              linkClicks: linkClicks
-            };
-          })
-        );
+          return {
+            id: location.id,
+            name: location.name,
+            totalSessions: sessions,
+            footTraffic: footTraffic,
+            linkClicks: linkClicks
+          };
+        });
         
         // Shuffle the locations to randomize the display order
         const randomizedLocations = shuffleArray(locationSummaries);

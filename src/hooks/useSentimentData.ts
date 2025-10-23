@@ -55,29 +55,32 @@ export const useSentimentData = () => {
         return;
       }
       
-      // If user is admin, fetch the data using the sentiment summary function
+      // If user is admin, fetch the data directly from survey_responses
       if (userData?.role === 'admin') {
-        const { data: summaryData, error: summaryError } = await supabase
-          .rpc('get_sentiment_summary');
+        const { data: responses, error: queryError } = await supabase
+          .from('survey_responses')
+          .select('answer');
             
-        if (summaryError) {
-          console.log('Error fetching sentiment summary:', summaryError);
+        if (queryError) {
+          console.log('Error fetching survey responses:', queryError);
           console.log('Using demo sentiment data instead');
-          // Use demo data if we can't get real data
           setSentimentData({
             happy_count: 320,
             neutral_count: 184,
             concerned_count: 96,
             total_count: 600
           });
-        } else if (summaryData && summaryData.length > 0) {
-          // Get the most recent data
-          const latestData = summaryData[0];
+        } else if (responses) {
+          // Count sentiments
+          const happy = responses.filter(r => r.answer === 'happy').length;
+          const neutral = responses.filter(r => r.answer === 'neutral').length;
+          const concerned = responses.filter(r => r.answer === 'concerned').length;
+          
           setSentimentData({
-            happy_count: latestData.happy_count || 0,
-            neutral_count: latestData.neutral_count || 0,
-            concerned_count: latestData.concerned_count || 0,
-            total_count: latestData.total_count || 0
+            happy_count: happy,
+            neutral_count: neutral,
+            concerned_count: concerned,
+            total_count: responses.length
           });
         }
       } else {

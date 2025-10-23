@@ -98,7 +98,7 @@ export const useQuestionManager = (selectedPartner?: string) => {
             order: currentQuestion.order,
             active: currentQuestion.active,
             partner_id: currentQuestion.partner_id,
-            options: currentQuestion.options || []
+            options: currentQuestion.options as any || []
           })
           .eq('id', currentQuestion.id);
           
@@ -113,7 +113,7 @@ export const useQuestionManager = (selectedPartner?: string) => {
             order: currentQuestion.order,
             active: true,
             partner_id: currentQuestion.partner_id,
-            options: currentQuestion.options || []
+            options: currentQuestion.options as any || []
           });
           
         if (error) throw error;

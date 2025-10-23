@@ -57,35 +57,18 @@ const PartnerOverview: React.FC<PartnerOverviewProps> = ({ selectedPartner }) =>
       let allEvents = [];
       
       if (selectedPartner) {
-        // Query 1: Events where partner_id matches
-        const { data: directEvents, error: directError } = await supabase
+        // Query events (engagement_events doesn't have partner_id column)
+        const { data: events, error: eventsError } = await supabase
           .from('engagement_events')
-          .select('event_type, partner_id, coupon_id')
-          .eq('partner_id', selectedPartner);
+          .select('event_type, coupon_id');
         
-        if (directError) throw directError;
-        
-        // Query 2: Events where partner_id is null but coupon belongs to partner
-        const { data: couponEvents, error: couponError } = await supabase
-          .from('engagement_events')
-          .select(`
-            event_type, 
-            partner_id,
-            coupon_id,
-            coupons!inner(partner_id)
-          `)
-          .is('partner_id', null)
-          .eq('coupons.partner_id', selectedPartner);
-        
-        if (couponError) throw couponError;
-        
-        // Merge both datasets
-        allEvents = [...(directEvents || []), ...(couponEvents || [])];
+        if (eventsError) throw eventsError;
+        allEvents = events || [];
       } else {
         // For "All Partners", get all events
         const { data, error } = await supabase
           .from('engagement_events')
-          .select('event_type, partner_id, coupon_id');
+          .select('event_type, coupon_id');
         
         if (error) throw error;
         allEvents = data || [];
@@ -160,30 +143,77 @@ const PartnerOverview: React.FC<PartnerOverviewProps> = ({ selectedPartner }) =>
     try {
       setLoading(true);
       
-      // First try to fetch analytics data using secure function
-      const { data: analyticsData, error: analyticsError } = await supabase.rpc('get_partner_analytics');
-      
-      if (analyticsData && analyticsData.length > 0) {
-        // Use analytics data if available
-        if (selectedPartner) {
-          const data = analyticsData.find(p => p.partner_id === selectedPartner) || null;
-          setPartnerData(data);
+      // Fetch basic data for the selected partner or all partners
+      if (selectedPartner) {
+        // Get basic partner info
+        const { data: partner } = await supabase
+          .from('partners')
+          .select('id, name, slug')
+          .eq('id', selectedPartner)
+          .eq('active', true)
+          .single();
+        
+        if (partner) {
+          // Get sentiment data from survey responses
+          const { data: responses } = await supabase
+            .from('survey_responses')
+            .select('answer, session_id')
+            .eq('partner_id', selectedPartner);
+          
+          const sentimentCounts = (responses || []).reduce((acc, response) => {
+            if (response.answer === 'happy') acc.happy_count++;
+            else if (response.answer === 'neutral') acc.neutral_count++;
+            else if (response.answer === 'concerned') acc.concerned_count++;
+            return acc;
+          }, { happy_count: 0, neutral_count: 0, concerned_count: 0 });
+          
+          const uniqueSessions = new Set((responses || []).map(r => r.session_id)).size;
+          
+          setPartnerData({
+            partner_id: partner.id,
+            name: partner.name,
+            slug: partner.slug,
+            total_responses: responses?.length || 0,
+            ...sentimentCounts,
+            respondent_sessions: uniqueSessions,
+            visits: 0,
+            copy_clicks: 0,
+            download_clicks: 0,
+            wallet_adds: 0,
+          });
         } else {
-          // Aggregate all partners data for "All Partners" view
-          const aggregated = analyticsData.reduce((acc, partner) => ({
+          setPartnerData(null);
+        }
+      } else {
+        // "All Partners" fallback
+        const { data: responses } = await supabase
+          .from('survey_responses')
+          .select('answer, session_id, partner_id');
+        
+        if (responses && responses.length > 0) {
+          const sentimentCounts = responses.reduce((acc, response) => {
+            if (response.answer === 'happy') acc.happy_count++;
+            else if (response.answer === 'neutral') acc.neutral_count++;
+            else if (response.answer === 'concerned') acc.concerned_count++;
+            return acc;
+          }, { happy_count: 0, neutral_count: 0, concerned_count: 0 });
+          
+          const uniqueSessions = new Set(responses.map(r => r.session_id)).size;
+          
+          setPartnerData({
             partner_id: 'all',
             name: 'All Partners',
             slug: 'all',
-            total_responses: acc.total_responses + (partner.total_responses || 0),
-            happy_count: acc.happy_count + (partner.happy_count || 0),
-            neutral_count: acc.neutral_count + (partner.neutral_count || 0),
-            concerned_count: acc.concerned_count + (partner.concerned_count || 0),
-            respondent_sessions: acc.respondent_sessions + (partner.respondent_sessions || 0),
-            visits: 0, // Will be populated from engagement data
-            copy_clicks: 0, // Will be populated from engagement data
-            download_clicks: 0, // Will be populated from engagement data
-            wallet_adds: 0, // Will be populated from engagement data
-          }), {
+            total_responses: responses.length,
+            ...sentimentCounts,
+            respondent_sessions: uniqueSessions,
+            visits: 0,
+            copy_clicks: 0,
+            download_clicks: 0,
+            wallet_adds: 0,
+          });
+        } else {
+          setPartnerData({
             partner_id: 'all',
             name: 'All Partners',
             slug: 'all',
@@ -197,97 +227,6 @@ const PartnerOverview: React.FC<PartnerOverviewProps> = ({ selectedPartner }) =>
             download_clicks: 0,
             wallet_adds: 0,
           });
-          
-          setPartnerData(aggregated);
-        }
-      } else {
-        // Fallback: Try to fetch basic data for admin users
-        console.log('Analytics not available, trying fallback approach');
-        
-        if (selectedPartner) {
-          // Get basic partner info
-          const { data: partner } = await supabase
-            .from('partners')
-            .select('id, name, slug')
-            .eq('id', selectedPartner)
-            .eq('active', true)
-            .single();
-          
-          if (partner) {
-            // Get sentiment data from survey responses
-            const { data: responses } = await supabase
-              .from('survey_responses')
-              .select('answer, session_id')
-              .eq('partner_id', selectedPartner);
-            
-            const sentimentCounts = (responses || []).reduce((acc, response) => {
-              if (response.answer === 'happy') acc.happy_count++;
-              else if (response.answer === 'neutral') acc.neutral_count++;
-              else if (response.answer === 'concerned') acc.concerned_count++;
-              return acc;
-            }, { happy_count: 0, neutral_count: 0, concerned_count: 0 });
-            
-            const uniqueSessions = new Set((responses || []).map(r => r.session_id)).size;
-            
-            setPartnerData({
-              partner_id: partner.id,
-              name: partner.name,
-              slug: partner.slug,
-              total_responses: responses?.length || 0,
-              ...sentimentCounts,
-              respondent_sessions: uniqueSessions,
-              visits: 0,
-              copy_clicks: 0,
-              download_clicks: 0,
-              wallet_adds: 0,
-            });
-          } else {
-            setPartnerData(null);
-          }
-        } else {
-          // "All Partners" fallback
-          const { data: responses } = await supabase
-            .from('survey_responses')
-            .select('answer, session_id, partner_id');
-          
-          if (responses && responses.length > 0) {
-            const sentimentCounts = responses.reduce((acc, response) => {
-              if (response.answer === 'happy') acc.happy_count++;
-              else if (response.answer === 'neutral') acc.neutral_count++;
-              else if (response.answer === 'concerned') acc.concerned_count++;
-              return acc;
-            }, { happy_count: 0, neutral_count: 0, concerned_count: 0 });
-            
-            const uniqueSessions = new Set(responses.map(r => r.session_id)).size;
-            
-            setPartnerData({
-              partner_id: 'all',
-              name: 'All Partners',
-              slug: 'all',
-              total_responses: responses.length,
-              ...sentimentCounts,
-              respondent_sessions: uniqueSessions,
-              visits: 0,
-              copy_clicks: 0,
-              download_clicks: 0,
-              wallet_adds: 0,
-            });
-          } else {
-            setPartnerData({
-              partner_id: 'all',
-              name: 'All Partners',
-              slug: 'all',
-              total_responses: 0,
-              happy_count: 0,
-              neutral_count: 0,
-              concerned_count: 0,
-              respondent_sessions: 0,
-              visits: 0,
-              copy_clicks: 0,
-              download_clicks: 0,
-              wallet_adds: 0,
-            });
-          }
         }
       }
       

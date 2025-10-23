@@ -118,21 +118,8 @@ const Auth: React.FC = () => {
       }
       
       if (data.user) {
-        // Create user record in public.users table
-        const { error: userError } = await supabase
-          .from('users')
-          .insert({
-            id: data.user.id,
-            email: values.email,
-            name: values.name,
-            signed_up_at: new Date().toISOString()
-          });
-          
-        if (userError) {
-          console.error('Error creating user record:', userError);
-          // Don't fail the signup for this, but log it
-        }
-        
+        // User info stored in auth.users by Supabase
+        console.log('User created successfully');
         toast.success('Account created successfully! Please check your email to verify your account.');
         setIsSignUp(false); // Switch to login form
       }

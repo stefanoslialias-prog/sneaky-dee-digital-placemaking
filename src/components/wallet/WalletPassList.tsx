@@ -34,12 +34,7 @@ export const WalletPassList: React.FC = () => {
 
       try {
         const walletPasses = await getUserWalletPasses(user.id);
-        // Type cast the platform field to ensure it matches our interface
-        const typedPasses = walletPasses.map(pass => ({
-          ...pass,
-          platform: (pass.platform === 'apple' || pass.platform === 'google') ? pass.platform : 'apple'
-        })) as WalletPass[];
-        setPasses(typedPasses);
+        setPasses(walletPasses as any);
       } catch (error) {
         console.error('Error loading wallet passes:', error);
       } finally {

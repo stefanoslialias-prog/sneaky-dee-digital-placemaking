@@ -66,10 +66,8 @@ export const useSurveyFlow = () => {
     
     // Update device opt-in status if we have a device ID
     try {
-      await supabase
-        .from('devices')
-        .update({ opt_in: true })
-        .eq('mac_address', deviceId);
+      // Store opt-in preference in localStorage
+      localStorage.setItem('user_opt_in', 'true');
     } catch (err) {
       console.error('Failed to update device opt-in status:', err);
     }

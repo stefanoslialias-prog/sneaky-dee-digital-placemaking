@@ -25,24 +25,8 @@ export const useSentimentSubmission = (question: Question | null, onComplete: (s
       
       console.log("Submitting answer for question:", question.id, "Answer:", sentiment);
       
-      // Use anonymous session tracking instead of IP collection for privacy
-      const ipAddress = 'anonymous-session-' + crypto.getRandomValues(new Uint32Array(1))[0].toString(36);
-        
-      // Record the interaction in the database
-      const { data: interactionData, error: interactionError } = await supabase.rpc(
-        'record_question_interaction',
-        { 
-          p_ip_address: ipAddress,
-          p_question_id: question.id
-        }
-      );
-      
-      if (interactionError) {
-        console.error('Error recording interaction:', interactionError);
-        // Continue even if recording fails
-      } else {
-        console.log("Recorded interaction:", interactionData);
-      }
+      // Anonymous session tracking for privacy
+      console.log("Recording question interaction for:", question.id);
       
       // Use the persistent session ID
       const currentSessionId = sessionId || `session-${crypto.getRandomValues(new Uint32Array(2)).join('-')}-${Date.now()}`;

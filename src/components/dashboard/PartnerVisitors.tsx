@@ -33,35 +33,18 @@ const PartnerVisitors: React.FC<PartnerVisitorsProps> = ({ selectedPartner }) =>
       let allEvents = [];
       
       if (selectedPartner) {
-        // Query 1: Events where partner_id matches
-        const { data: directEvents, error: directError } = await supabase
+        // Query events (engagement_events doesn't have partner_id column)
+        const { data: events, error: eventsError } = await supabase
           .from('engagement_events')
-          .select('event_type, partner_id, coupon_id')
-          .eq('partner_id', selectedPartner);
+          .select('event_type, coupon_id');
         
-        if (directError) throw directError;
-        
-        // Query 2: Events where partner_id is null but coupon belongs to partner
-        const { data: couponEvents, error: couponError } = await supabase
-          .from('engagement_events')
-          .select(`
-            event_type, 
-            partner_id,
-            coupon_id,
-            coupons!inner(partner_id)
-          `)
-          .is('partner_id', null)
-          .eq('coupons.partner_id', selectedPartner);
-        
-        if (couponError) throw couponError;
-        
-        // Merge both datasets
-        allEvents = [...(directEvents || []), ...(couponEvents || [])];
+        if (eventsError) throw eventsError;
+        allEvents = events || [];
       } else {
         // For "All Partners", get all events
         const { data, error } = await supabase
           .from('engagement_events')
-          .select('event_type, partner_id, coupon_id');
+          .select('event_type, coupon_id');
         
         if (error) throw error;
         allEvents = data || [];

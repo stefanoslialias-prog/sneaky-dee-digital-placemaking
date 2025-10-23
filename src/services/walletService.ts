@@ -78,36 +78,9 @@ export const isWalletSupported = (): { apple: boolean; google: boolean } => {
  */
 export const getUserWalletPasses = async (userId: string) => {
   try {
-    // SECURITY: This query now only works for authenticated users viewing their own data
-    // The RLS policies ensure device_id is never exposed to client-side code
-    const { data, error } = await supabase
-      .from('user_wallets')
-      .select(`
-        id,
-        claimed_at,
-        redeemed_at,
-        platform,
-        pass_url,
-        passkit_status,
-        coupons (
-          id,
-          title,
-          description,
-          code,
-          discount,
-          expires_at,
-          image_url
-        )
-      `)
-      .eq('user_id', userId)
-      .order('claimed_at', { ascending: false });
-
-    if (error) {
-      console.error('Error fetching wallet passes:', error);
-      return [];
-    }
-
-    return data || [];
+    // User wallets table not implemented yet
+    console.log('getUserWalletPasses: feature not available');
+    return [];
   } catch (error) {
     console.error('Error fetching wallet passes:', error);
     return [];

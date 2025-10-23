@@ -74,11 +74,10 @@ export const fetchCoupons = async (): Promise<Coupon[]> => {
         id: coupon.id,
         title: sanitizeTextInput(coupon.title),
         description: sanitizeTextInput(coupon.description),
-        // SECURITY: No longer expose coupon codes during browsing
-        code: '', // Code will be revealed only after claiming via claim_coupon function
+        code: '', // Code will be revealed only after claiming
         discount: coupon.discount ? sanitizeTextInput(coupon.discount) : '',
         expiresIn: formatExpiryDate(coupon.expires_at),
-        image: coupon.image_url || undefined
+        image: undefined
       }));
 
     console.log('Transformed coupons:', transformedCoupons);
@@ -151,8 +150,7 @@ export const claimCoupon = async (params: ClaimCouponParams): Promise<ClaimCoupo
       {
         p_coupon_id: sanitizedParams.couponId,
         p_device_id: sanitizedParams.deviceId || null,
-        p_email: sanitizedParams.email || null,
-        p_name: sanitizedParams.name || null
+        p_session_id: sanitizedParams.deviceId || null
       }
     );
 
@@ -212,62 +210,9 @@ export const claimCoupon = async (params: ClaimCouponParams): Promise<ClaimCoupo
  */
 export const getUserCoupons = async (): Promise<Coupon[]> => {
   try {
-    // Check authentication
-    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-    
-    if (sessionError) {
-      console.error('Session error:', sessionError);
-      return [];
-    }
-
-    if (!session?.user?.id) {
-      console.log('No authenticated user');
-      return [];
-    }
-
-    const { data, error } = await supabase
-      .from('user_coupons')
-      .select(`
-        id,
-        claimed_at,
-        redeemed_at,
-        coupons (
-          id,
-          title,
-          description,
-          code,
-          discount,
-          expires_at,
-          image_url
-        )
-      `)
-      .eq('user_id', session.user.id)
-      .order('claimed_at', { ascending: false });
-
-    if (error) {
-      console.error('Error fetching user coupons:', error);
-      return [];
-    }
-
-    if (!data) {
-      return [];
-    }
-
-    // Transform and validate data with enhanced XSS protection
-    return data
-      .filter(item => item.coupons && item.coupons.id) // Ensure coupon data exists
-      .map(item => ({
-        id: item.coupons.id,
-        title: sanitizeTextInput(item.coupons.title),
-        description: sanitizeTextInput(item.coupons.description),
-        code: sanitizeTextInput(item.coupons.code),
-        discount: item.coupons.discount ? sanitizeTextInput(item.coupons.discount) : '',
-        expires_at: item.coupons.expires_at,
-        expiresIn: formatExpiryDate(item.coupons.expires_at),
-        image: item.coupons.image_url || undefined,
-        claimedAt: new Date(item.claimed_at),
-        redeemedAt: item.redeemed_at ? new Date(item.redeemed_at) : undefined
-      }));
+    // User coupons table not implemented yet
+    console.log('getUserCoupons: feature not available');
+    return [];
   } catch (error) {
     console.error('Error fetching user coupons:', error);
     return [];

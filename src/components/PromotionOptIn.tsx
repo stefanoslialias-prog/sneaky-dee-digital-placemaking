@@ -11,6 +11,7 @@ import { toast } from 'sonner';
 import { Apple, LucideArrowRight } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { ClaimCouponResult } from '@/services/couponService';
+import { useSessionTracking } from '@/hooks/useSessionTracking';
 
 interface PromotionOptInProps {
   onSkip: () => void;
@@ -26,6 +27,7 @@ const formSchema = z.object({
 
 const PromotionOptIn: React.FC<PromotionOptInProps> = ({ onSkip, onRegister, onSocialSignIn, couponId }) => {
   const [isLoading, setIsLoading] = useState(false);
+  const { sessionId } = useSessionTracking();
   
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -106,9 +108,8 @@ const PromotionOptIn: React.FC<PromotionOptInProps> = ({ onSkip, onRegister, onS
           'claim_coupon', 
           {
             p_coupon_id: couponId,
-            p_email: values.email,
-            p_name: values.name,
-            p_device_id: deviceId
+            p_device_id: deviceId,
+            p_session_id: sessionId
           }
         );
         
@@ -194,9 +195,7 @@ const PromotionOptIn: React.FC<PromotionOptInProps> = ({ onSkip, onRegister, onS
     const { data: otherCoupons, error: couponsError } = await supabase
       .from('coupons_public')
       .select('title, discount')
-      .eq('active', true)
-      .order('created_at', { ascending: false })
-      .limit(3);
+      .limit(3) as any;
       
     let otherDealsHtml = '';
     
