@@ -90,7 +90,7 @@ const QuestionDialog: React.FC<QuestionDialogProps> = ({
   const needsOptions = currentQuestion?.type === 'multiple_choice' || currentQuestion?.type === 'ranked_choice';
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[550px]">
+      <DialogContent className="sm:max-w-[550px] max-h-[90vh] flex flex-col">
         <DialogHeader>
           <DialogTitle>
             {currentQuestion?.id ? 'Edit Question' : 'Add New Question'}
@@ -102,7 +102,7 @@ const QuestionDialog: React.FC<QuestionDialogProps> = ({
           </DialogDescription>
         </DialogHeader>
         
-        <div className="grid gap-4 py-4">
+        <div className="grid gap-4 py-4 overflow-y-auto flex-1">
           <div className="grid gap-2">
             <Label htmlFor="question-text">Question Text</Label>
             <Textarea
@@ -210,7 +210,7 @@ const QuestionDialog: React.FC<QuestionDialogProps> = ({
           )}
         </div>
         
-        <DialogFooter className="flex justify-between">
+        <DialogFooter className="flex flex-row justify-between items-center pt-4 border-t mt-4">
           <div>
             {currentQuestion?.id && (
               <Button 
@@ -230,7 +230,6 @@ const QuestionDialog: React.FC<QuestionDialogProps> = ({
               disabled={isSaving || isDeleting}
             >
               Cancel
-              <X className="ml-2 h-4 w-4" />
             </Button>
             <Button 
               onClick={onSave}
