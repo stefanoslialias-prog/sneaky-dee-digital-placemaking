@@ -1,7 +1,7 @@
 import React, { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { CheckCircle, Gift, Mail } from "lucide-react";
+import { Gift, Mail } from "lucide-react";
 import { toast } from "sonner";
 
 interface ThankYouProps {
@@ -27,8 +27,12 @@ const ThankYou: React.FC<ThankYouProps> = ({ onDone, userInfo }) => {
       <Card>
         {/* Header */}
         <CardHeader className="text-center">
-          <div className="mx-auto w-16 h-16 rounded-full bg-green-100 flex items-center justify-center mb-4">
-            <CheckCircle size={32} className="text-green-600" />
+          <div className="mx-auto w-24 h-24 rounded-full overflow-hidden flex items-center justify-center mb-4">
+            <img 
+              src="/lovable-uploads/sneaky-dees-logo.jpg" 
+              alt="Sneaky Dee's" 
+              className="w-full h-full object-cover"
+            />
           </div>
           <CardTitle className="text-2xl font-playfair mb-2">
             Thank You for Your Support
