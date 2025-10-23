@@ -9,12 +9,14 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AlertTriangle, Shield } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 
 const AdminLogin: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+  const [isSignupMode, setIsSignupMode] = useState(false);
   const { user, login } = useAuth();
   const navigate = useNavigate();
   
@@ -31,30 +33,40 @@ const AdminLogin: React.FC = () => {
     setErrorMsg('');
     
     try {
-      const result = await login(email, password);
-      console.log('Login attempt result:', result);
-      
-      if (result?.error) {
-        const message = result.error.message || 'Login failed. Please check your credentials.';
-        setErrorMsg(message);
-        toast.error('Login failed: ' + message);
+      if (isSignupMode) {
+        // Sign up flow
+        const { data, error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            emailRedirectTo: `${window.location.origin}/admin/dashboard`
+          }
+        });
         
-        // More helpful message for default admin
-        if (email === 'admin@digitalplacemaking.ca') {
-          const helpText = "If using default admin, make sure this account exists in Supabase Auth.";
-          setErrorMsg(message + " " + helpText);
+        if (error) throw error;
+        
+        toast.success('Account created! You can now sign in.');
+        setIsSignupMode(false);
+        setPassword('');
+      } else {
+        // Login flow
+        const result = await login(email, password);
+        
+        if (result?.error) {
+          const message = result.error.message || 'Login failed. Please check your credentials.';
+          setErrorMsg(message);
+          toast.error('Login failed: ' + message);
+          setIsLoading(false);
+          return;
         }
         
-        setIsLoading(false);
-        return;
+        toast.success('Login successful');
+        navigate('/admin/dashboard');
       }
-      
-      toast.success('Login successful');
-      navigate('/admin/dashboard');
     } catch (err: any) {
-      console.error('Login error:', err);
+      console.error('Auth error:', err);
       setErrorMsg(err?.message || 'An unexpected error occurred');
-      toast.error('Login failed: ' + (err?.message || 'Unknown error'));
+      toast.error((isSignupMode ? 'Signup' : 'Login') + ' failed: ' + (err?.message || 'Unknown error'));
     } finally {
       setIsLoading(false);
     }
@@ -69,7 +81,7 @@ const AdminLogin: React.FC = () => {
             <Shield className="h-6 w-6 text-blue-500" />
           </div>
           <CardDescription>
-            Secure admin access - Sign in to manage the real-time dashboard
+            {isSignupMode ? 'Create your admin account' : 'Secure admin access - Sign in to manage the real-time dashboard'}
           </CardDescription>
         </CardHeader>
         <form onSubmit={handleSubmit}>
@@ -108,11 +120,23 @@ const AdminLogin: React.FC = () => {
               className="w-full"
               disabled={isLoading}
             >
-              {isLoading ? 'Signing in...' : 'Sign in'}
+              {isLoading ? (isSignupMode ? 'Creating account...' : 'Signing in...') : (isSignupMode ? 'Create Account' : 'Sign in')}
             </Button>
             
+            <div className="text-center text-sm">
+              <button
+                type="button"
+                onClick={() => {
+                  setIsSignupMode(!isSignupMode);
+                  setErrorMsg('');
+                }}
+                className="text-blue-600 hover:text-blue-700 underline"
+              >
+                {isSignupMode ? 'Already have an account? Sign in' : 'Need an account? Sign up'}
+              </button>
+            </div>
+            
             <div className="text-center text-sm text-gray-500">
-              <p>Enter your admin credentials to access the dashboard</p>
               <p className="mt-1 text-xs text-orange-500">Secure admin access only</p>
             </div>
           </CardFooter>
