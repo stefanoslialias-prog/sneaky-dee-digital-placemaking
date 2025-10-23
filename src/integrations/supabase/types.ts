@@ -63,6 +63,7 @@ export type Database = {
       }
       engagement_events: {
         Row: {
+          coupon_id: string | null
           created_at: string | null
           event_data: Json | null
           event_type: string
@@ -71,6 +72,7 @@ export type Database = {
           session_id: string
         }
         Insert: {
+          coupon_id?: string | null
           created_at?: string | null
           event_data?: Json | null
           event_type: string
@@ -79,6 +81,7 @@ export type Database = {
           session_id: string
         }
         Update: {
+          coupon_id?: string | null
           created_at?: string | null
           event_data?: Json | null
           event_type?: string
@@ -86,30 +89,63 @@ export type Database = {
           metadata?: Json | null
           session_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "engagement_events_coupon_id_fkey"
+            columns: ["coupon_id"]
+            isOneToOne: false
+            referencedRelation: "coupons"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "engagement_events_coupon_id_fkey"
+            columns: ["coupon_id"]
+            isOneToOne: false
+            referencedRelation: "coupons_public"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       partners: {
         Row: {
           active: boolean | null
+          address: string | null
+          city: string | null
           created_at: string | null
+          description: string | null
           id: string
+          latitude: number | null
+          longitude: number | null
           name: string
+          postal_code: string | null
           slug: string
           updated_at: string | null
         }
         Insert: {
           active?: boolean | null
+          address?: string | null
+          city?: string | null
           created_at?: string | null
+          description?: string | null
           id?: string
+          latitude?: number | null
+          longitude?: number | null
           name: string
+          postal_code?: string | null
           slug: string
           updated_at?: string | null
         }
         Update: {
           active?: boolean | null
+          address?: string | null
+          city?: string | null
           created_at?: string | null
+          description?: string | null
           id?: string
+          latitude?: number | null
+          longitude?: number | null
           name?: string
+          postal_code?: string | null
           slug?: string
           updated_at?: string | null
         }
@@ -264,6 +300,39 @@ export type Database = {
         }
         Relationships: []
       }
+      wifi_locations: {
+        Row: {
+          active: boolean | null
+          address: string | null
+          city: string | null
+          created_at: string | null
+          id: string
+          latitude: number | null
+          longitude: number | null
+          name: string
+        }
+        Insert: {
+          active?: boolean | null
+          address?: string | null
+          city?: string | null
+          created_at?: string | null
+          id?: string
+          latitude?: number | null
+          longitude?: number | null
+          name: string
+        }
+        Update: {
+          active?: boolean | null
+          address?: string | null
+          city?: string | null
+          created_at?: string | null
+          id?: string
+          latitude?: number | null
+          longitude?: number | null
+          name?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       coupons_public: {
@@ -312,6 +381,16 @@ export type Database = {
       claim_coupon: {
         Args: { p_coupon_id: string; p_device_id: string; p_session_id: string }
         Returns: string
+      }
+      get_partner_analytics: {
+        Args: { partner_slug: string }
+        Returns: {
+          negative_sentiment: number
+          neutral_sentiment: number
+          positive_sentiment: number
+          total_responses: number
+          total_visits: number
+        }[]
       }
       has_role: {
         Args: {
