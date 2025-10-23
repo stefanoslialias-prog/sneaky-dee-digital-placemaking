@@ -14,6 +14,53 @@ export type Database = {
   }
   public: {
     Tables: {
+      coupons: {
+        Row: {
+          active: boolean | null
+          code: string | null
+          created_at: string | null
+          description: string | null
+          discount: string
+          expires_at: string | null
+          id: string
+          partner_id: string | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          active?: boolean | null
+          code?: string | null
+          created_at?: string | null
+          description?: string | null
+          discount: string
+          expires_at?: string | null
+          id?: string
+          partner_id?: string | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          active?: boolean | null
+          code?: string | null
+          created_at?: string | null
+          description?: string | null
+          discount?: string
+          expires_at?: string | null
+          id?: string
+          partner_id?: string | null
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "coupons_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       engagement_events: {
         Row: {
           created_at: string | null
@@ -157,11 +204,91 @@ export type Database = {
           },
         ]
       }
+      user_emails: {
+        Row: {
+          created_at: string | null
+          device_id: string
+          email_address: string
+          email_content: string
+          id: string
+          retries: number | null
+          sent_at: string | null
+          status: string | null
+          subject: string
+        }
+        Insert: {
+          created_at?: string | null
+          device_id: string
+          email_address: string
+          email_content: string
+          id?: string
+          retries?: number | null
+          sent_at?: string | null
+          status?: string | null
+          subject: string
+        }
+        Update: {
+          created_at?: string | null
+          device_id?: string
+          email_address?: string
+          email_content?: string
+          id?: string
+          retries?: number | null
+          sent_at?: string | null
+          status?: string | null
+          subject?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
-      [_ in never]: never
+      coupons_public: {
+        Row: {
+          code: string | null
+          created_at: string | null
+          description: string | null
+          discount: string | null
+          expires_at: string | null
+          id: string | null
+          partner_id: string | null
+          title: string | null
+        }
+        Insert: {
+          code?: string | null
+          created_at?: string | null
+          description?: string | null
+          discount?: string | null
+          expires_at?: string | null
+          id?: string | null
+          partner_id?: string | null
+          title?: string | null
+        }
+        Update: {
+          code?: string | null
+          created_at?: string | null
+          description?: string | null
+          discount?: string | null
+          expires_at?: string | null
+          id?: string | null
+          partner_id?: string | null
+          title?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "coupons_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
+      claim_coupon: {
+        Args: { p_coupon_id: string; p_device_id: string; p_session_id: string }
+        Returns: string
+      }
       insert_survey_response: {
         Args: {
           p_answer: string
@@ -172,6 +299,10 @@ export type Database = {
           p_session_id: string
         }
         Returns: string
+      }
+      update_response_comment: {
+        Args: { p_comment: string; p_response_id: string }
+        Returns: undefined
       }
     }
     Enums: {
