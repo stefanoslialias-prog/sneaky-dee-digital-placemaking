@@ -10,6 +10,7 @@ export interface Question {
   order: number;
   active: boolean;
   partner_id?: string;
+  options?: string[] | unknown;
 }
 
 export const useQuestionManager = (selectedPartner?: string) => {
@@ -78,6 +79,15 @@ export const useQuestionManager = (selectedPartner?: string) => {
       
       setIsSaving(true);
       
+      // Validate options for multiple choice and ranked questions
+      if ((currentQuestion.type === 'multiple_choice' || currentQuestion.type === 'ranked_choice')) {
+        const options = (currentQuestion.options as string[]) || [];
+        if (options.length < 2) {
+          toast.error('Please add at least 2 options');
+          return;
+        }
+      }
+
       // Determine if this is an update or insert
       if (currentQuestion.id) {
         const { error } = await supabase
@@ -87,7 +97,8 @@ export const useQuestionManager = (selectedPartner?: string) => {
             type: currentQuestion.type,
             order: currentQuestion.order,
             active: currentQuestion.active,
-            partner_id: currentQuestion.partner_id
+            partner_id: currentQuestion.partner_id,
+            options: currentQuestion.options || []
           })
           .eq('id', currentQuestion.id);
           
@@ -101,7 +112,8 @@ export const useQuestionManager = (selectedPartner?: string) => {
             type: currentQuestion.type,
             order: currentQuestion.order,
             active: true,
-            partner_id: currentQuestion.partner_id
+            partner_id: currentQuestion.partner_id,
+            options: currentQuestion.options || []
           });
           
         if (error) throw error;

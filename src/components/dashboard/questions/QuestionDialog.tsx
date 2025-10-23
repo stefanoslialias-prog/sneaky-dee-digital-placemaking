@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Save, Trash, X } from 'lucide-react';
+import { Save, Trash, X, Plus } from 'lucide-react';
 import { Question } from '@/hooks/useQuestionManager';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -31,7 +31,8 @@ interface QuestionDialogProps {
 const questionTypes = [
   { value: 'sentiment', label: 'Sentiment (Happy/Neutral/Concerned)' },
   { value: 'text', label: 'Text Response' },
-  { value: 'multiple_choice', label: 'Multiple Choice' }
+  { value: 'multiple_choice', label: 'Multiple Choice' },
+  { value: 'ranked_choice', label: 'Ranked Multiple Choice' }
 ];
 
 const QuestionDialog: React.FC<QuestionDialogProps> = ({
@@ -45,6 +46,7 @@ const QuestionDialog: React.FC<QuestionDialogProps> = ({
   isDeleting
 }) => {
   const [partners, setPartners] = useState<Partner[]>([]);
+  const [optionInput, setOptionInput] = useState('');
 
   // Fetch partners for dropdown
   useEffect(() => {
@@ -65,6 +67,27 @@ const QuestionDialog: React.FC<QuestionDialogProps> = ({
     
     fetchPartners();
   }, []);
+
+  const addOption = () => {
+    if (!optionInput.trim() || !currentQuestion) return;
+    const currentOptions = (currentQuestion.options as string[]) || [];
+    setCurrentQuestion({
+      ...currentQuestion,
+      options: [...currentOptions, optionInput.trim()]
+    });
+    setOptionInput('');
+  };
+
+  const removeOption = (index: number) => {
+    if (!currentQuestion) return;
+    const currentOptions = (currentQuestion.options as string[]) || [];
+    setCurrentQuestion({
+      ...currentQuestion,
+      options: currentOptions.filter((_, i) => i !== index)
+    });
+  };
+
+  const needsOptions = currentQuestion?.type === 'multiple_choice' || currentQuestion?.type === 'ranked_choice';
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[550px]">
@@ -152,6 +175,39 @@ const QuestionDialog: React.FC<QuestionDialogProps> = ({
               </SelectContent>
             </Select>
           </div>
+
+          {/* Options for multiple choice and ranked questions */}
+          {needsOptions && (
+            <div className="grid gap-2">
+              <Label>Options</Label>
+              <div className="flex gap-2">
+                <Input
+                  placeholder="Add an option..."
+                  value={optionInput}
+                  onChange={(e) => setOptionInput(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addOption())}
+                />
+                <Button type="button" onClick={addOption} size="sm">
+                  <Plus className="h-4 w-4" />
+                </Button>
+              </div>
+              <div className="space-y-2 max-h-40 overflow-y-auto">
+                {((currentQuestion?.options as string[]) || []).map((option, index) => (
+                  <div key={index} className="flex items-center justify-between p-2 bg-muted rounded-md">
+                    <span className="text-sm">{index + 1}. {option}</span>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => removeOption(index)}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
         
         <DialogFooter className="flex justify-between">

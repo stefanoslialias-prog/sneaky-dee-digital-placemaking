@@ -6,6 +6,8 @@ import { toast } from 'sonner';
 interface Question {
   id: string;
   text: string;
+  type?: string;
+  options?: string[] | unknown;
 }
 
 export const useSentimentQuestion = (partnerId?: string) => {
@@ -26,7 +28,7 @@ export const useSentimentQuestion = (partnerId?: string) => {
       // Get all active questions first, optionally filtered by partner
       let query = supabase
         .from('survey_questions')
-        .select('id, text')
+        .select('id, text, type')
         .eq('active', true);
 
       if (partnerId) {
