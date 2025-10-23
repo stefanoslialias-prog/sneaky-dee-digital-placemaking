@@ -27,13 +27,11 @@ const ThankYou: React.FC<ThankYouProps> = ({ onDone, userInfo }) => {
       <Card>
         {/* Header */}
         <CardHeader className="text-center">
-          <div className="mx-auto w-24 h-24 rounded-full overflow-hidden flex items-center justify-center mb-4">
-            <img 
-              src="/lovable-uploads/sneaky-dees-logo.jpg" 
-              alt="Sneaky Dee's" 
-              className="w-full h-full object-cover"
-            />
-          </div>
+          <img 
+            src="/lovable-uploads/sneaky-dees-logo.jpg" 
+            alt="Sneaky Dee's" 
+            className="mx-auto w-32 h-auto mb-4"
+          />
           <CardTitle className="text-2xl font-playfair mb-2">
             Thank You for Your Support
           </CardTitle>
