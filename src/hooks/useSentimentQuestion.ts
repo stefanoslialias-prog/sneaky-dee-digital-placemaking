@@ -28,7 +28,7 @@ export const useSentimentQuestion = (partnerId?: string) => {
       // Get all active questions first, optionally filtered by partner
       let query = supabase
         .from('survey_questions')
-        .select('id, text, type')
+        .select('id, text, type, options')
         .eq('active', true);
 
       if (partnerId) {

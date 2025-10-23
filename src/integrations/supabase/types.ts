@@ -14,13 +14,165 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      engagement_events: {
+        Row: {
+          created_at: string | null
+          event_data: Json | null
+          event_type: string
+          id: string
+          session_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          event_data?: Json | null
+          event_type: string
+          id?: string
+          session_id: string
+        }
+        Update: {
+          created_at?: string | null
+          event_data?: Json | null
+          event_type?: string
+          id?: string
+          session_id?: string
+        }
+        Relationships: []
+      }
+      partners: {
+        Row: {
+          active: boolean | null
+          created_at: string | null
+          id: string
+          name: string
+          slug: string
+          updated_at: string | null
+        }
+        Insert: {
+          active?: boolean | null
+          created_at?: string | null
+          id?: string
+          name: string
+          slug: string
+          updated_at?: string | null
+        }
+        Update: {
+          active?: boolean | null
+          created_at?: string | null
+          id?: string
+          name?: string
+          slug?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      survey_questions: {
+        Row: {
+          active: boolean | null
+          created_at: string | null
+          id: string
+          options: Json | null
+          order: number
+          partner_id: string | null
+          text: string
+          type: string
+          updated_at: string | null
+        }
+        Insert: {
+          active?: boolean | null
+          created_at?: string | null
+          id?: string
+          options?: Json | null
+          order?: number
+          partner_id?: string | null
+          text: string
+          type?: string
+          updated_at?: string | null
+        }
+        Update: {
+          active?: boolean | null
+          created_at?: string | null
+          id?: string
+          options?: Json | null
+          order?: number
+          partner_id?: string | null
+          text?: string
+          type?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "survey_questions_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      survey_responses: {
+        Row: {
+          answer: string | null
+          comment: string | null
+          created_at: string | null
+          id: string
+          location_id: string | null
+          partner_id: string | null
+          question_id: string | null
+          session_id: string | null
+        }
+        Insert: {
+          answer?: string | null
+          comment?: string | null
+          created_at?: string | null
+          id?: string
+          location_id?: string | null
+          partner_id?: string | null
+          question_id?: string | null
+          session_id?: string | null
+        }
+        Update: {
+          answer?: string | null
+          comment?: string | null
+          created_at?: string | null
+          id?: string
+          location_id?: string | null
+          partner_id?: string | null
+          question_id?: string | null
+          session_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "survey_responses_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "survey_responses_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "survey_questions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      insert_survey_response: {
+        Args: {
+          p_answer: string
+          p_comment?: string
+          p_location_id?: string
+          p_partner_id?: string
+          p_question_id: string
+          p_session_id: string
+        }
+        Returns: string
+      }
     }
     Enums: {
       [_ in never]: never
