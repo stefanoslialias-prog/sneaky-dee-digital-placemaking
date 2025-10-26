@@ -173,6 +173,20 @@ const MultiQuestionSurvey = ({ onComplete, partnerId }: MultiQuestionSurveyProps
     }
 
     if (currentQuestion.type === 'text') {
+      const handleSkip = () => {
+        // Skip to next question without saving response
+        if (currentIndex < questions.length - 1) {
+          setCurrentIndex(currentIndex + 1);
+          setTextAnswer('');
+          setSelectedOption('');
+          setSelectedSentiment(null);
+        } else {
+          // If last question, complete the survey
+          toast.success('Thanks for completing the survey!');
+          onComplete('neutral' as Sentiment);
+        }
+      };
+
       return (
         <div className="space-y-4">
           <Textarea
@@ -181,12 +195,22 @@ const MultiQuestionSurvey = ({ onComplete, partnerId }: MultiQuestionSurveyProps
             onChange={(e) => setTextAnswer(e.target.value)}
             className="min-h-[100px]"
           />
-          <Button 
-            onClick={() => handleAnswer(textAnswer)}
-            disabled={!textAnswer.trim() || isSubmitting}
-          >
-            {currentIndex < questions.length - 1 ? 'Next' : 'Submit'}
-          </Button>
+          <div className="flex gap-2">
+            <Button 
+              onClick={() => handleAnswer(textAnswer)}
+              disabled={!textAnswer.trim() || isSubmitting}
+              className="flex-1"
+            >
+              {currentIndex < questions.length - 1 ? 'Next' : 'Submit'}
+            </Button>
+            <Button 
+              onClick={handleSkip}
+              disabled={isSubmitting}
+              variant="outline"
+            >
+              Skip
+            </Button>
+          </div>
         </div>
       );
     }
