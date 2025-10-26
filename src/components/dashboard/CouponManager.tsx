@@ -155,7 +155,8 @@ const CouponManager: React.FC<CouponManagerProps> = ({ selectedPartner }) => {
     try {
       const couponData = {
         ...formData,
-        expires_at: formData.expires_at ? new Date(formData.expires_at).toISOString() : null
+        expires_at: formData.expires_at ? new Date(formData.expires_at).toISOString() : null,
+        partner_id: formData.partner_id || null // Convert empty string to null
       };
 
       if (editingCoupon) {
