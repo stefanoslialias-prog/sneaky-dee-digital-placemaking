@@ -26,6 +26,14 @@ export const ActionButtons: React.FC<ActionButtonsProps> = ({
 }) => {
   const { trackSessionEvent } = useSessionTracking();
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
+  
+  // Debug logging
+  console.log('🔍 ActionButtons render:', {
+    couponId: coupon.id,
+    hasShareToken: !!coupon.share_token,
+    shareToken: coupon.share_token,
+    couponCode: coupon.code
+  });
   const handleCopyCode = async () => {
     try {
       await navigator.clipboard.writeText(coupon.code);
