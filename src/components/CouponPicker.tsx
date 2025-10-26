@@ -24,6 +24,7 @@ export interface Coupon {
   discount?: string;
   remaining?: number;
   claimedCount?: number;
+  share_token?: string;
 }
 
 interface CouponPickerProps {

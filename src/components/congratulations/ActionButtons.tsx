@@ -1,12 +1,13 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Copy, Check, Download } from 'lucide-react';
+import { Copy, Check, Download, Share2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Coupon } from '../CouponPicker';
 import { WalletButtons } from '../wallet/WalletButtons';
 import { useSessionTracking } from '@/hooks/useSessionTracking';
 import { supabase } from '@/integrations/supabase/client';
+import { ShareCouponDialog } from '../coupon/ShareCouponDialog';
 
 interface ActionButtonsProps {
   coupon: Coupon;
@@ -24,6 +25,7 @@ export const ActionButtons: React.FC<ActionButtonsProps> = ({
   userName
 }) => {
   const { trackSessionEvent } = useSessionTracking();
+  const [shareDialogOpen, setShareDialogOpen] = useState(false);
   const handleCopyCode = async () => {
     try {
       await navigator.clipboard.writeText(coupon.code);
@@ -84,33 +86,59 @@ export const ActionButtons: React.FC<ActionButtonsProps> = ({
   };
 
   return (
-    <div className="w-full space-y-3">
-      <Button 
-        onClick={handleCopyCode} 
-        className="w-full bg-toronto-blue hover:bg-toronto-lightblue"
-        size="lg"
-      >
-        {copied ? (
-          <>
-            <Check className="mr-2 h-4 w-4" />
-            Copied!
-          </>
-        ) : (
-          <>
-            <Copy className="mr-2 h-4 w-4" />
-            Copy Code
-          </>
-        )}
-      </Button>
+    <>
+      <div className="w-full space-y-3">
+        <Button 
+          onClick={handleCopyCode} 
+          className="w-full bg-toronto-blue hover:bg-toronto-lightblue"
+          size="lg"
+        >
+          {copied ? (
+            <>
+              <Check className="mr-2 h-4 w-4" />
+              Copied!
+            </>
+          ) : (
+            <>
+              <Copy className="mr-2 h-4 w-4" />
+              Copy Code
+            </>
+          )}
+        </Button>
 
-      <Button 
-        onClick={handleAddToGoogleWallet}
-        className="w-full bg-toronto-blue hover:bg-toronto-lightblue"
-        size="lg"
-      >
-        <Download className="mr-2 h-4 w-4" />
-        Add to Google Wallet
-      </Button>
-    </div>
+        <Button 
+          onClick={handleAddToGoogleWallet}
+          className="w-full bg-toronto-blue hover:bg-toronto-lightblue"
+          size="lg"
+        >
+          <Download className="mr-2 h-4 w-4" />
+          Add to Google Wallet
+        </Button>
+
+        {coupon.share_token && (
+          <Button 
+            onClick={() => {
+              setShareDialogOpen(true);
+              trackSessionEvent('share_button_clicked', coupon.id);
+            }}
+            variant="outline"
+            className="w-full"
+            size="lg"
+          >
+            <Share2 className="mr-2 h-4 w-4" />
+            Share with Friends
+          </Button>
+        )}
+      </div>
+
+      {coupon.share_token && (
+        <ShareCouponDialog
+          open={shareDialogOpen}
+          onOpenChange={setShareDialogOpen}
+          shareToken={coupon.share_token}
+          couponTitle={coupon.title}
+        />
+      )}
+    </>
   );
 };

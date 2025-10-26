@@ -16,6 +16,7 @@ export interface ClaimCouponResult {
   message: string;
   coupon?: Coupon;
   claimedId?: string;
+  share_token?: string;
 }
 
 /**
@@ -144,13 +145,15 @@ export const claimCoupon = async (params: ClaimCouponParams): Promise<ClaimCoupo
       deviceId: params.deviceId ? sanitizeTextInput(params.deviceId, 50) : undefined
     };
 
-    // Call database function with validated inputs
+    // Call database function with validated inputs (using claim_coupon_with_share for share functionality)
     const { data, error } = await supabase.rpc(
-      'claim_coupon',
+      'claim_coupon_with_share',
       {
         p_coupon_id: sanitizedParams.couponId,
-        p_device_id: sanitizedParams.deviceId || null,
-        p_session_id: sanitizedParams.deviceId || null
+        p_device_id: sanitizedParams.deviceId || 'unknown',
+        p_user_email: sanitizedParams.email || null,
+        p_user_name: sanitizedParams.name || null,
+        p_referred_by_token: null
       }
     );
 
@@ -181,20 +184,36 @@ export const claimCoupon = async (params: ClaimCouponParams): Promise<ClaimCoupo
       };
     }
 
+    // Fetch the actual coupon data with the real code
+    const { data: couponData, error: couponError } = await supabase
+      .from('coupons')
+      .select('*')
+      .eq('id', sanitizedParams.couponId)
+      .single();
+
+    if (couponError || !couponData) {
+      return {
+        success: false,
+        message: 'Failed to retrieve coupon details'
+      };
+    }
+
     return {
       success: result.success,
-      message: result.message,
-      coupon: result.coupon ? {
-        id: result.coupon.id,
-        title: sanitizeTextInput(result.coupon.title || ''),
-        description: sanitizeTextInput(result.coupon.description || ''),
-        code: sanitizeTextInput(result.coupon.code || ''),
-        discount: result.coupon.discount ? sanitizeTextInput(result.coupon.discount) : '',
-        expires_at: result.coupon.expires_at,
-        expiresIn: formatExpiryDate(result.coupon.expires_at),
-        image: result.coupon.image_url || undefined
-      } : undefined,
-      claimedId: result.claimed_id || undefined
+      message: result.message || 'Coupon claimed successfully',
+      coupon: {
+        id: couponData.id,
+        title: sanitizeTextInput(couponData.title || ''),
+        description: sanitizeTextInput(couponData.description || ''),
+        code: sanitizeTextInput(couponData.code || ''),
+        discount: couponData.discount ? sanitizeTextInput(couponData.discount) : '',
+        expires_at: couponData.expires_at,
+        expiresIn: formatExpiryDate(couponData.expires_at),
+        image: undefined,
+        share_token: result.share_token || undefined
+      },
+      claimedId: result.claim_id || undefined,
+      share_token: result.share_token || undefined
     };
   } catch (error: any) {
     console.error('Unexpected error claiming coupon:', error);
