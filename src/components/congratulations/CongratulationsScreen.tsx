@@ -71,12 +71,20 @@ const CongratulationsScreen: React.FC<CongratulationsScreenProps> = ({
   }, []);
 
   const handleClaimCoupon = async () => {
+    console.log('🚀 Starting coupon claim process...');
     try {
       setIsClaiming(true);
       
       // Get device ID if available (this would come from your WiFi sniffer)
       // For demo purposes, we'll generate a random device ID
       const deviceId = `demo-device-${Math.random().toString(36).substring(7)}`;
+      
+      console.log('📞 Calling claimCoupon with:', {
+        couponId: coupon.id,
+        deviceId,
+        email: userInfo?.email,
+        name: userInfo?.name
+      });
       
       const result = await claimCoupon({
         couponId: coupon.id,
@@ -85,21 +93,23 @@ const CongratulationsScreen: React.FC<CongratulationsScreenProps> = ({
         name: userInfo?.name
       });
       
+      console.log('📦 Claim result received:', result);
+      
       if (result.success && result.coupon) {
         setClaimed(true);
         // Update the coupon with the actual claimed coupon data that includes the real code
-        setCoupon(result.coupon);
-        // Track coupon claimed event for dashboard
-        trackSessionEvent('coupon_claimed', result.coupon.id);
         console.log('✅ Coupon claimed successfully!');
         console.log('📝 Coupon code:', result.coupon.code);
         console.log('🔗 Share token:', result.coupon.share_token);
         console.log('📦 Full coupon object:', result.coupon);
+        setCoupon(result.coupon);
+        // Track coupon claimed event for dashboard
+        trackSessionEvent('coupon_claimed', result.coupon.id);
       } else {
         console.error('❌ Failed to claim coupon:', result.message);
       }
     } catch (error) {
-      console.error('Error claiming coupon:', error);
+      console.error('💥 Error claiming coupon:', error);
     } finally {
       setIsClaiming(false);
     }
