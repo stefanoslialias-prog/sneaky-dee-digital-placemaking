@@ -11,6 +11,7 @@ import { EmailOptIn } from './EmailOptIn';
 import { ActionButtons } from './ActionButtons';
 import { claimCoupon } from '@/services/couponService';
 import { useSessionTracking } from '@/hooks/useSessionTracking';
+import { toast } from 'sonner';
 
 interface CongratulationsScreenProps {
   coupon: Coupon;
@@ -105,11 +106,14 @@ const CongratulationsScreen: React.FC<CongratulationsScreenProps> = ({
         setCoupon(result.coupon);
         // Track coupon claimed event for dashboard
         trackSessionEvent('coupon_claimed', result.coupon.id);
+        toast.success('Coupon claimed! Your code is ready.');
       } else {
         console.error('❌ Failed to claim coupon:', result.message);
+        toast.error(`Failed to claim: ${result.message}`, { duration: 10000 });
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('💥 Error claiming coupon:', error);
+      toast.error(`Error: ${error?.message || 'Unknown error occurred'}`, { duration: 10000 });
     } finally {
       setIsClaiming(false);
     }
