@@ -198,6 +198,16 @@ export const claimCoupon = async (params: ClaimCouponParams): Promise<ClaimCoupo
       };
     }
 
+    // Extract share_token from the RPC result
+    const shareToken = typeof result.share_token === 'string' ? result.share_token : undefined;
+    
+    console.log('🔑 RPC Result:', {
+      success: result.success,
+      message: result.message,
+      share_token: shareToken,
+      claim_id: result.claim_id
+    });
+
     return {
       success: result.success,
       message: result.message || 'Coupon claimed successfully',
@@ -210,10 +220,10 @@ export const claimCoupon = async (params: ClaimCouponParams): Promise<ClaimCoupo
         expires_at: couponData.expires_at,
         expiresIn: formatExpiryDate(couponData.expires_at),
         image: undefined,
-        share_token: result.share_token || undefined
+        share_token: shareToken
       },
       claimedId: result.claim_id || undefined,
-      share_token: result.share_token || undefined
+      share_token: shareToken
     };
   } catch (error: any) {
     console.error('Unexpected error claiming coupon:', error);
