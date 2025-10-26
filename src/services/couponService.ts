@@ -157,16 +157,19 @@ export const claimCoupon = async (params: ClaimCouponParams): Promise<ClaimCoupo
       }
     );
 
+    console.log('🔧 RPC Response:', { data, error });
+
     if (error) {
-      console.error('Error claiming coupon:', error);
+      console.error('❌ RPC Error:', error);
       return {
         success: false,
-        message: 'Failed to claim coupon. Please try again.'
+        message: `Database error: ${error.message || 'Unknown error'}`
       };
     }
 
     // Validate and safely convert response data
     if (!data || typeof data !== 'object' || Array.isArray(data)) {
+      console.error('❌ Invalid response format:', data);
       return {
         success: false,
         message: 'Invalid response from server'
@@ -176,11 +179,23 @@ export const claimCoupon = async (params: ClaimCouponParams): Promise<ClaimCoupo
     // Type-safe conversion of JSON response
     const result = data as Record<string, any>;
     
+    console.log('📊 Parsed result:', result);
+    
     // Validate required fields exist
-    if (typeof result.success !== 'boolean' || typeof result.message !== 'string') {
+    if (typeof result.success !== 'boolean') {
+      console.error('❌ Missing success field:', result);
       return {
         success: false,
         message: 'Invalid response format from server'
+      };
+    }
+    
+    // Check if the RPC function returned success: false
+    if (result.success === false) {
+      console.error('❌ RPC returned failure:', result.message);
+      return {
+        success: false,
+        message: result.message || 'Failed to claim coupon'
       };
     }
 
