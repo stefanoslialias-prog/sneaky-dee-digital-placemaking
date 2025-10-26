@@ -8,7 +8,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Share2, Copy, Check } from 'lucide-react';
+import { Share2, Copy, Check, Mail, MessageSquare, Send } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import { generateShareLink } from '@/services/pdfCouponService';
 import { toast } from 'sonner';
@@ -56,6 +56,33 @@ export const ShareCouponDialog: React.FC<ShareCouponDialogProps> = ({
     }
   };
 
+  const shareMessage = `Check out this great deal: ${couponTitle}! Claim your coupon here: ${shareLink}`;
+
+  const handleSMS = () => {
+    const smsUrl = `sms:?body=${encodeURIComponent(shareMessage)}`;
+    window.open(smsUrl, '_blank');
+  };
+
+  const handleEmail = () => {
+    const emailUrl = `mailto:?subject=${encodeURIComponent(couponTitle)}&body=${encodeURIComponent(shareMessage)}`;
+    window.open(emailUrl, '_blank');
+  };
+
+  const handleWhatsApp = () => {
+    const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(shareMessage)}`;
+    window.open(whatsappUrl, '_blank');
+  };
+
+  const handleFacebook = () => {
+    const facebookUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareLink)}`;
+    window.open(facebookUrl, '_blank', 'width=600,height=400');
+  };
+
+  const handleTwitter = () => {
+    const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(`${couponTitle} - Claim your coupon!`)}&url=${encodeURIComponent(shareLink)}`;
+    window.open(twitterUrl, '_blank', 'width=600,height=400');
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md">
@@ -91,14 +118,59 @@ export const ShareCouponDialog: React.FC<ShareCouponDialogProps> = ({
             </div>
           </div>
 
-          <div className="flex gap-2">
+          <div className="space-y-3">
+            <Label>Share via</Label>
+            <div className="grid grid-cols-2 gap-2">
+              <Button
+                onClick={handleSMS}
+                variant="outline"
+                className="flex items-center justify-center"
+              >
+                <MessageSquare className="h-4 w-4 mr-2" />
+                SMS
+              </Button>
+              <Button
+                onClick={handleEmail}
+                variant="outline"
+                className="flex items-center justify-center"
+              >
+                <Mail className="h-4 w-4 mr-2" />
+                Email
+              </Button>
+              <Button
+                onClick={handleWhatsApp}
+                variant="outline"
+                className="flex items-center justify-center"
+              >
+                <Send className="h-4 w-4 mr-2" />
+                WhatsApp
+              </Button>
+              <Button
+                onClick={handleFacebook}
+                variant="outline"
+                className="flex items-center justify-center"
+              >
+                <Share2 className="h-4 w-4 mr-2" />
+                Facebook
+              </Button>
+            </div>
             <Button
-              onClick={handleShare}
-              className="flex-1"
+              onClick={handleTwitter}
+              variant="outline"
+              className="w-full"
             >
               <Share2 className="h-4 w-4 mr-2" />
-              Share on Social Media
+              Twitter / X
             </Button>
+            {navigator.share && (
+              <Button
+                onClick={handleShare}
+                className="w-full"
+              >
+                <Share2 className="h-4 w-4 mr-2" />
+                More Options
+              </Button>
+            )}
           </div>
 
           <p className="text-sm text-muted-foreground text-center">
