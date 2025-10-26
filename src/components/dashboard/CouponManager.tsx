@@ -20,7 +20,6 @@ interface Coupon {
   discount: string;
   expires_at: string;
   active: boolean;
-  image_url?: string;
   pdf_url?: string;
   created_at: string;
   partner_id?: string;
@@ -52,7 +51,6 @@ const CouponManager: React.FC<CouponManagerProps> = ({ selectedPartner }) => {
     discount: '',
     expires_at: '',
     active: true,
-    image_url: '',
     partner_id: ''
   });
 
@@ -129,7 +127,6 @@ const CouponManager: React.FC<CouponManagerProps> = ({ selectedPartner }) => {
       discount: '',
       expires_at: '',
       active: true,
-      image_url: '',
       partner_id: selectedPartner === 'all' ? '' : selectedPartner || ''
     });
     setEditingCoupon(null);
@@ -149,7 +146,6 @@ const CouponManager: React.FC<CouponManagerProps> = ({ selectedPartner }) => {
       discount: coupon.discount,
       expires_at: coupon.expires_at ? coupon.expires_at.split('T')[0] : '', // Format for date input
       active: coupon.active,
-      image_url: coupon.image_url || '',
       partner_id: coupon.partner_id || ''
     });
     setIsDialogOpen(true);
@@ -375,16 +371,6 @@ const CouponManager: React.FC<CouponManagerProps> = ({ selectedPartner }) => {
                 type="date"
                 value={formData.expires_at}
                 onChange={(e) => setFormData({ ...formData, expires_at: e.target.value })}
-              />
-            </div>
-            
-            <div>
-              <Label htmlFor="image_url">Image URL (Optional)</Label>
-              <Input
-                id="image_url"
-                value={formData.image_url}
-                onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
-                placeholder="Enter image URL"
               />
             </div>
             
