@@ -147,7 +147,7 @@ const CouponManager: React.FC<CouponManagerProps> = ({ selectedPartner }) => {
       description: coupon.description,
       code: coupon.code,
       discount: coupon.discount,
-      expires_at: coupon.expires_at.split('T')[0], // Format for date input
+      expires_at: coupon.expires_at ? coupon.expires_at.split('T')[0] : '', // Format for date input
       active: coupon.active,
       image_url: coupon.image_url || '',
       partner_id: coupon.partner_id || ''
@@ -159,7 +159,7 @@ const CouponManager: React.FC<CouponManagerProps> = ({ selectedPartner }) => {
     try {
       const couponData = {
         ...formData,
-        expires_at: new Date(formData.expires_at).toISOString()
+        expires_at: formData.expires_at ? new Date(formData.expires_at).toISOString() : null
       };
 
       if (editingCoupon) {
@@ -273,7 +273,7 @@ const CouponManager: React.FC<CouponManagerProps> = ({ selectedPartner }) => {
                           <span className="font-medium">Discount:</span> {coupon.discount}
                         </div>
                         <div>
-                          <span className="font-medium">Expires:</span> {formatDate(coupon.expires_at)}
+                          <span className="font-medium">Expires:</span> {coupon.expires_at ? formatDate(coupon.expires_at) : 'No expiry'}
                         </div>
                         <div>
                           <span className="font-medium">Created:</span> {formatDate(coupon.created_at)}
@@ -364,12 +364,12 @@ const CouponManager: React.FC<CouponManagerProps> = ({ selectedPartner }) => {
                 id="discount"
                 value={formData.discount}
                 onChange={(e) => setFormData({ ...formData, discount: e.target.value })}
-                placeholder="e.g., 20% off, $10 off"
+                placeholder="e.g., 20% off, $10 off, Buy 1 Get 1 Free"
               />
             </div>
             
             <div>
-              <Label htmlFor="expires_at">Expiry Date</Label>
+              <Label htmlFor="expires_at">Expiry Date (Optional)</Label>
               <Input
                 id="expires_at"
                 type="date"
