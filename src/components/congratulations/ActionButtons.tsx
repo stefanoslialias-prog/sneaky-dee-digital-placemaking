@@ -129,8 +129,7 @@ export const ActionButtons: React.FC<ActionButtonsProps> = ({
               setShareDialogOpen(true);
               trackSessionEvent('share_button_clicked', coupon.id);
             }}
-            variant="outline"
-            className="w-full"
+            className="w-full bg-toronto-blue hover:bg-toronto-lightblue"
             size="lg"
           >
             <Share2 className="mr-2 h-4 w-4" />
