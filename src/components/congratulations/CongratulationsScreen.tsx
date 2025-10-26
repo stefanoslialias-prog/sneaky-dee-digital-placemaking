@@ -91,10 +91,12 @@ const CongratulationsScreen: React.FC<CongratulationsScreenProps> = ({
         setCoupon(result.coupon);
         // Track coupon claimed event for dashboard
         trackSessionEvent('coupon_claimed', result.coupon.id);
-        console.log('Coupon claimed successfully with code:', result.coupon.code);
-        console.log('Full coupon object:', result.coupon);
+        console.log('✅ Coupon claimed successfully!');
+        console.log('📝 Coupon code:', result.coupon.code);
+        console.log('🔗 Share token:', result.coupon.share_token);
+        console.log('📦 Full coupon object:', result.coupon);
       } else {
-        console.error('Failed to claim coupon:', result.message);
+        console.error('❌ Failed to claim coupon:', result.message);
       }
     } catch (error) {
       console.error('Error claiming coupon:', error);
