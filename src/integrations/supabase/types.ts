@@ -14,6 +14,79 @@ export type Database = {
   }
   public: {
     Tables: {
+      coupon_claims: {
+        Row: {
+          claimed_at: string | null
+          coupon_id: string
+          device_id: string
+          expires_at: string | null
+          id: string
+          metadata: Json | null
+          redeemed: boolean | null
+          redeemed_at: string | null
+          redeemed_by: string | null
+          redemption_code: string
+          referred_by: string | null
+          share_token: string | null
+          user_email: string | null
+          user_name: string | null
+        }
+        Insert: {
+          claimed_at?: string | null
+          coupon_id: string
+          device_id: string
+          expires_at?: string | null
+          id?: string
+          metadata?: Json | null
+          redeemed?: boolean | null
+          redeemed_at?: string | null
+          redeemed_by?: string | null
+          redemption_code: string
+          referred_by?: string | null
+          share_token?: string | null
+          user_email?: string | null
+          user_name?: string | null
+        }
+        Update: {
+          claimed_at?: string | null
+          coupon_id?: string
+          device_id?: string
+          expires_at?: string | null
+          id?: string
+          metadata?: Json | null
+          redeemed?: boolean | null
+          redeemed_at?: string | null
+          redeemed_by?: string | null
+          redemption_code?: string
+          referred_by?: string | null
+          share_token?: string | null
+          user_email?: string | null
+          user_name?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "coupon_claims_coupon_id_fkey"
+            columns: ["coupon_id"]
+            isOneToOne: false
+            referencedRelation: "coupons"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coupon_claims_coupon_id_fkey"
+            columns: ["coupon_id"]
+            isOneToOne: false
+            referencedRelation: "coupons_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coupon_claims_referred_by_fkey"
+            columns: ["referred_by"]
+            isOneToOne: false
+            referencedRelation: "coupon_claims"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       coupons: {
         Row: {
           active: boolean | null
@@ -24,6 +97,8 @@ export type Database = {
           expires_at: string | null
           id: string
           partner_id: string | null
+          pdf_url: string | null
+          share_enabled: boolean | null
           title: string
           updated_at: string | null
         }
@@ -36,6 +111,8 @@ export type Database = {
           expires_at?: string | null
           id?: string
           partner_id?: string | null
+          pdf_url?: string | null
+          share_enabled?: boolean | null
           title: string
           updated_at?: string | null
         }
@@ -48,6 +125,8 @@ export type Database = {
           expires_at?: string | null
           id?: string
           partner_id?: string | null
+          pdf_url?: string | null
+          share_enabled?: boolean | null
           title?: string
           updated_at?: string | null
         }
@@ -102,6 +181,38 @@ export type Database = {
             columns: ["coupon_id"]
             isOneToOne: false
             referencedRelation: "coupons_public"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      partner_staff: {
+        Row: {
+          active: boolean | null
+          created_at: string | null
+          id: string
+          partner_id: string | null
+          user_id: string
+        }
+        Insert: {
+          active?: boolean | null
+          created_at?: string | null
+          id?: string
+          partner_id?: string | null
+          user_id: string
+        }
+        Update: {
+          active?: boolean | null
+          created_at?: string | null
+          id?: string
+          partner_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "partner_staff_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
             referencedColumns: ["id"]
           },
         ]
@@ -409,6 +520,16 @@ export type Database = {
         Args: { p_coupon_id: string; p_device_id: string; p_session_id: string }
         Returns: string
       }
+      claim_coupon_with_share: {
+        Args: {
+          p_coupon_id: string
+          p_device_id: string
+          p_referred_by_token?: string
+          p_user_email?: string
+          p_user_name?: string
+        }
+        Returns: Json
+      }
       get_partner_analytics: {
         Args: { partner_slug: string }
         Returns: {
@@ -436,6 +557,10 @@ export type Database = {
           p_session_id: string
         }
         Returns: string
+      }
+      redeem_coupon_qr: {
+        Args: { p_redemption_code: string; p_staff_user_id: string }
+        Returns: Json
       }
       update_response_comment:
         | {

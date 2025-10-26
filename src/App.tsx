@@ -8,6 +8,9 @@ import Index from "./pages/Index";
 import Admin from "./pages/Admin";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
+import Wallet from "./pages/Wallet";
+import Share from "./pages/Share";
+import Redeem from "./pages/Redeem";
 import AdminDashboard from "./components/AdminDashboard";
 import { AuthProvider } from "./contexts/AuthContext";
 
@@ -25,6 +28,9 @@ const App = () => (
             <Route path="/auth" element={<Auth />} />
             <Route path="/admin" element={<Admin />} />
             <Route path="/admin/dashboard" element={<Admin />} />
+            <Route path="/wallet" element={<Wallet />} />
+            <Route path="/share/:shareToken" element={<Share />} />
+            <Route path="/redeem" element={<Redeem />} />
             <Route path="/survey" element={<Navigate to="/" />} /> {/* Redirect /survey to Index page */}
             <Route path="*" element={<NotFound />} />
           </Routes>

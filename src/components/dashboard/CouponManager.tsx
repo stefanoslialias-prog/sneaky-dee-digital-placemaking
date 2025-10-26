@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -6,11 +5,12 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Edit, Trash2, Save, X, Gift } from 'lucide-react';
+import { Plus, Edit, Trash2, Save, X, Gift, FileUp } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { PdfUploadDialog } from './PdfUploadDialog';
 
 interface Coupon {
   id: string;
@@ -21,6 +21,7 @@ interface Coupon {
   expires_at: string;
   active: boolean;
   image_url?: string;
+  pdf_url?: string;
   created_at: string;
   partner_id?: string;
 }
@@ -42,6 +43,8 @@ const CouponManager: React.FC<CouponManagerProps> = ({ selectedPartner }) => {
   const [loading, setLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingCoupon, setEditingCoupon] = useState<Coupon | null>(null);
+  const [pdfUploadDialogOpen, setPdfUploadDialogOpen] = useState(false);
+  const [selectedCouponForPdf, setSelectedCouponForPdf] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -281,6 +284,17 @@ const CouponManager: React.FC<CouponManagerProps> = ({ selectedPartner }) => {
                       <Button
                         variant="outline"
                         size="sm"
+                        onClick={() => {
+                          setSelectedCouponForPdf(coupon.id);
+                          setPdfUploadDialogOpen(true);
+                        }}
+                        title={coupon.pdf_url ? 'Update PDF' : 'Upload PDF'}
+                      >
+                        <FileUp className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
                         onClick={() => handleEditCoupon(coupon)}
                       >
                         <Edit className="h-4 w-4" />
@@ -406,6 +420,20 @@ const CouponManager: React.FC<CouponManagerProps> = ({ selectedPartner }) => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {selectedCouponForPdf && (
+        <PdfUploadDialog
+          open={pdfUploadDialogOpen}
+          onOpenChange={setPdfUploadDialogOpen}
+          couponId={selectedCouponForPdf}
+          onSuccess={(url) => {
+            toast.success('PDF uploaded successfully');
+            fetchCoupons();
+            setPdfUploadDialogOpen(false);
+            setSelectedCouponForPdf(null);
+          }}
+        />
+      )}
     </>
   );
 };
