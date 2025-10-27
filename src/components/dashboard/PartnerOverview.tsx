@@ -393,7 +393,7 @@ const PartnerOverview: React.FC<PartnerOverviewProps> = ({ selectedPartner }) =>
             <ChartPie className="h-5 w-5" /> Sentiment Distribution
           </CardTitle>
           <CardDescription>
-            How people are feeling about {partnerData.name}
+            How people are feeling
           </CardDescription>
         </CardHeader>
         <CardContent className="h-64">
