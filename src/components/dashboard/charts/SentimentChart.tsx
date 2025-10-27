@@ -8,11 +8,11 @@ interface SentimentChartProps {
 }
 
 const SentimentChart: React.FC<SentimentChartProps> = ({ sentimentData, chartLoaded }) => {
-  // Prepare data for the chart with semantic colors
+  // Prepare data for the chart with custom colors
   const chartData = [
-    { name: 'Happy', value: sentimentData.happy_count, color: 'hsl(var(--success))' },
-    { name: 'Neutral', value: sentimentData.neutral_count, color: 'hsl(var(--muted-foreground))' },
-    { name: 'Concerned', value: sentimentData.concerned_count, color: 'hsl(var(--destructive))' }
+    { name: 'Happy', value: sentimentData.happy_count, color: 'hsl(var(--sentiment-happy))' },
+    { name: 'Neutral', value: sentimentData.neutral_count, color: 'hsl(var(--sentiment-neutral))' },
+    { name: 'Concerned', value: sentimentData.concerned_count, color: 'hsl(var(--sentiment-concerned))' }
   ].filter(item => item.value > 0); // Only show segments with data
 
   const totalResponses = sentimentData.happy_count + sentimentData.neutral_count + sentimentData.concerned_count;
