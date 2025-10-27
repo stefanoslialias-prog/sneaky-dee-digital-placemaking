@@ -236,30 +236,33 @@ const PartnerLocations: React.FC<PartnerLocationsProps> = ({ selectedPartner, on
                 </DialogHeader>
                 <div className="space-y-4">
                   <div>
-                    <Label htmlFor="name">Partner Name</Label>
+                    <Label htmlFor="name">Location Name</Label>
                     <Input
                       id="name"
                       value={newPartner.name}
                       onChange={(e) => setNewPartner({ ...newPartner, name: e.target.value })}
-                      placeholder="Enter partner name"
+                      placeholder="Enter location name"
                     />
                   </div>
                   <div>
-                    <Label htmlFor="slug">Slug</Label>
+                    <Label htmlFor="slug">Location Slug</Label>
                     <Input
                       id="slug"
                       value={newPartner.slug}
                       onChange={(e) => setNewPartner({ ...newPartner, slug: e.target.value })}
-                      placeholder="partner-slug"
+                      placeholder="location-slug"
                     />
+                    <p className="text-xs text-muted-foreground mt-1">
+                      URL-friendly identifier (e.g., "sneaky-dees"). Use lowercase letters, numbers, and hyphens only.
+                    </p>
                   </div>
                   <div>
-                    <Label htmlFor="description">Description (Optional)</Label>
+                    <Label htmlFor="description">Location Description</Label>
                     <Textarea
                       id="description"
                       value={newPartner.description}
                       onChange={(e) => setNewPartner({ ...newPartner, description: e.target.value })}
-                      placeholder="Partner description"
+                      placeholder="Enter location description"
                     />
                   </div>
                   <Button 
