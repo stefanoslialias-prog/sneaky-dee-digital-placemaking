@@ -42,10 +42,10 @@ const PartnerLocations: React.FC<PartnerLocationsProps> = ({ selectedPartner, on
     try {
       setLoading(true);
       
-      // Fetch basic partner list from partners table
+      // Fetch basic location list from locations table
       const { data: basicPartners, error: basicError } = await supabase
-        .from('partners')
-        .select('id, name, slug, description, active')
+        .from('locations')
+        .select('id, name, slug, description, active, client_name')
         .eq('active', true)
         .order('name');
       
@@ -93,7 +93,7 @@ const PartnerLocations: React.FC<PartnerLocationsProps> = ({ selectedPartner, on
     try {
       setIsCreating(true);
       const { error } = await supabase
-        .from('partners')
+        .from('locations')
         .insert({
           name: newPartner.name.trim(),
           slug: newPartner.slug.trim(),
@@ -122,7 +122,7 @@ const PartnerLocations: React.FC<PartnerLocationsProps> = ({ selectedPartner, on
 
     try {
       const { error } = await supabase
-        .from('partners')
+        .from('locations')
         .update({ active: false })
         .eq('id', partnerId);
 

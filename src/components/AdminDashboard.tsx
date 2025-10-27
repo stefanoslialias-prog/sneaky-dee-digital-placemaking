@@ -51,7 +51,7 @@ const AdminDashboard: React.FC = () => {
     const fetchPartners = async () => {
       try {
         const { data, error } = await supabase
-          .from('partners')
+          .from('locations')
           .select('id, name, slug, active')
           .eq('active', true)
           .order('name');

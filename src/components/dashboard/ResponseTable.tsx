@@ -94,9 +94,9 @@ const ResponseTable: React.FC<ResponseTableProps> = ({ selectedPartner }) => {
   useEffect(() => {
     const fetchPartners = async () => {
       try {
-        console.log('Fetching partners...');
+        console.log('Fetching locations...');
         const { data, error } = await supabase
-          .from('partners')
+          .from('locations')
           .select('id, name');
           
         if (error) throw error;

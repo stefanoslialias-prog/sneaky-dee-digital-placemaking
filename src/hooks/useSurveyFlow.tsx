@@ -8,27 +8,29 @@ import { useSessionTracking } from '@/hooks/useSessionTracking';
 
 export type AppStep = 
   | 'welcome'
-  | 'partnerPicker'
+  | 'locationPicker'
   | 'promotionOptIn'
   | 'couponPicker'
   | 'sentiment'
   | 'congratulations'
   | 'thankYou';
 
-interface Partner {
+interface Location {
   id: string;
   name: string;
   slug: string;
   description?: string;
   logo_url?: string;
   active: boolean;
+  client_name?: string;
+  parent_location_id?: string;
 }
 
 export const useSurveyFlow = () => {
   const [step, setStep] = useState<AppStep>('welcome');
   const [selectedCoupon, setSelectedCoupon] = useState<Coupon | null>(null);
   const [sentiment, setSentiment] = useState<Sentiment | null>(null);
-  const [selectedPartner, setSelectedPartner] = useState<Partner | null>(null);
+  const [selectedLocation, setSelectedLocation] = useState<Location | null>(null);
   const [lastResponseId, setLastResponseId] = useState<string | null>(null);
   const [showEmailOptIn, setShowEmailOptIn] = useState(false);
   const { startNewSession, trackSessionEvent } = useSessionTracking();
@@ -45,10 +47,10 @@ export const useSurveyFlow = () => {
     setStep('couponPicker');
   };
 
-  const handlePartnerSelected = (partner: Partner) => {
-    setSelectedPartner(partner);
+  const handleLocationSelected = (location: Location) => {
+    setSelectedLocation(location);
     // Start new session and track visit
-    startNewSession(partner.id);
+    startNewSession(location.id);
     setStep('couponPicker');
   };
 
@@ -180,12 +182,12 @@ export const useSurveyFlow = () => {
     step,
     setStep,
     selectedCoupon,
-    selectedPartner,
+    selectedLocation,
     sentiment,
     lastResponseId,
     showEmailOptIn,
     handleStartSurvey,
-    handlePartnerSelected,
+    handleLocationSelected,
     handleSkipRegistration,
     handleRegister,
     handleSocialSignIn,

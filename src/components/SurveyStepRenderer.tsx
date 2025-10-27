@@ -11,26 +11,28 @@ import PromotionOptIn from '@/components/PromotionOptIn';
 import ThankYou from '@/components/ThankYou';
 import { Sentiment } from '@/services/mockData';
 import BrandImage from '@/components/BrandImage';
-import PartnerPicker from '@/components/PartnerPicker';
+import LocationPicker from '@/components/LocationPicker';
 
-interface Partner {
+interface Location {
   id: string;
   name: string;
   slug: string;
   description?: string;
   logo_url?: string;
   active: boolean;
+  client_name?: string;
+  parent_location_id?: string;
 }
 
 interface SurveyStepRendererProps {
   step: AppStep;
   selectedCoupon: Coupon | null;
-  selectedPartner: Partner | null;
+  selectedLocation: Location | null;
   userInfo: any;
   lastResponseId?: string | null;
   showEmailOptIn?: boolean;
   onStartSurvey: (email?: string) => void;
-  onPartnerSelected: (partner: Partner) => void;
+  onLocationSelected: (location: Location) => void;
   onSkipRegistration: () => void;
   onRegister: (email: string, name: string) => void;
   onSocialSignIn: (provider: 'google' | 'apple') => void;
@@ -46,12 +48,12 @@ interface SurveyStepRendererProps {
 const SurveyStepRenderer: React.FC<SurveyStepRendererProps> = ({
   step,
   selectedCoupon,
-  selectedPartner,
+  selectedLocation,
   userInfo,
   lastResponseId,
   showEmailOptIn,
   onStartSurvey,
-  onPartnerSelected,
+  onLocationSelected,
   onSkipRegistration,
   onRegister,
   onSocialSignIn,
@@ -69,10 +71,10 @@ const SurveyStepRenderer: React.FC<SurveyStepRendererProps> = ({
       case 'welcome':
         return <WelcomeScreen onStartSurvey={onStartSurvey} />;
         
-      case 'partnerPicker':
+      case 'locationPicker':
         return (
           <div className="animate-fade-in">
-            <PartnerPicker onPartnerSelected={onPartnerSelected} />
+            <LocationPicker onLocationSelected={onLocationSelected} />
           </div>
         );
         
@@ -93,7 +95,7 @@ const SurveyStepRenderer: React.FC<SurveyStepRendererProps> = ({
           <div className="animate-slide-in-right">
             <CouponPicker 
               onCouponSelected={onCouponSelected} 
-              partnerId={selectedPartner?.id}
+              partnerId={selectedLocation?.id}
             />
           </div>
         );
@@ -103,7 +105,7 @@ const SurveyStepRenderer: React.FC<SurveyStepRendererProps> = ({
           <div className="animate-fade-in">
             <MultiQuestionSurvey 
               onComplete={onSentimentComplete}
-              partnerId={selectedPartner?.id}
+              partnerId={selectedLocation?.id}
             />
           </div>
         );

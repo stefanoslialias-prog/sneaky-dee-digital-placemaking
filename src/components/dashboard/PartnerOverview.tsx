@@ -145,9 +145,9 @@ const PartnerOverview: React.FC<PartnerOverviewProps> = ({ selectedPartner }) =>
       
       // Fetch basic data for the selected partner or all partners
       if (selectedPartner) {
-        // Get basic partner info
+        // Get basic location info
         const { data: partner } = await supabase
-          .from('partners')
+          .from('locations')
           .select('id, name, slug')
           .eq('id', selectedPartner)
           .eq('active', true)

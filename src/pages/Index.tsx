@@ -18,11 +18,11 @@ const Index = () => {
     step,
     setStep,
     selectedCoupon,
-    selectedPartner,
+    selectedLocation,
     lastResponseId,
     showEmailOptIn,
     handleStartSurvey,
-    handlePartnerSelected,
+    handleLocationSelected,
     handleSkipRegistration,
     handleCouponSelected,
     handleSentimentComplete,
@@ -104,12 +104,12 @@ const Index = () => {
       <SurveyStepRenderer
         step={step}
         selectedCoupon={selectedCoupon}
-        selectedPartner={selectedPartner}
+        selectedLocation={selectedLocation}
         userInfo={userInfo}
         lastResponseId={lastResponseId}
         showEmailOptIn={showEmailOptIn}
         onStartSurvey={handleStartSurvey}
-        onPartnerSelected={handlePartnerSelected}
+        onLocationSelected={handleLocationSelected}
         onSkipRegistration={handleSkipRegistration}
         onRegister={handleRegister}
         onSocialSignIn={handleSocialSignIn}

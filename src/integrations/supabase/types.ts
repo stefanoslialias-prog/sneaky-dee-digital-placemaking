@@ -135,7 +135,7 @@ export type Database = {
             foreignKeyName: "coupons_partner_id_fkey"
             columns: ["partner_id"]
             isOneToOne: false
-            referencedRelation: "partners"
+            referencedRelation: "locations"
             referencedColumns: ["id"]
           },
         ]
@@ -185,6 +185,65 @@ export type Database = {
           },
         ]
       }
+      locations: {
+        Row: {
+          active: boolean | null
+          address: string | null
+          city: string | null
+          client_name: string | null
+          created_at: string | null
+          description: string | null
+          id: string
+          latitude: number | null
+          longitude: number | null
+          name: string
+          parent_location_id: string | null
+          postal_code: string | null
+          slug: string
+          updated_at: string | null
+        }
+        Insert: {
+          active?: boolean | null
+          address?: string | null
+          city?: string | null
+          client_name?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          latitude?: number | null
+          longitude?: number | null
+          name: string
+          parent_location_id?: string | null
+          postal_code?: string | null
+          slug: string
+          updated_at?: string | null
+        }
+        Update: {
+          active?: boolean | null
+          address?: string | null
+          city?: string | null
+          client_name?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          latitude?: number | null
+          longitude?: number | null
+          name?: string
+          parent_location_id?: string | null
+          postal_code?: string | null
+          slug?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "partners_parent_location_id_fkey"
+            columns: ["parent_location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       partner_staff: {
         Row: {
           active: boolean | null
@@ -212,55 +271,10 @@ export type Database = {
             foreignKeyName: "partner_staff_partner_id_fkey"
             columns: ["partner_id"]
             isOneToOne: false
-            referencedRelation: "partners"
+            referencedRelation: "locations"
             referencedColumns: ["id"]
           },
         ]
-      }
-      partners: {
-        Row: {
-          active: boolean | null
-          address: string | null
-          city: string | null
-          created_at: string | null
-          description: string | null
-          id: string
-          latitude: number | null
-          longitude: number | null
-          name: string
-          postal_code: string | null
-          slug: string
-          updated_at: string | null
-        }
-        Insert: {
-          active?: boolean | null
-          address?: string | null
-          city?: string | null
-          created_at?: string | null
-          description?: string | null
-          id?: string
-          latitude?: number | null
-          longitude?: number | null
-          name: string
-          postal_code?: string | null
-          slug: string
-          updated_at?: string | null
-        }
-        Update: {
-          active?: boolean | null
-          address?: string | null
-          city?: string | null
-          created_at?: string | null
-          description?: string | null
-          id?: string
-          latitude?: number | null
-          longitude?: number | null
-          name?: string
-          postal_code?: string | null
-          slug?: string
-          updated_at?: string | null
-        }
-        Relationships: []
       }
       profiles: {
         Row: {
@@ -328,7 +342,7 @@ export type Database = {
             foreignKeyName: "survey_questions_partner_id_fkey"
             columns: ["partner_id"]
             isOneToOne: false
-            referencedRelation: "partners"
+            referencedRelation: "locations"
             referencedColumns: ["id"]
           },
         ]
@@ -369,7 +383,7 @@ export type Database = {
             foreignKeyName: "survey_responses_partner_id_fkey"
             columns: ["partner_id"]
             isOneToOne: false
-            referencedRelation: "partners"
+            referencedRelation: "locations"
             referencedColumns: ["id"]
           },
           {
@@ -509,7 +523,7 @@ export type Database = {
             foreignKeyName: "coupons_partner_id_fkey"
             columns: ["partner_id"]
             isOneToOne: false
-            referencedRelation: "partners"
+            referencedRelation: "locations"
             referencedColumns: ["id"]
           },
         ]
@@ -530,8 +544,8 @@ export type Database = {
         }
         Returns: Json
       }
-      get_partner_analytics: {
-        Args: { partner_slug: string }
+      get_location_analytics: {
+        Args: { location_slug: string }
         Returns: {
           negative_sentiment: number
           neutral_sentiment: number
