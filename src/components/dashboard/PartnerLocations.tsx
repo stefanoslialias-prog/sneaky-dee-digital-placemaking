@@ -200,7 +200,7 @@ const PartnerLocations: React.FC<PartnerLocationsProps> = ({ selectedPartner, on
   };
 
   const displayData = selectedPartnerData || calculateTotalStats();
-  const displayName = selectedPartnerData?.name || "All Partners";
+  const displayName = selectedPartnerData?.name || "All Locations";
 
   const totalSentiment = displayData.happy_count + displayData.neutral_count + displayData.concerned_count;
   const happyPercent = totalSentiment > 0 ? ((displayData.happy_count / totalSentiment) * 100).toFixed(1) : "0";
@@ -224,12 +224,12 @@ const PartnerLocations: React.FC<PartnerLocationsProps> = ({ selectedPartner, on
               <DialogTrigger asChild>
                 <Button variant="outline" size="sm">
                   <Plus className="mr-2 h-4 w-4" />
-                  Add Partner
+                  Add Location
                 </Button>
               </DialogTrigger>
               <DialogContent>
                 <DialogHeader>
-                  <DialogTitle>Add New Partner</DialogTitle>
+                  <DialogTitle>Add New Location</DialogTitle>
                   <DialogDescription>
                     Create a new business partner for the platform.
                   </DialogDescription>
@@ -283,7 +283,7 @@ const PartnerLocations: React.FC<PartnerLocationsProps> = ({ selectedPartner, on
                 }`}
                 onClick={() => onPartnerSelect?.(undefined)}
               >
-                All Partners
+                All Locations
               </div>
             </li>
             {partners.map((partner) => (

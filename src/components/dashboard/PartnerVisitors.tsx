@@ -41,7 +41,7 @@ const PartnerVisitors: React.FC<PartnerVisitorsProps> = ({ selectedPartner }) =>
         if (eventsError) throw eventsError;
         allEvents = events || [];
       } else {
-        // For "All Partners", get all events
+        // For "All Locations", get all events
         const { data, error } = await supabase
           .from('engagement_events')
           .select('event_type, coupon_id');
@@ -197,8 +197,8 @@ const PartnerVisitors: React.FC<PartnerVisitorsProps> = ({ selectedPartner }) =>
           <CardTitle>User Engagement Funnel</CardTitle>
           <CardDescription>
             {selectedPartner 
-              ? "How users interact with the selected partner's content"
-              : "Overall user engagement across all partners"
+              ? "How users interact with the selected location's content"
+              : "Overall user engagement across all locations"
             }
           </CardDescription>
         </CardHeader>

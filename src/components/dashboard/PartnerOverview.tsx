@@ -65,7 +65,7 @@ const PartnerOverview: React.FC<PartnerOverviewProps> = ({ selectedPartner }) =>
         if (eventsError) throw eventsError;
         allEvents = events || [];
       } else {
-        // For "All Partners", get all events
+        // For "All Locations", get all events
         const { data, error } = await supabase
           .from('engagement_events')
           .select('event_type, coupon_id');
@@ -143,7 +143,7 @@ const PartnerOverview: React.FC<PartnerOverviewProps> = ({ selectedPartner }) =>
     try {
       setLoading(true);
       
-      // Fetch basic data for the selected partner or all partners
+      // Fetch basic data for the selected location or all locations
       if (selectedPartner) {
         // Get basic location info
         const { data: partner } = await supabase
@@ -185,7 +185,7 @@ const PartnerOverview: React.FC<PartnerOverviewProps> = ({ selectedPartner }) =>
           setPartnerData(null);
         }
       } else {
-        // "All Partners" fallback
+        // "All Locations" fallback
         const { data: responses } = await supabase
           .from('survey_responses')
           .select('answer, session_id, partner_id');
@@ -202,7 +202,7 @@ const PartnerOverview: React.FC<PartnerOverviewProps> = ({ selectedPartner }) =>
           
           setPartnerData({
             partner_id: 'all',
-            name: 'All Partners',
+            name: 'All Locations',
             slug: 'all',
             total_responses: responses.length,
             ...sentimentCounts,
@@ -215,7 +215,7 @@ const PartnerOverview: React.FC<PartnerOverviewProps> = ({ selectedPartner }) =>
         } else {
           setPartnerData({
             partner_id: 'all',
-            name: 'All Partners',
+            name: 'All Locations',
             slug: 'all',
             total_responses: 0,
             happy_count: 0,
