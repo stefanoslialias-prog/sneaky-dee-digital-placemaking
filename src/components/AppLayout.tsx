@@ -32,12 +32,20 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
             }}
           />
         </div>
-        <Link to="/admin">
-          <Button variant="outline" size="sm" className="text-xs flex items-center gap-1">
-            Admin
-            <ArrowUpRightFromCircle size={12} />
-          </Button>
-        </Link>
+        <div className="flex items-center gap-2">
+          <Link to="/auth">
+            <Button variant="outline" size="sm" className="text-xs flex items-center gap-1">
+              Staff Login
+              <ArrowUpRightFromCircle size={12} />
+            </Button>
+          </Link>
+          <Link to="/admin">
+            <Button variant="outline" size="sm" className="text-xs flex items-center gap-1">
+              Admin
+              <ArrowUpRightFromCircle size={12} />
+            </Button>
+          </Link>
+        </div>
       </header>
       
       <main className="flex-1 flex flex-col items-center justify-center p-4 md:p-8 bg-toronto-gray">
