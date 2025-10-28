@@ -67,20 +67,28 @@ const Redeem = () => {
         throw new Error('Camera not supported by this browser');
       }
 
-      // Request camera permission first
+      // Request camera permission specifically for back camera first
       try {
-        await navigator.mediaDevices.getUserMedia({ video: true });
+        await navigator.mediaDevices.getUserMedia({ 
+          video: { facingMode: { ideal: "environment" } } 
+        });
       } catch (permErr) {
-        throw new Error('Camera permission denied. Please allow camera access in your browser settings.');
+        console.warn('Back camera permission denied, trying any camera:', permErr);
+        // Try any camera as fallback for permission
+        try {
+          await navigator.mediaDevices.getUserMedia({ video: true });
+        } catch (err) {
+          throw new Error('Camera permission denied. Please allow camera access in your browser settings.');
+        }
       }
 
       const html5QrCode = new Html5Qrcode(scannerDivId);
       scannerRef.current = html5QrCode;
 
-      // Try to start with back camera first, fallback to any camera
+      // Start with back camera (environment)
       try {
         await html5QrCode.start(
-          { facingMode: "environment" },
+          { facingMode: { exact: "environment" } },
           {
             fps: 10,
             qrbox: { width: 250, height: 250 }
@@ -112,38 +120,74 @@ const Redeem = () => {
           }
         );
       } catch (cameraErr) {
-        // If back camera fails, try any available camera
-        console.log('Back camera failed, trying any camera...');
-        await html5QrCode.start(
-          { facingMode: "user" },
-          {
-            fps: 10,
-            qrbox: { width: 250, height: 250 }
-          },
-          async (decodedText) => {
-            console.log('QR Code detected:', decodedText);
-            setRedemptionCode(decodedText);
-            await stopScanner();
-            
-            if (user) {
-              setRedeeming(true);
-              const result = await redeemCouponQR(decodedText.trim(), user.id);
-              setRedeeming(false);
+        // If exact back camera fails, try with ideal preference
+        console.log('Exact back camera failed, trying with ideal preference...');
+        try {
+          await html5QrCode.start(
+            { facingMode: { ideal: "environment" } },
+            {
+              fps: 10,
+              qrbox: { width: 250, height: 250 }
+            },
+            async (decodedText) => {
+              console.log('QR Code detected:', decodedText);
+              setRedemptionCode(decodedText);
+              await stopScanner();
+              
+              if (user) {
+                setRedeeming(true);
+                const result = await redeemCouponQR(decodedText.trim(), user.id);
+                setRedeeming(false);
 
-              if (result.success) {
-                toast.success(result.message);
-                setRedeemed(true);
-                setClaimInfo(result.claim);
-              } else {
-                toast.error(result.message);
-                setRedemptionCode('');
+                if (result.success) {
+                  toast.success(result.message);
+                  setRedeemed(true);
+                  setClaimInfo(result.claim);
+                } else {
+                  toast.error(result.message);
+                  setRedemptionCode('');
+                }
               }
+            },
+            (errorMessage) => {
+              // Scanning error
             }
-          },
-          (errorMessage) => {
-            // Scanning error
-          }
-        );
+          );
+        } catch (fallbackErr) {
+          console.error('Back camera not available, falling back to front camera');
+          toast.info('Using front camera. Flip your phone to scan QR codes.');
+          // Final fallback to front camera
+          await html5QrCode.start(
+            { facingMode: "user" },
+            {
+              fps: 10,
+              qrbox: { width: 250, height: 250 }
+            },
+            async (decodedText) => {
+              console.log('QR Code detected:', decodedText);
+              setRedemptionCode(decodedText);
+              await stopScanner();
+              
+              if (user) {
+                setRedeeming(true);
+                const result = await redeemCouponQR(decodedText.trim(), user.id);
+                setRedeeming(false);
+
+                if (result.success) {
+                  toast.success(result.message);
+                  setRedeemed(true);
+                  setClaimInfo(result.claim);
+                } else {
+                  toast.error(result.message);
+                  setRedemptionCode('');
+                }
+              }
+            },
+            (errorMessage) => {
+              // Scanning error
+            }
+          );
+        }
       }
     } catch (err: any) {
       console.error('Camera error:', err);
