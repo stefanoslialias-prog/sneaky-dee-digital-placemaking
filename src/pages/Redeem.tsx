@@ -9,6 +9,7 @@ import { redeemCouponQR } from '@/services/pdfCouponService';
 import { toast } from 'sonner';
 import { useAuth } from '@/hooks/useAuth';
 import { Html5Qrcode } from 'html5-qrcode';
+import { useStaffTracking } from '@/hooks/useStaffTracking';
 
 const Redeem = () => {
   const { user, isLoading } = useAuth();
@@ -20,6 +21,9 @@ const Redeem = () => {
   const [manualEntry, setManualEntry] = useState(false);
   const scannerRef = useRef<Html5Qrcode | null>(null);
   const scannerDivId = 'qr-reader';
+
+  // Automatically track staff email with device for visitor analytics
+  useStaffTracking(user?.email);
 
   const handleRedeem = async () => {
     if (!redemptionCode.trim()) {
