@@ -11,7 +11,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { Html5Qrcode } from 'html5-qrcode';
 
 const Redeem = () => {
-  const { user } = useAuth();
+  const { user, isLoading } = useAuth();
   const [redemptionCode, setRedemptionCode] = useState('');
   const [redeeming, setRedeeming] = useState(false);
   const [redeemed, setRedeemed] = useState(false);
@@ -125,6 +125,26 @@ const Redeem = () => {
       }
     };
   }, []);
+
+  if (isLoading) {
+    return (
+      <AppLayout>
+        <div className="container mx-auto px-4 py-8 max-w-2xl">
+          <Card>
+            <CardHeader>
+              <CardTitle>Loading...</CardTitle>
+              <CardDescription>
+                Checking authentication status
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="flex justify-center py-8">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </CardContent>
+          </Card>
+        </div>
+      </AppLayout>
+    );
+  }
 
   if (!user) {
     return (
