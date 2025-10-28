@@ -117,7 +117,7 @@ const Share = () => {
 
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="email">Email (Optional)</Label>
+                <Label htmlFor="email">For great news, events and deals:</Label>
                 <Input
                   id="email"
                   type="email"
