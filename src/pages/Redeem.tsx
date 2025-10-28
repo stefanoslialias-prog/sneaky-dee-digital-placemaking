@@ -58,44 +58,92 @@ const Redeem = () => {
     setManualEntry(false);
     
     try {
+      // Check if camera is available
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        throw new Error('Camera not supported by this browser');
+      }
+
+      // Request camera permission first
+      try {
+        await navigator.mediaDevices.getUserMedia({ video: true });
+      } catch (permErr) {
+        throw new Error('Camera permission denied. Please allow camera access in your browser settings.');
+      }
+
       const html5QrCode = new Html5Qrcode(scannerDivId);
       scannerRef.current = html5QrCode;
 
-      await html5QrCode.start(
-        { facingMode: "environment" },
-        {
-          fps: 10,
-          qrbox: { width: 250, height: 250 }
-        },
-        async (decodedText) => {
-          // Successfully scanned
-          console.log('QR Code detected:', decodedText);
-          setRedemptionCode(decodedText);
-          await stopScanner();
-          
-          // Auto-redeem the scanned code
-          if (user) {
-            setRedeeming(true);
-            const result = await redeemCouponQR(decodedText.trim(), user.id);
-            setRedeeming(false);
+      // Try to start with back camera first, fallback to any camera
+      try {
+        await html5QrCode.start(
+          { facingMode: "environment" },
+          {
+            fps: 10,
+            qrbox: { width: 250, height: 250 }
+          },
+          async (decodedText) => {
+            // Successfully scanned
+            console.log('QR Code detected:', decodedText);
+            setRedemptionCode(decodedText);
+            await stopScanner();
+            
+            // Auto-redeem the scanned code
+            if (user) {
+              setRedeeming(true);
+              const result = await redeemCouponQR(decodedText.trim(), user.id);
+              setRedeeming(false);
 
-            if (result.success) {
-              toast.success(result.message);
-              setRedeemed(true);
-              setClaimInfo(result.claim);
-            } else {
-              toast.error(result.message);
-              setRedemptionCode('');
+              if (result.success) {
+                toast.success(result.message);
+                setRedeemed(true);
+                setClaimInfo(result.claim);
+              } else {
+                toast.error(result.message);
+                setRedemptionCode('');
+              }
             }
+          },
+          (errorMessage) => {
+            // Scanning error (usually just "no QR code found" - don't show to user)
           }
-        },
-        (errorMessage) => {
-          // Scanning error (usually just "no QR code found" - don't show to user)
-        }
-      );
-    } catch (err) {
+        );
+      } catch (cameraErr) {
+        // If back camera fails, try any available camera
+        console.log('Back camera failed, trying any camera...');
+        await html5QrCode.start(
+          { facingMode: "user" },
+          {
+            fps: 10,
+            qrbox: { width: 250, height: 250 }
+          },
+          async (decodedText) => {
+            console.log('QR Code detected:', decodedText);
+            setRedemptionCode(decodedText);
+            await stopScanner();
+            
+            if (user) {
+              setRedeeming(true);
+              const result = await redeemCouponQR(decodedText.trim(), user.id);
+              setRedeeming(false);
+
+              if (result.success) {
+                toast.success(result.message);
+                setRedeemed(true);
+                setClaimInfo(result.claim);
+              } else {
+                toast.error(result.message);
+                setRedemptionCode('');
+              }
+            }
+          },
+          (errorMessage) => {
+            // Scanning error
+          }
+        );
+      }
+    } catch (err: any) {
       console.error('Camera error:', err);
-      toast.error('Could not access camera. Please check permissions or use manual entry.');
+      toast.error(err.message || 'Could not access camera. Please check permissions or use manual entry.');
       setScanning(false);
     }
   };
