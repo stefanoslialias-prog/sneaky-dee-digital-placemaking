@@ -74,10 +74,12 @@ const Auth: React.FC = () => {
     <div className="min-h-screen flex flex-col items-center justify-center bg-toronto-gray p-4">
       <div className="w-full max-w-md">
         {/* Header */}
-        <div className="text-center mb-6">
-          <h1 className="text-3xl font-playfair font-bold text-toronto-blue mb-2">
-            Shop Local Win Local
-          </h1>
+        <div className="text-center mb-6 flex flex-col items-center">
+          <img 
+            src="/lovable-uploads/sneaky-dees-logo.jpg" 
+            alt="Sneaky Dee's" 
+            className="h-24 mb-4"
+          />
           <p className="text-gray-600">
             Staff Login
           </p>
