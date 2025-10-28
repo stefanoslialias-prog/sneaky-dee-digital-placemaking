@@ -32,10 +32,10 @@ const Auth: React.FC = () => {
     }
   });
   
-  // If user is already logged in, redirect to main page
+  // If user is already logged in, redirect to redeem page
   useEffect(() => {
     if (user) {
-      navigate('/');
+      navigate('/redeem');
     }
   }, [user, navigate]);
 
