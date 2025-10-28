@@ -2,55 +2,33 @@ import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate, Link } from 'react-router-dom';
 import { toast } from 'sonner';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { AlertTriangle, UserPlus, LogIn, Shield } from 'lucide-react';
+import { AlertTriangle, Mail, CheckCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 
-const loginSchema = z.object({
-  email: z.string().email({ message: 'Please enter a valid email' }),
-  password: z.string().min(6, { message: 'Password must be at least 6 characters' })
-});
-
-const signupSchema = z.object({
-  name: z.string().min(2, { message: 'Name must be at least 2 characters' }),
-  email: z.string().email({ message: 'Please enter a valid email' }),
-  password: z.string().min(6, { message: 'Password must be at least 6 characters' }),
-  confirmPassword: z.string()
-}).refine((data) => data.password === data.confirmPassword, {
-  message: "Passwords don't match",
-  path: ["confirmPassword"],
+const emailSchema = z.object({
+  email: z.string().email({ message: 'Please enter a valid email' })
 });
 
 const Auth: React.FC = () => {
-  const [isSignUp, setIsSignUp] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
-  const { user, login } = useAuth();
+  const [emailSent, setEmailSent] = useState(false);
+  const [sentToEmail, setSentToEmail] = useState('');
+  const { user } = useAuth();
   const navigate = useNavigate();
   
-  const loginForm = useForm<z.infer<typeof loginSchema>>({
-    resolver: zodResolver(loginSchema),
+  const emailForm = useForm<z.infer<typeof emailSchema>>({
+    resolver: zodResolver(emailSchema),
     defaultValues: {
-      email: '',
-      password: ''
-    }
-  });
-
-  const signupForm = useForm<z.infer<typeof signupSchema>>({
-    resolver: zodResolver(signupSchema),
-    defaultValues: {
-      name: '',
-      email: '',
-      password: '',
-      confirmPassword: ''
+      email: ''
     }
   });
   
@@ -61,72 +39,32 @@ const Auth: React.FC = () => {
     }
   }, [user, navigate]);
 
-  const handleLogin = async (values: z.infer<typeof loginSchema>) => {
+  const handleMagicLink = async (values: z.infer<typeof emailSchema>) => {
     setIsLoading(true);
     setErrorMsg('');
     
     try {
-      const result = await login(values.email, values.password);
-      
-      if (result?.error) {
-        const message = result.error.message || 'Login failed. Please check your credentials.';
-        setErrorMsg(message);
-        toast.error('Login failed: ' + message);
-        return;
-      }
-      
-      toast.success('Login successful! Welcome back.');
-      navigate('/');
-    } catch (err: any) {
-      console.error('Login error:', err);
-      setErrorMsg(err?.message || 'An unexpected error occurred');
-      toast.error('Login failed: ' + (err?.message || 'Unknown error'));
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleSignUp = async (values: z.infer<typeof signupSchema>) => {
-    setIsLoading(true);
-    setErrorMsg('');
-    
-    try {
-      const redirectUrl = `${window.location.origin}/`;
-      
-      const { data, error } = await supabase.auth.signUp({
+      const { error } = await supabase.auth.signInWithOtp({
         email: values.email,
-        password: values.password,
         options: {
-          emailRedirectTo: redirectUrl,
-          data: {
-            name: values.name
-          }
+          emailRedirectTo: `${window.location.origin}/`
         }
       });
       
       if (error) {
-        console.error('Signup error:', error);
-        
-        // Handle specific error cases
-        if (error.message.includes('already registered')) {
-          setErrorMsg('An account with this email already exists. Please try logging in instead.');
-        } else {
-          setErrorMsg(error.message);
-        }
-        toast.error('Signup failed: ' + error.message);
+        console.error('Magic link error:', error);
+        setErrorMsg(error.message);
+        toast.error('Failed to send login link: ' + error.message);
         return;
       }
       
-      if (data.user) {
-        // User info stored in auth.users by Supabase
-        console.log('User created successfully');
-        toast.success('Account created successfully! Please check your email to verify your account.');
-        setIsSignUp(false); // Switch to login form
-      }
+      setSentToEmail(values.email);
+      setEmailSent(true);
+      toast.success('Check your email for the login link!');
     } catch (err: any) {
-      console.error('Signup error:', err);
+      console.error('Magic link error:', err);
       setErrorMsg(err?.message || 'An unexpected error occurred');
-      toast.error('Signup failed: ' + (err?.message || 'Unknown error'));
+      toast.error('Failed to send login link: ' + (err?.message || 'Unknown error'));
     } finally {
       setIsLoading(false);
     }
@@ -141,7 +79,7 @@ const Auth: React.FC = () => {
             Shop Local Win Local
           </h1>
           <p className="text-gray-600">
-            {isSignUp ? 'Create your account' : 'Welcome back'}
+            Staff Login
           </p>
         </div>
 
@@ -149,14 +87,14 @@ const Auth: React.FC = () => {
           <CardHeader className="space-y-1">
             <div className="flex items-center justify-between">
               <CardTitle className="text-2xl font-playfair">
-                {isSignUp ? 'Sign Up' : 'Sign In'}
+                {emailSent ? 'Check Your Email' : 'Passwordless Login'}
               </CardTitle>
-              {isSignUp ? <UserPlus className="h-6 w-6 text-toronto-blue" /> : <LogIn className="h-6 w-6 text-toronto-blue" />}
+              {emailSent ? <CheckCircle className="h-6 w-6 text-green-500" /> : <Mail className="h-6 w-6 text-toronto-blue" />}
             </div>
             <CardDescription>
-              {isSignUp 
-                ? 'Create an account to save your coupons and get personalized offers' 
-                : 'Sign in to access your saved coupons and preferences'
+              {emailSent 
+                ? `We sent a login link to ${sentToEmail}` 
+                : 'Enter your email to receive a secure login link'
               }
             </CardDescription>
           </CardHeader>
@@ -170,108 +108,67 @@ const Auth: React.FC = () => {
             </div>
           )}
 
-          {isSignUp ? (
-            <Form {...signupForm}>
-              <form onSubmit={signupForm.handleSubmit(handleSignUp)}>
-                <CardContent className="space-y-4">
-                  <FormField
-                    control={signupForm.control}
-                    name="name"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Full Name</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Enter your full name" {...field} disabled={isLoading} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={signupForm.control}
-                    name="email"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Email</FormLabel>
-                        <FormControl>
-                          <Input type="email" placeholder="Enter your email" {...field} disabled={isLoading} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={signupForm.control}
-                    name="password"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Password</FormLabel>
-                        <FormControl>
-                          <Input type="password" placeholder="Create a password" {...field} disabled={isLoading} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={signupForm.control}
-                    name="confirmPassword"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Confirm Password</FormLabel>
-                        <FormControl>
-                          <Input type="password" placeholder="Confirm your password" {...field} disabled={isLoading} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </CardContent>
-                <CardFooter className="flex flex-col space-y-4">
-                  <Button 
-                    type="submit" 
-                    className="w-full bg-toronto-blue hover:bg-toronto-lightblue"
-                    disabled={isLoading}
-                  >
-                    {isLoading ? 'Creating Account...' : 'Create Account'}
-                  </Button>
-                </CardFooter>
-              </form>
-            </Form>
+          {emailSent ? (
+            <CardContent className="space-y-4">
+              <div className="bg-green-50 border border-green-200 rounded-lg p-4 space-y-3">
+                <div className="flex items-start gap-3">
+                  <Mail className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
+                  <div className="space-y-2 flex-1">
+                    <p className="text-sm font-medium text-green-900">
+                      Login link sent!
+                    </p>
+                    <p className="text-sm text-green-700">
+                      Check your inbox and click the link to log in. The link will expire in 1 hour.
+                    </p>
+                    <p className="text-xs text-green-600">
+                      Don't see it? Check your spam folder.
+                    </p>
+                  </div>
+                </div>
+              </div>
+              
+              <Button 
+                variant="outline" 
+                className="w-full"
+                onClick={() => {
+                  setEmailSent(false);
+                  setSentToEmail('');
+                  setErrorMsg('');
+                  emailForm.reset();
+                }}
+              >
+                Send to a different email
+              </Button>
+            </CardContent>
           ) : (
-            <Form {...loginForm}>
-              <form onSubmit={loginForm.handleSubmit(handleLogin)}>
+            <Form {...emailForm}>
+              <form onSubmit={emailForm.handleSubmit(handleMagicLink)}>
                 <CardContent className="space-y-4">
                   <FormField
-                    control={loginForm.control}
+                    control={emailForm.control}
                     name="email"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Email</FormLabel>
+                        <FormLabel>Staff Email</FormLabel>
                         <FormControl>
-                          <Input type="email" placeholder="Enter your email" {...field} disabled={isLoading} />
+                          <Input 
+                            type="email" 
+                            placeholder="Enter your work email" 
+                            {...field} 
+                            disabled={isLoading}
+                            autoFocus
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
                   
-                  <FormField
-                    control={loginForm.control}
-                    name="password"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Password</FormLabel>
-                        <FormControl>
-                          <Input type="password" placeholder="Enter your password" {...field} disabled={isLoading} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                    <p className="text-xs text-blue-700">
+                      <strong>No password needed.</strong> We'll send you a secure login link to access the redemption scanner.
+                    </p>
+                  </div>
                 </CardContent>
                 <CardFooter className="flex flex-col space-y-4">
                   <Button 
@@ -279,39 +176,22 @@ const Auth: React.FC = () => {
                     className="w-full bg-toronto-blue hover:bg-toronto-lightblue"
                     disabled={isLoading}
                   >
-                    {isLoading ? 'Signing In...' : 'Sign In'}
+                    {isLoading ? (
+                      <>
+                        <Mail className="h-4 w-4 mr-2 animate-pulse" />
+                        Sending Login Link...
+                      </>
+                    ) : (
+                      <>
+                        <Mail className="h-4 w-4 mr-2" />
+                        Send Login Link
+                      </>
+                    )}
                   </Button>
                 </CardFooter>
               </form>
             </Form>
           )}
-          
-          <div className="px-6 pb-6">
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t" />
-              </div>
-              <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-white px-2 text-muted-foreground">
-                  {isSignUp ? 'Already have an account?' : "Don't have an account?"}
-                </span>
-              </div>
-            </div>
-            
-            <Button 
-              variant="ghost" 
-              className="w-full mt-4"
-              onClick={() => {
-                setIsSignUp(!isSignUp);
-                setErrorMsg('');
-                loginForm.reset();
-                signupForm.reset();
-              }}
-              disabled={isLoading}
-            >
-              {isSignUp ? 'Sign in instead' : 'Create an account'}
-            </Button>
-          </div>
         </Card>
 
         {/* Footer */}
@@ -322,7 +202,7 @@ const Auth: React.FC = () => {
             </Link>
           </p>
           <p className="text-xs text-gray-400">
-            Your personal information is protected and secure
+            Secure passwordless authentication
           </p>
         </div>
       </div>
