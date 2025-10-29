@@ -14,6 +14,44 @@ export type Database = {
   }
   public: {
     Tables: {
+      api_keys: {
+        Row: {
+          active: boolean | null
+          created_at: string | null
+          id: string
+          key_hash: string
+          last_used_at: string | null
+          location_id: string | null
+          name: string
+        }
+        Insert: {
+          active?: boolean | null
+          created_at?: string | null
+          id?: string
+          key_hash: string
+          last_used_at?: string | null
+          location_id?: string | null
+          name: string
+        }
+        Update: {
+          active?: boolean | null
+          created_at?: string | null
+          id?: string
+          key_hash?: string
+          last_used_at?: string | null
+          location_id?: string | null
+          name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "api_keys_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "wifi_locations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       coupon_claims: {
         Row: {
           claimed_at: string | null
@@ -181,6 +219,41 @@ export type Database = {
             columns: ["coupon_id"]
             isOneToOne: false
             referencedRelation: "coupons_public"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      location_traffic: {
+        Row: {
+          created_at: string | null
+          device_count: number
+          id: string
+          location_id: string | null
+          metadata: Json | null
+          timestamp: string
+        }
+        Insert: {
+          created_at?: string | null
+          device_count?: number
+          id?: string
+          location_id?: string | null
+          metadata?: Json | null
+          timestamp?: string
+        }
+        Update: {
+          created_at?: string | null
+          device_count?: number
+          id?: string
+          location_id?: string | null
+          metadata?: Json | null
+          timestamp?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "location_traffic_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "wifi_locations"
             referencedColumns: ["id"]
           },
         ]
