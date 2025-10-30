@@ -525,6 +525,60 @@ export type Database = {
         }
         Relationships: []
       }
+      user_wallets: {
+        Row: {
+          coupon_id: string
+          created_at: string | null
+          device_id: string
+          id: string
+          pass_url: string
+          passkit_coupon_id: string
+          passkit_status: string | null
+          platform: string
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          coupon_id: string
+          created_at?: string | null
+          device_id: string
+          id?: string
+          pass_url: string
+          passkit_coupon_id: string
+          passkit_status?: string | null
+          platform: string
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          coupon_id?: string
+          created_at?: string | null
+          device_id?: string
+          id?: string
+          pass_url?: string
+          passkit_coupon_id?: string
+          passkit_status?: string | null
+          platform?: string
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_wallets_coupon_id_fkey"
+            columns: ["coupon_id"]
+            isOneToOne: false
+            referencedRelation: "coupons"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_wallets_coupon_id_fkey"
+            columns: ["coupon_id"]
+            isOneToOne: false
+            referencedRelation: "coupons_public"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       wifi_locations: {
         Row: {
           active: boolean | null

@@ -75,5 +75,21 @@ export const WalletButtons: React.FC<WalletButtonsProps> = ({
   // Always show the wallet button - let users try to add it regardless of device detection
   const walletName = walletSupport.apple ? 'Apple Wallet' : 'Google Pay';
 
-  return null;
+  return (
+    <Button
+      onClick={handleAddToWallet}
+      disabled={isAdding !== null}
+      variant="outline"
+      className="w-full"
+    >
+      {isAdding ? (
+        <>Adding to {walletName}...</>
+      ) : (
+        <>
+          <Wallet className="mr-2 h-4 w-4" />
+          Add to {walletName}
+        </>
+      )}
+    </Button>
+  );
 };
